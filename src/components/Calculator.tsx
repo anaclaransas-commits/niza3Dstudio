@@ -6,9 +6,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Calculator as CalcIcon, 
-  ChevronRight, 
-  Info,
-  Save,
   Printer as PrinterIcon,
   Droplets,
   Zap,
@@ -20,8 +17,17 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { useStore } from '../store';
-import { calculate3DPrintCost, formatCurrency, cn } from '../lib/utils';
+import {
+  calculate3DPrintCost,
+  formatCurrency,
+  parseLocalizedNumber,
+  roundCurrencyValue,
+} from '../lib/utils';
 import { CalculationResult } from '../types';
+
+const DEFAULT_CEMIG_ENERGY_PRICE_KWH = '0.85858';
+const DEFAULT_MANUAL_POWER_CONSUMPTION_W = '250';
+const DEFAULT_MANUAL_MAINTENANCE_COST_PER_HOUR = '0.50';
 
 export function Calculator() {
   const { filaments, printers, clients, addBudget, products } = useStore();
@@ -32,9 +38,11 @@ export function Calculator() {
   const [selectedProductId, setSelectedProductId] = useState('');
   
   const [manualFilamentPrice, setManualFilamentPrice] = useState('120');
+  const [manualPowerConsumptionW, setManualPowerConsumptionW] = useState(DEFAULT_MANUAL_POWER_CONSUMPTION_W);
+  const [manualMaintenanceCostPerHour, setManualMaintenanceCostPerHour] = useState(DEFAULT_MANUAL_MAINTENANCE_COST_PER_HOUR);
   const [weightG, setWeightG] = useState('50');
   const [printTimeHours, setPrintTimeHours] = useState('5');
-  const [energyPriceKWh, setEnergyPriceKWh] = useState('0.85');
+  const [energyPriceKWh, setEnergyPriceKWh] = useState(DEFAULT_CEMIG_ENERGY_PRICE_KWH);
   const [failureRate, setFailureRate] = useState('5');
   const [laborRate, setLaborRate] = useState('15');
   const [margin, setMargin] = useState('100');
@@ -46,56 +54,32 @@ export function Calculator() {
   const selectedPrinter = printers.find(p => p.id === selectedPrinterId);
   const selectedProduct = products.find(p => p.id === selectedProductId);
 
-  const toPositiveNumber = (value: string, fallback: number) => {
-    const parsedValue = Number(value);
-    return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : fallback;
-  };
-
-  const toNonNegativeNumber = (value: string, fallback: number) => {
-    const parsedValue = Number(value);
-    return Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : fallback;
-  };
-
-  // Auto-select first printer to avoid orphan budgets without machine reference
-  useEffect(() => {
-    if (!selectedPrinterId && printers.length > 0) {
-      setSelectedPrinterId(printers[0].id);
-    }
-  }, [printers, selectedPrinterId]);
-
   // Auto-fill product weights
   useEffect(() => {
     if (selectedProduct && selectedProduct.defaultWeightG) {
       setWeightG(selectedProduct.defaultWeightG.toString());
     }
-  }, [selectedProductId, selectedProduct]);
+  }, [selectedProduct]);
 
   useEffect(() => {
-    const filamentPrice = selectedFilament
-      ? selectedFilament.pricePerKg
-      : toPositiveNumber(manualFilamentPrice, 120);
-
-    const power = selectedPrinter ? selectedPrinter.powerConsumption : 250;
-    const maint = selectedPrinter ? selectedPrinter.maintenanceCostPerHour : 0.5;
-
     const calc = calculate3DPrintCost({
-      pricePerKg: filamentPrice,
-      weightG: toPositiveNumber(weightG, 1),
-      printTimeHours: toPositiveNumber(printTimeHours, 1),
-      powerConsumptionW: power,
-      energyPriceKWh: toPositiveNumber(energyPriceKWh, 0.85),
-      failureRatePercent: toNonNegativeNumber(failureRate, 0),
-      laborRatePerHour: toNonNegativeNumber(laborRate, 0),
-      profitMarginPercent: toNonNegativeNumber(margin, 0),
-      maintenanceCostPerHour: toNonNegativeNumber(String(maint), 0),
-      quantity: Math.max(1, Math.floor(toPositiveNumber(quantity, 1))),
+      pricePerKg: selectedFilament ? selectedFilament.pricePerKg : manualFilamentPrice,
+      weightG,
+      printTimeHours,
+      powerConsumptionW: selectedPrinter ? selectedPrinter.powerConsumption : manualPowerConsumptionW,
+      energyPriceKWh,
+      failureRatePercent: failureRate,
+      laborRatePerHour: laborRate,
+      profitMarginPercent: margin,
+      maintenanceCostPerHour: selectedPrinter ? selectedPrinter.maintenanceCostPerHour : manualMaintenanceCostPerHour,
+      quantity,
     });
 
     setResult(calc);
   }, [
-    selectedFilamentId,
-    selectedPrinterId,
     manualFilamentPrice,
+    manualMaintenanceCostPerHour,
+    manualPowerConsumptionW,
     weightG,
     printTimeHours,
     energyPriceKWh,
@@ -112,17 +96,12 @@ export function Calculator() {
       return;
     }
 
-    const safeQuantity = Math.max(1, Math.floor(toPositiveNumber(quantity, 1)));
-    const safeWeight = toPositiveNumber(weightG, 0);
-    const safePrintTime = toPositiveNumber(printTimeHours, 0);
+    const safeQuantity = Math.max(1, Math.floor(parseLocalizedNumber(quantity, 1)));
+    const safeWeight = parseLocalizedNumber(weightG, 0);
+    const safePrintTime = parseLocalizedNumber(printTimeHours, 0);
 
     if (safeWeight <= 0 || safePrintTime <= 0) {
       alert('Preencha peso e tempo com valores maiores que zero antes de salvar.');
-      return;
-    }
-
-    if (!selectedPrinterId) {
-      alert('Selecione uma impressora para salvar o orçamento.');
       return;
     }
 
@@ -136,13 +115,21 @@ export function Calculator() {
       printTimeHours: safePrintTime,
       weightG: safeWeight,
       quantity: safeQuantity,
-      price: result.batchFinalPrice,
-      profit: result.batchTotalProfit,
+      price: roundCurrencyValue(result.batchFinalPrice),
+      profit: roundCurrencyValue(result.batchTotalProfit),
       calculation: result,
     });
 
     alert('Orçamento de lote salvo com sucesso!');
   };
+
+  const normalizedPowerConsumptionW = selectedPrinter
+    ? selectedPrinter.powerConsumption
+    : parseLocalizedNumber(manualPowerConsumptionW, 0);
+  const derivedEnergyCostPerHour =
+    normalizedPowerConsumptionW > 0
+      ? (normalizedPowerConsumptionW / 1000) * parseLocalizedNumber(energyPriceKWh, 0)
+      : 0;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -154,7 +141,7 @@ export function Calculator() {
             </div>
             <div>
               <h3 className="font-black text-slate-800 text-xl">Calculadora Inteligente</h3>
-              <p className="text-slate-500 text-sm">Cálculos precisos baseados em seus insumos.</p>
+              <p className="text-slate-500 text-sm">Use cadastros existentes ou calcule manualmente, sem precisar cadastrar nada.</p>
             </div>
           </div>
 
@@ -197,7 +184,8 @@ export function Calculator() {
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">R$</span>
                   <input 
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     value={manualFilamentPrice}
                     onChange={(e) => setManualFilamentPrice(e.target.value)}
                     className="w-full p-3.5 pl-10 bg-slate-50 border border-slate-100 rounded-2xl outline-none text-sm"
@@ -215,11 +203,46 @@ export function Calculator() {
                 onChange={(e) => setSelectedPrinterId(e.target.value)}
                 className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 text-sm font-medium transition-all"
               >
+                <option value="">Cálculo Rápido Manual</option>
                 {printers.map(p => (
                   <option key={p.id} value={p.id}>{p.name} ({p.powerConsumption}W)</option>
                 ))}
               </select>
+              <p className="text-xs text-slate-500">
+                {selectedPrinter
+                  ? 'Usando potência e manutenção cadastradas da impressora selecionada.'
+                  : 'Modo manual ativo: informe potência e manutenção da máquina para calcular sem cadastro.'}
+              </p>
             </div>
+
+            {!selectedPrinter && (
+              <>
+                <div className="space-y-2 animate-in fade-in duration-300">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Consumo Médio da Impressora (W)</label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={manualPowerConsumptionW}
+                    onChange={(e) => setManualPowerConsumptionW(e.target.value)}
+                    className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none text-sm"
+                  />
+                </div>
+
+                <div className="space-y-2 animate-in fade-in duration-300">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Manutenção por Hora (Manual)</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">R$</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={manualMaintenanceCostPerHour}
+                      onChange={(e) => setManualMaintenanceCostPerHour(e.target.value)}
+                      className="w-full p-3.5 pl-10 bg-slate-50 border border-slate-100 rounded-2xl outline-none text-sm"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
@@ -248,13 +271,15 @@ export function Calculator() {
 
         <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
           <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Parâmetros Técnicos da Peça</h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700 flex items-center">
                 <Clock className="w-4 h-4 mr-2 text-indigo-500" /> Horas
               </label>
               <input 
-                type="number" value={printTimeHours} 
+                type="text"
+                inputMode="decimal"
+                value={printTimeHours} 
                 onChange={(e) => setPrintTimeHours(e.target.value)} 
                 className="w-full p-3 border border-slate-200 rounded-2xl text-sm font-bold"
               />
@@ -264,27 +289,74 @@ export function Calculator() {
                 <Weight className="w-4 h-4 mr-2 text-emerald-500" /> Gramas
               </label>
               <input 
-                type="number" value={weightG} 
+                type="text"
+                inputMode="decimal"
+                value={weightG} 
                 onChange={(e) => setWeightG(e.target.value)} 
                 className="w-full p-3 border border-slate-200 rounded-2xl text-sm font-bold"
               />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700 flex items-center">
+                <Zap className="w-4 h-4 mr-2 text-amber-500" /> Tarifa de Energia (R$/kWh)
+              </label>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={energyPriceKWh}
+                onChange={(e) => setEnergyPriceKWh(e.target.value)}
+                className="w-full p-3 border border-slate-200 rounded-2xl text-sm font-bold"
+              />
+              <p className="text-xs text-slate-500">
+                Padrão CEMIG B1 residencial, bandeira verde, antes de impostos. Vigente de 28/05/2025 a 27/05/2026.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700 flex items-center">
+                <Zap className="w-4 h-4 mr-2 text-blue-500" /> Energia por Hora
+              </label>
+              <div className="w-full p-3 border border-blue-100 bg-blue-50 rounded-2xl text-sm font-black text-blue-700">
+                {formatCurrency(derivedEnergyCostPerHour)}
+              </div>
+              <p className="text-xs text-slate-500">
+                Valor automático por hora com base na tarifa e em {selectedPrinter ? 'sua impressora cadastrada' : 'potência manual'}.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700 flex items-center">
                 <Percent className="w-4 h-4 mr-2 text-rose-500" /> Falhas %
               </label>
               <input 
-                type="number" value={failureRate} 
+                type="text"
+                inputMode="decimal"
+                value={failureRate} 
                 onChange={(e) => setFailureRate(e.target.value)} 
                 className="w-full p-3 border border-slate-200 rounded-2xl text-sm font-bold"
               />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700 flex items-center">
+                <User className="w-4 h-4 mr-2 text-slate-500" /> Mão de Obra / Hora
+              </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">R$</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={laborRate}
+                  onChange={(e) => setLaborRate(e.target.value)}
+                  className="w-full p-3 pl-10 border border-slate-200 rounded-2xl text-sm font-bold"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700 flex items-center">
                 <Percent className="w-4 h-4 mr-2 text-blue-500" /> Margem %
               </label>
               <input 
-                type="number" value={margin} 
+                type="text"
+                inputMode="decimal"
+                value={margin} 
                 onChange={(e) => setMargin(e.target.value)} 
                 className="w-full p-3 border border-slate-200 rounded-2xl text-sm font-bold"
               />
@@ -313,6 +385,14 @@ export function Calculator() {
               <div className="flex justify-between items-center group">
                 <span className="text-slate-500 text-xs font-medium group-hover:text-slate-300 transition-colors">Energia ({printTimeHours}h)</span>
                 <span className="text-sm font-bold text-slate-300">{formatCurrency(result?.unitEnergyCost || 0)}</span>
+              </div>
+              <div className="flex justify-between items-center group">
+                <span className="text-slate-500 text-xs font-medium group-hover:text-slate-300 transition-colors">Energia / hora</span>
+                <span className="text-sm font-bold text-slate-300">{formatCurrency(derivedEnergyCostPerHour)}</span>
+              </div>
+              <div className="flex justify-between items-center group">
+                <span className="text-slate-500 text-xs font-medium group-hover:text-slate-300 transition-colors">Mão de Obra</span>
+                <span className="text-sm font-bold text-slate-300">{formatCurrency(result?.unitLaborCost || 0)}</span>
               </div>
               <div className="flex justify-between items-center group">
                 <span className="text-slate-500 text-xs font-medium group-hover:text-slate-300 transition-colors">Manutenção</span>
