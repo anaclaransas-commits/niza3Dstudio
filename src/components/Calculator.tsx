@@ -27,7 +27,6 @@ import { CalculationResult } from '../types';
 
 const DEFAULT_CEMIG_ENERGY_PRICE_KWH = '0.85858';
 const DEFAULT_MANUAL_POWER_CONSUMPTION_W = '250';
-const DEFAULT_MANUAL_MAINTENANCE_COST_PER_HOUR = '0.50';
 
 export function Calculator() {
   const { filaments, printers, clients, addBudget, products } = useStore();
@@ -39,13 +38,12 @@ export function Calculator() {
   
   const [manualFilamentPrice, setManualFilamentPrice] = useState('120');
   const [manualPowerConsumptionW, setManualPowerConsumptionW] = useState(DEFAULT_MANUAL_POWER_CONSUMPTION_W);
-  const [manualMaintenanceCostPerHour, setManualMaintenanceCostPerHour] = useState(DEFAULT_MANUAL_MAINTENANCE_COST_PER_HOUR);
   const [weightG, setWeightG] = useState('50');
   const [printTimeHours, setPrintTimeHours] = useState('5');
   const [energyPriceKWh, setEnergyPriceKWh] = useState(DEFAULT_CEMIG_ENERGY_PRICE_KWH);
-  const [failureRate, setFailureRate] = useState('5');
-  const [laborRate, setLaborRate] = useState('15');
-  const [margin, setMargin] = useState('100');
+  const [laborCostFixed, setLaborCostFixed] = useState('0');
+  const [fixedCostPerPiece, setFixedCostPerPiece] = useState('0');
+  const [margin, setMargin] = useState('30');
   const [quantity, setQuantity] = useState('1');
 
   const [result, setResult] = useState<CalculationResult | null>(null);
@@ -68,23 +66,21 @@ export function Calculator() {
       printTimeHours,
       powerConsumptionW: selectedPrinter ? selectedPrinter.powerConsumption : manualPowerConsumptionW,
       energyPriceKWh,
-      failureRatePercent: failureRate,
-      laborRatePerHour: laborRate,
+      laborCostFixed,
+      fixedCostPerPiece,
       profitMarginPercent: margin,
-      maintenanceCostPerHour: selectedPrinter ? selectedPrinter.maintenanceCostPerHour : manualMaintenanceCostPerHour,
       quantity,
     });
 
     setResult(calc);
   }, [
     manualFilamentPrice,
-    manualMaintenanceCostPerHour,
     manualPowerConsumptionW,
     weightG,
     printTimeHours,
     energyPriceKWh,
-    failureRate,
-    laborRate,
+    laborCostFixed,
+    fixedCostPerPiece,
     margin,
     quantity,
     selectedFilament,
@@ -130,6 +126,7 @@ export function Calculator() {
     normalizedPowerConsumptionW > 0
       ? (normalizedPowerConsumptionW / 1000) * parseLocalizedNumber(energyPriceKWh, 0)
       : 0;
+
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -210,38 +207,22 @@ export function Calculator() {
               </select>
               <p className="text-xs text-slate-500">
                 {selectedPrinter
-                  ? 'Usando potência e manutenção cadastradas da impressora selecionada.'
-                  : 'Modo manual ativo: informe potência e manutenção da máquina para calcular sem cadastro.'}
+                  ? 'Usando potência cadastrada da impressora selecionada.'
+                  : 'Modo manual ativo: informe a potência da máquina para calcular sem cadastro.'}
               </p>
             </div>
 
             {!selectedPrinter && (
-              <>
-                <div className="space-y-2 animate-in fade-in duration-300">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Consumo Médio da Impressora (W)</label>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={manualPowerConsumptionW}
-                    onChange={(e) => setManualPowerConsumptionW(e.target.value)}
-                    className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none text-sm"
-                  />
-                </div>
-
-                <div className="space-y-2 animate-in fade-in duration-300">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Manutenção por Hora (Manual)</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">R$</span>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={manualMaintenanceCostPerHour}
-                      onChange={(e) => setManualMaintenanceCostPerHour(e.target.value)}
-                      className="w-full p-3.5 pl-10 bg-slate-50 border border-slate-100 rounded-2xl outline-none text-sm"
-                    />
-                  </div>
-                </div>
-              </>
+              <div className="space-y-2 animate-in fade-in duration-300">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Consumo Médio da Impressora (W)</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={manualPowerConsumptionW}
+                  onChange={(e) => setManualPowerConsumptionW(e.target.value)}
+                  className="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none text-sm"
+                />
+              </div>
             )}
 
             <div className="space-y-2">
@@ -324,34 +305,39 @@ export function Calculator() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700 flex items-center">
-                <Percent className="w-4 h-4 mr-2 text-rose-500" /> Falhas %
-              </label>
-              <input 
-                type="text"
-                inputMode="decimal"
-                value={failureRate} 
-                onChange={(e) => setFailureRate(e.target.value)} 
-                className="w-full p-3 border border-slate-200 rounded-2xl text-sm font-bold"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700 flex items-center">
-                <User className="w-4 h-4 mr-2 text-slate-500" /> Mão de Obra / Hora
+                <User className="w-4 h-4 mr-2 text-slate-500" /> Mão de Obra (R$ fixo/peça)
               </label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">R$</span>
                 <input
                   type="text"
                   inputMode="decimal"
-                  value={laborRate}
-                  onChange={(e) => setLaborRate(e.target.value)}
+                  value={laborCostFixed}
+                  onChange={(e) => setLaborCostFixed(e.target.value)}
                   className="w-full p-3 pl-10 border border-slate-200 rounded-2xl text-sm font-bold"
                 />
               </div>
+              <p className="text-xs text-slate-500">Preparação, acabamento, etc.</p>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700 flex items-center">
-                <Percent className="w-4 h-4 mr-2 text-blue-500" /> Margem %
+                <Package className="w-4 h-4 mr-2 text-amber-500" /> Custos Fixos (R$ fixo/peça)
+              </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">R$</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={fixedCostPerPiece}
+                  onChange={(e) => setFixedCostPerPiece(e.target.value)}
+                  className="w-full p-3 pl-10 border border-slate-200 rounded-2xl text-sm font-bold"
+                />
+              </div>
+              <p className="text-xs text-slate-500">Desgaste da impressora, acabamento, etc.</p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700 flex items-center">
+                <Percent className="w-4 h-4 mr-2 text-blue-500" /> Margem de Lucro %
               </label>
               <input 
                 type="text"
@@ -379,7 +365,7 @@ export function Calculator() {
 
             <div className="space-y-4 mb-8">
               <div className="flex justify-between items-center group">
-                <span className="text-slate-500 text-xs font-medium group-hover:text-slate-300 transition-colors">Material ({weightG}g)</span>
+                <span className="text-slate-500 text-xs font-medium group-hover:text-slate-300 transition-colors">Filamento ({weightG}g)</span>
                 <span className="text-sm font-bold text-slate-300">{formatCurrency(result?.unitMaterialCost || 0)}</span>
               </div>
               <div className="flex justify-between items-center group">
@@ -387,24 +373,20 @@ export function Calculator() {
                 <span className="text-sm font-bold text-slate-300">{formatCurrency(result?.unitEnergyCost || 0)}</span>
               </div>
               <div className="flex justify-between items-center group">
-                <span className="text-slate-500 text-xs font-medium group-hover:text-slate-300 transition-colors">Energia / hora</span>
-                <span className="text-sm font-bold text-slate-300">{formatCurrency(derivedEnergyCostPerHour)}</span>
-              </div>
-              <div className="flex justify-between items-center group">
                 <span className="text-slate-500 text-xs font-medium group-hover:text-slate-300 transition-colors">Mão de Obra</span>
                 <span className="text-sm font-bold text-slate-300">{formatCurrency(result?.unitLaborCost || 0)}</span>
               </div>
               <div className="flex justify-between items-center group">
-                <span className="text-slate-500 text-xs font-medium group-hover:text-slate-300 transition-colors">Manutenção</span>
-                <span className="text-sm font-bold text-slate-300">{formatCurrency(result?.unitMaintCost || 0)}</span>
-              </div>
-              <div className="flex justify-between items-center group">
-                <span className="text-slate-500 text-xs font-medium group-hover:text-slate-300 transition-colors">Margem de Falha</span>
-                <span className="text-sm font-bold text-rose-400/80">{formatCurrency(result?.unitFailureCost || 0)}</span>
+                <span className="text-slate-500 text-xs font-medium group-hover:text-slate-300 transition-colors">Custos Fixos</span>
+                <span className="text-sm font-bold text-slate-300">{formatCurrency(result?.unitFixedCost || 0)}</span>
               </div>
               <div className="pt-4 border-t border-white/5 flex justify-between items-center">
-                <span className="text-slate-300 text-sm font-black">Custo Real (Un)</span>
+                <span className="text-slate-300 text-sm font-black">Custo Total (Un)</span>
                 <span className="text-lg font-black text-slate-200">{formatCurrency(result?.unitTotalCost || 0)}</span>
+              </div>
+              <div className="flex justify-between items-center group">
+                <span className="text-slate-500 text-xs font-medium group-hover:text-slate-300 transition-colors">Lucro ({margin}%)</span>
+                <span className="text-sm font-bold text-emerald-400">{formatCurrency(result?.unitProfit || 0)}</span>
               </div>
             </div>
 

@@ -56,9 +56,8 @@ export interface Product {
 export interface CalculationResult {
   unitMaterialCost: number;
   unitEnergyCost: number;
-  unitFailureCost: number;
   unitLaborCost: number;
-  unitMaintCost: number;
+  unitFixedCost: number;
   unitTotalCost: number;
   unitFinalPrice: number;
   unitProfit: number;

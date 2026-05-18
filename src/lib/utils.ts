@@ -239,10 +239,9 @@ export function calculate3DPrintCost(params: {
   printTimeHours: DecimalInput;
   powerConsumptionW: DecimalInput;
   energyPriceKWh: DecimalInput;
-  failureRatePercent: DecimalInput;
-  laborRatePerHour: DecimalInput;
+  laborCostFixed: DecimalInput;
+  fixedCostPerPiece: DecimalInput;
   profitMarginPercent: DecimalInput;
-  maintenanceCostPerHour: DecimalInput;
   quantity: DecimalInput;
 }) {
   const {
@@ -251,11 +250,10 @@ export function calculate3DPrintCost(params: {
     printTimeHours,
     powerConsumptionW,
     energyPriceKWh,
-    failureRatePercent,
-    laborRatePerHour,
+    laborCostFixed,
+    fixedCostPerPiece,
     profitMarginPercent,
-    maintenanceCostPerHour,
-    quantity
+    quantity,
   } = params;
 
   const quantityValue = Math.max(1, Math.floor(parseLocalizedNumber(quantity, 1)));
@@ -264,16 +262,17 @@ export function calculate3DPrintCost(params: {
   const printTimeValue = clampToNonNegative(parseDecimal(printTimeHours));
   const powerConsumptionValue = clampToNonNegative(parseDecimal(powerConsumptionW));
   const energyPriceValue = clampToNonNegative(parseDecimal(energyPriceKWh));
-  const failureRateValue = clampToNonNegative(parseDecimal(failureRatePercent));
-  const laborRateValue = clampToNonNegative(parseDecimal(laborRatePerHour));
+  const laborCostFixedValue = clampToNonNegative(parseDecimal(laborCostFixed));
+  const fixedCostValue = clampToNonNegative(parseDecimal(fixedCostPerPiece));
   const profitMarginValue = clampToNonNegative(parseDecimal(profitMarginPercent));
-  const maintenanceCostValue = clampToNonNegative(parseDecimal(maintenanceCostPerHour));
 
+  // Custo do filamento: (preço/kg ÷ 1000) × gramas
   const unitMaterialCost = roundDecimalValue(
     divideDecimalByPowerOfTen(multiplyDecimalValues(pricePerKgValue, weightValue), 3),
     6,
   );
 
+  // Custo de energia: (W ÷ 1000) × horas × R$/kWh
   const unitEnergyCost = roundDecimalValue(
     divideDecimalByPowerOfTen(
       multiplyDecimalValues(
@@ -285,30 +284,30 @@ export function calculate3DPrintCost(params: {
     6,
   );
 
-  const unitLaborCost = roundDecimalValue(multiplyDecimalValues(printTimeValue, laborRateValue), 6);
-  const unitMaintCost = roundDecimalValue(multiplyDecimalValues(printTimeValue, maintenanceCostValue), 6);
+  // Mão de obra: valor fixo por peça (não por hora)
+  const unitLaborCost = roundDecimalValue(laborCostFixedValue, 6);
 
-  const unitSubTotal = roundDecimalValue(
+  // Custos fixos: valor fixo por peça (desgaste, acabamento, etc.)
+  const unitFixedCost = roundDecimalValue(fixedCostValue, 6);
+
+  // Custo total = filamento + energia + mão de obra (fixo) + custos fixos (fixo)
+  const unitTotalCost = roundDecimalValue(
     addDecimalValues(
       addDecimalValues(unitMaterialCost, unitEnergyCost),
-      addDecimalValues(unitLaborCost, unitMaintCost),
+      addDecimalValues(unitLaborCost, unitFixedCost),
     ),
     6,
   );
 
-  const unitFailureCost = roundDecimalValue(
-    divideDecimalByPowerOfTen(multiplyDecimalValues(unitSubTotal, failureRateValue), 2),
-    6,
-  );
-
-  const unitTotalCost = roundDecimalValue(addDecimalValues(unitSubTotal, unitFailureCost), 6);
-
+  // Lucro = custo total × margem%
   const unitProfit = roundDecimalValue(
     divideDecimalByPowerOfTen(multiplyDecimalValues(unitTotalCost, profitMarginValue), 2),
     6,
   );
 
+  // Preço final = custo total + lucro
   const unitFinalPrice = roundDecimalValue(addDecimalValues(unitTotalCost, unitProfit), 6);
+
   const quantityDecimal = parseDecimal(quantityValue);
   const batchTotalCost = roundDecimalValue(multiplyDecimalValues(unitTotalCost, quantityDecimal), 6);
   const batchFinalPrice = roundDecimalValue(multiplyDecimalValues(unitFinalPrice, quantityDecimal), 6);
@@ -317,9 +316,8 @@ export function calculate3DPrintCost(params: {
   return {
     unitMaterialCost: decimalValueToNumber(unitMaterialCost),
     unitEnergyCost: decimalValueToNumber(unitEnergyCost),
-    unitFailureCost: decimalValueToNumber(unitFailureCost),
     unitLaborCost: decimalValueToNumber(unitLaborCost),
-    unitMaintCost: decimalValueToNumber(unitMaintCost),
+    unitFixedCost: decimalValueToNumber(unitFixedCost),
     unitTotalCost: decimalValueToNumber(unitTotalCost),
     unitFinalPrice: decimalValueToNumber(unitFinalPrice),
     unitProfit: decimalValueToNumber(unitProfit),
