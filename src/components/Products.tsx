@@ -6,17 +6,50 @@
 import React, { useRef, useState } from 'react';
 import {
   Box,
+  Clock,
+  Edit2,
+  ExternalLink,
   FileText,
   Image as ImageIcon,
+  Link,
+  Package,
   Plus,
   Search,
+  Tag,
   Trash2,
   Upload,
   X,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { useStore } from '../store';
-import { cn } from '../lib/utils';
-import { formatCurrency } from '../lib/utils';
+import { cn, formatCurrency } from '../lib/utils';
+import type { Product } from '../types';
+
+const MATERIAL_COLORS: Record<string, string> = {
+  PLA:    'bg-emerald-100 text-emerald-700',
+  ABS:    'bg-orange-100 text-orange-700',
+  PETG:   'bg-blue-100 text-blue-700',
+  TPU:    'bg-purple-100 text-purple-700',
+  Resina: 'bg-rose-100 text-rose-700',
+  SLA:    'bg-pink-100 text-pink-700',
+  Other:  'bg-slate-100 text-slate-600',
+};
+
+const EMPTY_FORM = {
+  name: '',
+  materialType: 'PLA',
+  description: '',
+  collection: '',
+  imageUrl: '',
+  defaultWeightG: '',
+  basePrice: '',
+  stlUrl: '',
+  referenceUrl: '',
+  avgPrintTimeHours: '',
+  tags: '',
+  isPublic: true,
+};
 
 async function* getDirectoryImageFiles(
   directoryHandle: any,
@@ -24,15 +57,11 @@ async function* getDirectoryImageFiles(
 ): AsyncGenerator<{ file: File; relativePath: string }> {
   for await (const entry of directoryHandle.values()) {
     const relativePath = currentPath ? `${currentPath}/${entry.name}` : entry.name;
-
     if (entry.kind === 'file') {
       const file = await entry.getFile();
-      if (file.type.startsWith('image/')) {
-        yield { file, relativePath };
-      }
+      if (file.type.startsWith('image/')) yield { file, relativePath };
       continue;
     }
-
     yield* getDirectoryImageFiles(entry, relativePath);
   }
 }
@@ -47,254 +76,287 @@ function readFileAsDataUrl(file: File) {
 }
 
 export function Products() {
-  const { products, addProduct, removeProduct, budgets } = useStore();
+  const { products, addProduct, updateProduct, removeProduct, budgets } = useStore();
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeCollection, setActiveCollection] = useState<string>('Todos');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [formData, setFormData] = useState({ ...EMPTY_FORM });
 
-  const [formData, setFormData] = useState({
-    name: '',
-    materialType: 'PLA',
-    description: '',
-    collection: '',
-    imageUrl: '',
-    defaultWeightG: '',
-    basePrice: '',
-    category: '',
-    tags: ''
+  // Collections list
+  const collections = ['Todos', ...Array.from(new Set(products.map(p => p.collection || 'Sem Coleção')))];
+
+  const filtered = products.filter(p => {
+    const matchSearch =
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.tags?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.collection?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchCollection =
+      activeCollection === 'Todos' ||
+      (p.collection || 'Sem Coleção') === activeCollection;
+    return matchSearch && matchCollection;
   });
 
-  const filteredProducts = products.filter((product) => {
-    const normalizedSearch = searchTerm.toLowerCase();
-    return (
-      product.name.toLowerCase().includes(normalizedSearch) ||
-      product.materialType.toLowerCase().includes(normalizedSearch) ||
-      product.description.toLowerCase().includes(normalizedSearch) ||
-      product.collection?.toLowerCase().includes(normalizedSearch) ||
-      product.sourcePath?.toLowerCase().includes(normalizedSearch)
-    );
-  });
+  const openAdd = () => {
+    setEditingId(null);
+    setFormData({ ...EMPTY_FORM });
+    setShowForm(true);
+  };
+
+  const openEdit = (p: Product) => {
+    setEditingId(p.id);
+    setFormData({
+      name: p.name,
+      materialType: p.materialType,
+      description: p.description || '',
+      collection: p.collection || '',
+      imageUrl: p.imageUrl || '',
+      defaultWeightG: p.defaultWeightG?.toString() || '',
+      basePrice: p.basePrice?.toString() || '',
+      stlUrl: p.stlUrl || '',
+      referenceUrl: p.referenceUrl || '',
+      avgPrintTimeHours: p.avgPrintTimeHours?.toString() || '',
+      tags: p.tags || '',
+      isPublic: p.isPublic !== false,
+    });
+    setShowForm(true);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setFormData(prev => ({ ...prev, imageUrl: reader.result as string }));
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = {
+      name: formData.name,
+      materialType: formData.materialType,
+      description: formData.description,
+      collection: formData.collection.trim() || undefined,
+      imageUrl: formData.imageUrl || undefined,
+      defaultWeightG: formData.defaultWeightG ? Number(formData.defaultWeightG) : undefined,
+      basePrice: formData.basePrice ? Number(formData.basePrice) : undefined,
+      stlUrl: formData.stlUrl.trim() || undefined,
+      referenceUrl: formData.referenceUrl.trim() || undefined,
+      avgPrintTimeHours: formData.avgPrintTimeHours ? Number(formData.avgPrintTimeHours) : undefined,
+      tags: formData.tags.trim() || undefined,
+      isPublic: formData.isPublic,
+    };
+    if (editingId) {
+      updateProduct(editingId, payload);
+    } else {
+      addProduct(payload);
+    }
+    setShowForm(false);
+    setEditingId(null);
+    setFormData({ ...EMPTY_FORM });
+  };
+
+  const handleDelete = (id: string, name: string) => {
+    const linked = budgets.filter(b => b.productId === id).length;
+    if (linked > 0) {
+      alert(`"${name}" está ligado a ${linked} orçamento(s) e não pode ser removido.`);
+      return;
+    }
+    if (!window.confirm(`Excluir "${name}"?`)) return;
+    removeProduct(id);
+  };
 
   const handleFolderImport = async () => {
     try {
       if (!('showDirectoryPicker' in window)) {
-        alert('Seu navegador não suporta a API de Acesso ao Sistema de Arquivos. Use o Chrome ou Edge atualizado.');
+        alert('Use Chrome ou Edge para importar pastas.');
         return;
       }
-
       setImporting(true);
-      const directoryHandle = await (window as any).showDirectoryPicker();
-      let importedCount = 0;
-
-      for await (const { file, relativePath } of getDirectoryImageFiles(directoryHandle)) {
+      const dir = await (window as any).showDirectoryPicker();
+      let count = 0;
+      for await (const { file, relativePath } of getDirectoryImageFiles(dir)) {
         const imageUrl = await readFileAsDataUrl(file);
-        const pathSegments = relativePath.split('/');
-        const collection = pathSegments.length > 1 ? pathSegments.slice(0, -1).join(' / ') : 'Importados';
-
+        const segs = relativePath.split('/');
+        const collection = segs.length > 1 ? segs.slice(0, -1).join(' / ') : 'Importados';
         addProduct({
           name: file.name.split('.')[0].replace(/[-_]/g, ' '),
           materialType: 'PLA',
-          description: `Importado da pasta local: ${relativePath}`,
+          description: `Importado de: ${relativePath}`,
           collection,
           sourcePath: relativePath,
           imageUrl,
           defaultWeightG: 50,
           basePrice: 0,
+          isPublic: true,
         });
-        importedCount += 1;
+        count++;
       }
-
-      if (importedCount === 0) {
-        alert('Nenhuma imagem encontrada na pasta selecionada.');
-        return;
-      }
-
-      alert(`${importedCount} produto(s) importado(s) com sucesso.`);
+      if (count === 0) { alert('Nenhuma imagem encontrada.'); return; }
+      alert(`${count} produto(s) importado(s).`);
     } catch (err) {
-      if ((err as Error).name !== 'AbortError') {
-        console.error('Erro ao importar pasta:', err);
-        alert('Erro ao acessar a pasta.');
-      }
+      if ((err as Error).name !== 'AbortError') alert('Erro ao acessar a pasta.');
     } finally {
       setImporting(false);
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, imageUrl: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    addProduct({
-      ...formData,
-      collection: formData.collection.trim() || undefined,
-      defaultWeightG: Number(formData.defaultWeightG),
-      basePrice: Number(formData.basePrice)
-    });
-    setShowForm(false);
-    setFormData({
-      name: '',
-      materialType: 'PLA',
-      description: '',
-      collection: '',
-      imageUrl: '',
-      defaultWeightG: '',
-      basePrice: ''
-    });
-  };
-
-  const handleDeleteProduct = (productId: string, productName: string) => {
-    const linkedBudgets = budgets.filter((budget) => budget.productId === productId).length;
-    if (linkedBudgets > 0) {
-      alert(`O produto "${productName}" já está ligado a ${linkedBudgets} orçamento(s) e não pode ser removido agora.`);
-      return;
-    }
-
-    if (!window.confirm(`Deseja excluir o produto "${productName}" do catálogo?`)) {
-      return;
-    }
-
-    removeProduct(productId);
-  };
-
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Catálogo de Produtos</h2>
-          <p className="text-slate-500">Produtos recorrentes, catálogo visual e base rápida para orçamentos.</p>
+          <p className="text-slate-500 text-sm">Gerencie produtos, imagens, links STL e visibilidade no catálogo do cliente.</p>
         </div>
-        <div className="flex items-center space-x-3">
-          <button 
-            onClick={handleFolderImport}
-            disabled={importing}
-            className="flex items-center px-4 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-all font-bold text-sm disabled:opacity-50"
-          >
+        <div className="flex items-center gap-3 flex-wrap">
+          <button onClick={handleFolderImport} disabled={importing}
+            className="flex items-center px-4 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-all font-bold text-sm disabled:opacity-50">
             <Upload className="w-4 h-4 mr-2" />
-            {importing ? 'Importando...' : 'Importar Catálogo'}
+            {importing ? 'Importando...' : 'Importar Pasta'}
           </button>
-          <button 
-            id="toggle-product-form"
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all font-semibold"
-          >
-            {showForm ? <X className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
-            {showForm ? 'Cancelar' : 'Adicionar Produto'}
+          <button onClick={openAdd}
+            className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all font-semibold text-sm">
+            <Plus className="w-4 h-4 mr-2" /> Novo Produto
           </button>
         </div>
       </div>
 
+      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-        <input
-          type="text"
-          placeholder="Buscar por nome, coleção, material ou descrição..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm outline-none focus:ring-2 focus:ring-emerald-500/20"
-        />
+        <input type="text" placeholder="Buscar por nome, coleção, tags ou material..."
+          value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+          className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm" />
       </div>
 
+      {/* Collection tabs */}
+      {collections.length > 1 && (
+        <div className="flex gap-2 flex-wrap">
+          {collections.map(col => (
+            <button key={col} onClick={() => setActiveCollection(col)}
+              className={cn('px-4 py-1.5 rounded-full text-xs font-bold transition-all',
+                activeCollection === col
+                  ? 'bg-slate-900 text-white shadow'
+                  : 'bg-white border border-slate-200 text-slate-500 hover:border-slate-400')}>
+              {col}
+            </button>
+          ))}
+        </div>
+      )}
 
+      {/* Form */}
       {showForm && (
         <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-black text-slate-800 text-lg">{editingId ? 'Editar Produto' : 'Novo Produto'}</h3>
+            <button onClick={() => { setShowForm(false); setEditingId(null); }}
+              className="p-2 hover:bg-slate-100 rounded-xl transition-colors"><X className="w-5 h-5" /></button>
+          </div>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Image upload */}
             <div className="md:col-span-1 space-y-4">
-              <label className="text-sm font-semibold text-slate-500 uppercase flex items-center">
-                <ImageIcon className="w-3 h-3 mr-1" /> Imagem do Produto
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                <ImageIcon className="w-3 h-3" /> Imagem
               </label>
-              
-              <div 
-                onClick={() => fileInputRef.current?.click()}
-                className={cn(
-                  "relative aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 transition-all overflow-hidden group",
-                  formData.imageUrl ? "border-solid border-emerald-500" : ""
-                )}
-              >
+              <div onClick={() => fileInputRef.current?.click()}
+                className={cn('relative aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 transition-all overflow-hidden group',
+                  formData.imageUrl ? 'border-solid border-emerald-400' : '')}>
                 {formData.imageUrl ? (
                   <>
                     <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <p className="text-white text-xs font-bold">Alterar Foto</p>
+                      <p className="text-white text-xs font-bold">Alterar</p>
                     </div>
                   </>
                 ) : (
                   <div className="text-center p-4">
                     <Upload className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                    <p className="text-xs text-slate-500 font-medium">Clique para fazer upload</p>
+                    <p className="text-xs text-slate-500 font-medium">Clique para upload</p>
                     <p className="text-[10px] text-slate-400 mt-1">PNG, JPG ou WEBP</p>
                   </div>
                 )}
               </div>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileChange} 
-                className="hidden" 
-                accept="image/*"
-              />
-              
+              <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
               <div className="space-y-1">
-                <p className="text-[10px] text-slate-400 uppercase font-bold">Ou cole uma URL</p>
-                <input 
-                  type="text" 
-                  value={formData.imageUrl} 
-                  onChange={e => setFormData({...formData, imageUrl: e.target.value})}
-                  className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs" 
-                  placeholder="https://exemplo.com/imagem.jpg" 
-                />
+                <p className="text-[10px] text-slate-400 uppercase font-bold">Ou cole uma URL de imagem</p>
+                <input type="text" value={formData.imageUrl}
+                  onChange={e => setFormData(p => ({ ...p, imageUrl: e.target.value }))}
+                  className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none"
+                  placeholder="https://..." />
               </div>
             </div>
 
-            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Nome do Modelo/Produto</label>
-                <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500/20" placeholder="Vaso Octogonal v2" />
+            {/* Fields */}
+            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Nome *</label>
+                <input required value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm"
+                  placeholder="Vaso Low Poly" />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Material Recomendado</label>
-                <select value={formData.materialType} onChange={e => setFormData({...formData, materialType: e.target.value})} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500/20">
-                  <option value="PLA">PLA</option>
-                  <option value="ABS">ABS</option>
-                  <option value="PETG">PETG</option>
-                  <option value="Resina">Resina</option>
-                  <option value="SLA">SLA</option>
-                  <option value="TPU">TPU</option>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Material</label>
+                <select value={formData.materialType} onChange={e => setFormData(p => ({ ...p, materialType: e.target.value }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm">
+                  {['PLA','ABS','PETG','TPU','Resina','SLA'].map(m => <option key={m}>{m}</option>)}
                 </select>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Coleção / Categoria</label>
-                <input
-                  value={formData.collection}
-                  onChange={e => setFormData({...formData, collection: e.target.value})}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500/20"
-                  placeholder="Ex: Vasos, Articulados, Geek"
-                />
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Coleção / Categoria</label>
+                <input value={formData.collection} onChange={e => setFormData(p => ({ ...p, collection: e.target.value }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                  placeholder="Ex: Decoração, Geek, Funcional" />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Peso Estimado (g)</label>
-                <input type="number" required value={formData.defaultWeightG} onChange={e => setFormData({...formData, defaultWeightG: e.target.value})} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500/20" placeholder="45" />
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Tags (separadas por vírgula)</label>
+                <input value={formData.tags} onChange={e => setFormData(p => ({ ...p, tags: e.target.value }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                  placeholder="vaso, decoração, presente" />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Preço Sugerido</label>
-                <input type="number" required value={formData.basePrice} onChange={e => setFormData({...formData, basePrice: e.target.value})} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500/20" placeholder="75" />
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Peso estimado (g) *</label>
+                <input required type="number" value={formData.defaultWeightG}
+                  onChange={e => setFormData(p => ({ ...p, defaultWeightG: e.target.value }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm" placeholder="50" />
               </div>
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-slate-700">Descrição Técnica</label>
-                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl h-24 outline-none focus:ring-2 focus:ring-emerald-500/20 resize-none" placeholder="Detalhes sobre suporte, preenchimento, etc." />
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Tempo médio (horas)</label>
+                <input type="number" value={formData.avgPrintTimeHours}
+                  onChange={e => setFormData(p => ({ ...p, avgPrintTimeHours: e.target.value }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm" placeholder="4" />
               </div>
-              <div className="col-span-full pt-4">
-                <button type="submit" className="w-full px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-lg shadow-slate-200">
-                  Salvar Produto no Catálogo
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Preço sugerido (R$)</label>
+                <input type="number" value={formData.basePrice}
+                  onChange={e => setFormData(p => ({ ...p, basePrice: e.target.value }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm" placeholder="75" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1"><Link className="w-3 h-3" /> Link STL</label>
+                <input type="url" value={formData.stlUrl} onChange={e => setFormData(p => ({ ...p, stlUrl: e.target.value }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                  placeholder="Google Drive, Printables..." />
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-bold text-slate-500 uppercase">Descrição</label>
+                <textarea value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl h-20 outline-none resize-none text-sm"
+                  placeholder="Detalhes sobre suporte, preenchimento, tempo de impressão..." />
+              </div>
+              <div className="md:col-span-2 flex items-center justify-between pt-2">
+                <button type="button" onClick={() => setFormData(p => ({ ...p, isPublic: !p.isPublic }))}
+                  className={cn('flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all',
+                    formData.isPublic ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200')}>
+                  {formData.isPublic ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  {formData.isPublic ? 'Visível no catálogo do cliente' : 'Oculto no catálogo do cliente'}
+                </button>
+                <button type="submit"
+                  className="px-8 py-2.5 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors text-sm">
+                  {editingId ? 'Salvar Alterações' : 'Adicionar ao Catálogo'}
                 </button>
               </div>
             </div>
@@ -302,75 +364,93 @@ export function Products() {
         </div>
       )}
 
+      {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredProducts.map(product => {
-          const linkedBudgets = budgets.filter((budget) => budget.productId === product.id).length;
-
+        {filtered.map(product => {
+          const linked = budgets.filter(b => b.productId === product.id).length;
+          const matColor = MATERIAL_COLORS[product.materialType] || MATERIAL_COLORS.Other;
           return (
             <div key={product.id} className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              {/* Image */}
               <div className="aspect-square bg-slate-50 relative overflow-hidden">
                 {product.imageUrl ? (
-                  <img 
-                    src={product.imageUrl} 
-                    alt={product.name} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                  />
+                  <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-200 group-hover:text-emerald-100 transition-colors">
+                  <div className="w-full h-full flex items-center justify-center text-slate-200">
                     <Box className="w-16 h-16" />
                   </div>
                 )}
+                {/* Material badge */}
                 <div className="absolute top-3 left-3">
-                  <span className="text-[10px] font-black text-white bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-full uppercase tracking-widest">
+                  <span className={cn('text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest', matColor)}>
                     {product.materialType}
                   </span>
                 </div>
-                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => handleDeleteProduct(product.id, product.name)}
-                    className="p-2 bg-white/90 backdrop-blur-md text-rose-500 rounded-full shadow-lg hover:bg-rose-500 hover:text-white transition-all"
-                    aria-label={`Excluir produto ${product.name}`}
-                  >
+                {/* Visibility badge */}
+                <div className="absolute top-3 right-12">
+                  {product.isPublic === false ? (
+                    <span className="text-[10px] font-bold bg-slate-800/80 text-slate-300 px-2 py-1 rounded-full flex items-center gap-1 backdrop-blur-sm">
+                      <EyeOff className="w-3 h-3" /> Privado
+                    </span>
+                  ) : null}
+                </div>
+                {/* Actions */}
+                <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => openEdit(product)}
+                    className="p-2 bg-white/90 backdrop-blur-md text-slate-600 rounded-full shadow-lg hover:bg-blue-500 hover:text-white transition-all">
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => handleDelete(product.id, product.name)}
+                    className="p-2 bg-white/90 backdrop-blur-md text-rose-400 rounded-full shadow-lg hover:bg-rose-500 hover:text-white transition-all">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-bold text-slate-800 text-lg truncate pr-2">{product.name}</h4>
-                  <div className="text-emerald-600 font-black whitespace-nowrap">
-                    {formatCurrency(product.basePrice || 0)}
-                  </div>
-                </div>
-                <p className="text-xs text-slate-500 line-clamp-2 mb-3 leading-relaxed min-h-[32px]">
-                  {product.description || 'Produto base para orçamentos rápidos.'}
+
+              {/* Info */}
+              <div className="p-5">
+                <h4 className="font-bold text-slate-800 text-base truncate mb-1">{product.name}</h4>
+                <p className="text-xs text-slate-400 line-clamp-2 min-h-[32px] leading-relaxed mb-3">
+                  {product.description || 'Sem descrição.'}
                 </p>
-                <div className="flex flex-wrap gap-2 mb-6 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  {product.collection && (
-                    <span className="px-2.5 py-1 bg-slate-100 rounded-full text-slate-500">
-                      {product.collection}
-                    </span>
-                  )}
-                  {product.sourcePath && (
-                    <span className="px-2.5 py-1 bg-emerald-50 rounded-full text-emerald-600 max-w-full truncate">
-                      {product.sourcePath}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                  <div className="flex items-center space-x-4">
-                    <div className="text-center">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold">Peso</p>
-                      <p className="text-xs font-bold text-slate-700">{product.defaultWeightG}g</p>
-                    </div>
-                    <div className="w-px h-6 bg-slate-100"></div>
-                    <div className="text-center">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold">Uso</p>
-                      <p className="text-xs font-bold text-slate-700">{linkedBudgets} orç.</p>
-                    </div>
+
+                {/* Tags */}
+                {product.tags && (
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {product.tags.split(',').slice(0, 3).map(tag => (
+                      <span key={tag} className="text-[9px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                        {tag.trim()}
+                      </span>
+                    ))}
                   </div>
-                  <div className="p-2.5 bg-slate-50 text-slate-400 rounded-xl">
-                    <FileText className="w-5 h-5" />
+                )}
+
+                {/* Stats row */}
+                <div className="flex items-center justify-between pt-3 border-t border-slate-50 text-xs text-slate-500">
+                  <div className="flex items-center gap-3">
+                    {product.defaultWeightG && (
+                      <span className="flex items-center gap-1 font-semibold">
+                        <Package className="w-3 h-3" /> {product.defaultWeightG}g
+                      </span>
+                    )}
+                    {product.avgPrintTimeHours && (
+                      <span className="flex items-center gap-1 font-semibold">
+                        <Clock className="w-3 h-3" /> {product.avgPrintTimeHours}h
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {product.stlUrl && (
+                      <a href={product.stlUrl} target="_blank" rel="noopener noreferrer"
+                        className="p-1.5 bg-blue-50 text-blue-500 rounded-lg hover:bg-blue-100 transition-colors" title="Abrir STL">
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                    {linked > 0 && (
+                      <span className="flex items-center gap-1 bg-indigo-50 text-indigo-500 px-2 py-1 rounded-lg font-bold">
+                        <FileText className="w-3 h-3" /> {linked}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -378,7 +458,7 @@ export function Products() {
           );
         })}
 
-        {filteredProducts.length === 0 && !showForm && (
+        {filtered.length === 0 && !showForm && (
           <div className="col-span-full py-24 flex flex-col items-center justify-center bg-slate-50/50 rounded-[40px] border-4 border-dashed border-slate-100 text-slate-300">
             <div className="w-20 h-20 bg-white rounded-3xl shadow-sm flex items-center justify-center mb-6">
               <ImageIcon className="w-10 h-10 text-slate-200" />
@@ -386,14 +466,12 @@ export function Products() {
             <h3 className="text-lg font-bold text-slate-400">
               {products.length === 0 ? 'Nenhum produto cadastrado' : 'Nenhum produto encontrado'}
             </h3>
-            <p className="text-sm mt-1">
-              {products.length === 0 ? 'Sua vitrine virtual aparecerá aqui.' : 'Tente outro termo de busca.'}
+            <p className="text-sm mt-1 text-slate-400">
+              {products.length === 0 ? 'Sua vitrine aparecerá aqui.' : 'Tente outro filtro ou termo.'}
             </p>
             {products.length === 0 && (
-              <button 
-                onClick={() => setShowForm(true)}
-                className="mt-6 px-6 py-2 bg-emerald-100 text-emerald-600 rounded-xl font-bold text-sm hover:bg-emerald-600 hover:text-white transition-all shadow-sm shadow-emerald-100"
-              >
+              <button onClick={openAdd}
+                className="mt-6 px-6 py-2 bg-emerald-100 text-emerald-600 rounded-xl font-bold text-sm hover:bg-emerald-600 hover:text-white transition-all">
                 Criar Primeiro Produto
               </button>
             )}

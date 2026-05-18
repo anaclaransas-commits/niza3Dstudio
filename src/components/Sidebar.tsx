@@ -12,15 +12,13 @@ import {
   Package, 
   BarChart3, 
   FileText,
-  Printer,
-  Droplets,
-  CircleDollarSign,
+  BookOpen,
   Menu,
   X
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
-export type PageId = 'dashboard' | 'calculator' | 'registration' | 'clients' | 'products' | 'reports' | 'budgets';
+export type PageId = 'dashboard' | 'calculator' | 'registration' | 'clients' | 'products' | 'catalog' | 'reports' | 'budgets';
 
 interface SidebarProps {
   activePage: PageId;
@@ -36,6 +34,7 @@ export function Sidebar({ activePage, onPageChange }: SidebarProps) {
     { id: 'budgets', icon: FileText, label: 'Orçamentos' },
     { id: 'registration', icon: PlusCircle, label: 'Cadastros' },
     { id: 'products', icon: Package, label: 'Produtos' },
+    { id: 'catalog', icon: BookOpen, label: 'Catálogo Cliente' },
     { id: 'clients', icon: Users, label: 'Clientes' },
     { id: 'reports', icon: BarChart3, label: 'Relatórios' },
   ] as const;

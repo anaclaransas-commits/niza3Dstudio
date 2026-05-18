@@ -10,6 +10,7 @@ import { Calculator } from './components/Calculator';
 import { Registration } from './components/Registration';
 import { Clients } from './components/Clients';
 import { Products } from './components/Products';
+import { Catalog } from './components/Catalog';
 import { Reports } from './components/Reports';
 import { Budgets } from './components/Budgets';
 import { motion, AnimatePresence } from 'motion/react';
@@ -29,6 +30,8 @@ export default function App() {
         return <Clients />;
       case 'products':
         return <Products />;
+      case 'catalog':
+        return <Catalog />;
       case 'reports':
         return <Reports />;
       case 'budgets':

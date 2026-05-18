@@ -51,6 +51,23 @@ export interface Product {
   imageUrl?: string;
   defaultWeightG?: number;
   basePrice?: number;
+  stlUrl?: string;
+  referenceUrl?: string;
+  avgPrintTimeHours?: number;
+  tags?: string;
+  isPublic?: boolean;
+}
+
+export interface CatalogSettings {
+  businessName: string;
+  tagline: string;
+  primaryColor: string;
+  accentColor: string;
+  logoUrl?: string;
+  whatsapp?: string;
+  instagram?: string;
+  email?: string;
+  footerNote?: string;
 }
 
 export interface CalculationResult {

@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   type Budget,
   type BudgetStatus,
+  type CatalogSettings,
   type Client,
   type Filament,
   type Printer,
@@ -32,7 +33,19 @@ const STORAGE_KEYS = {
   products: '3d_products',
   budgets: '3d_budgets',
   channels: '3d_channels',
+  catalogSettings: '3d_catalog_settings',
 } as const;
+
+const defaultCatalogSettings: CatalogSettings = {
+  businessName: '3DPrint Master',
+  tagline: 'Impressão 3D com qualidade e precisão',
+  primaryColor: '#1e293b',
+  accentColor: '#3b82f6',
+  whatsapp: '',
+  instagram: '',
+  email: '',
+  footerNote: '',
+};
 
 const defaultPrinters: Printer[] = [
   {
@@ -136,16 +149,19 @@ type StoreContextValue = {
   products: Product[];
   budgets: Budget[];
   channels: SalesChannel[];
+  catalogSettings: CatalogSettings;
   addPrinter: (data: Omit<Printer, 'id'>) => Printer;
   addFilament: (data: Omit<Filament, 'id'>) => Filament;
   addResin: (data: Omit<ResinSupply, 'id'>) => ResinSupply;
   addClient: (data: Omit<Client, 'id'>) => Client;
   addProduct: (data: Omit<Product, 'id'>) => Product;
+  updateProduct: (id: string, data: Partial<Omit<Product, 'id'>>) => void;
   addBudget: (data: Omit<Budget, 'id'>) => Budget;
   addChannel: (data: Omit<SalesChannel, 'id'>) => SalesChannel;
   updateBudgetStatus: (budgetId: string, status: BudgetStatus) => void;
   deleteBudget: (budgetId: string) => void;
   removeProduct: (productId: string) => void;
+  updateCatalogSettings: (settings: Partial<CatalogSettings>) => void;
 };
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -158,6 +174,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>(() => readStoredValue(STORAGE_KEYS.products, defaultProducts));
   const [budgets, setBudgets] = useState<Budget[]>(() => readStoredValue(STORAGE_KEYS.budgets, []));
   const [channels, setChannels] = useState<SalesChannel[]>(() => readStoredValue(STORAGE_KEYS.channels, []));
+  const [catalogSettings, setCatalogSettings] = useState<CatalogSettings>(() => readStoredValue(STORAGE_KEYS.catalogSettings, defaultCatalogSettings));
 
   useEffect(() => {
     writeStoredValue(STORAGE_KEYS.printers, printers);
@@ -167,7 +184,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     writeStoredValue(STORAGE_KEYS.products, products);
     writeStoredValue(STORAGE_KEYS.budgets, budgets);
     writeStoredValue(STORAGE_KEYS.channels, channels);
-  }, [printers, filaments, resins, clients, products, budgets, channels]);
+    writeStoredValue(STORAGE_KEYS.catalogSettings, catalogSettings);
+  }, [printers, filaments, resins, clients, products, budgets, channels, catalogSettings]);
 
   const addPrinter = (data: Omit<Printer, 'id'>) => {
     const newPrinter = { ...data, id: uuidv4() };
@@ -225,6 +243,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setProducts((currentProducts) => currentProducts.filter((product) => product.id !== productId));
   };
 
+  const updateProduct = (id: string, data: Partial<Omit<Product, 'id'>>) => {
+    setProducts((currentProducts) =>
+      currentProducts.map((product) => (product.id === id ? { ...product, ...data } : product)),
+    );
+  };
+
+  const updateCatalogSettings = (settings: Partial<CatalogSettings>) => {
+    setCatalogSettings((prev) => ({ ...prev, ...settings }));
+  };
+
   const value = useMemo<StoreContextValue>(
     () => ({
       printers,
@@ -234,18 +262,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       products,
       budgets,
       channels,
+      catalogSettings,
       addPrinter,
       addFilament,
       addResin,
       addClient,
       addProduct,
+      updateProduct,
       addBudget,
       addChannel,
       updateBudgetStatus,
       deleteBudget,
       removeProduct,
+      updateCatalogSettings,
     }),
-    [printers, filaments, resins, clients, products, budgets, channels],
+    [printers, filaments, resins, clients, products, budgets, channels, catalogSettings],
   );
 
   return createElement(StoreContext.Provider, { value }, children);
