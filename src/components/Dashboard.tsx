@@ -61,7 +61,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       const quantity = getBudgetQuantity(budget);
       acc.material += (budget.calculation.unitMaterialCost || 0) * quantity;
       acc.energy += (budget.calculation.unitEnergyCost || 0) * quantity;
-      acc.maintenance += (budget.calculation.unitMaintCost || 0) * quantity;
+      acc.maintenance += (budget.calculation.unitFixedCost || 0) * quantity;
     }
     return acc;
   }, { material: 0, energy: 0, maintenance: 0 });

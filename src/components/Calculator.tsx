@@ -26,7 +26,7 @@ import {
 import { CalculationResult } from '../types';
 
 const DEFAULT_CEMIG_ENERGY_PRICE_KWH = '0.85858';
-const DEFAULT_MANUAL_POWER_CONSUMPTION_W = '250';
+const DEFAULT_MANUAL_POWER_CONSUMPTION_W = '200';
 
 export function Calculator() {
   const { filaments, printers, clients, addBudget, products } = useStore();
