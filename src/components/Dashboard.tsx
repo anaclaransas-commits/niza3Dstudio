@@ -37,6 +37,13 @@ interface DashboardProps {
 }
 
 export function Dashboard({ onNavigate }: DashboardProps) {
+  
+ const senha = prompt(32162069)
+
+  if (senha !== "1234") {
+    window.location.href = "/catalog"
+}
+	
   const { budgets, clients, products, filaments } = useStore();
 
   // Real Stats calculation
