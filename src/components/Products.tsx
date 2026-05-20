@@ -166,9 +166,10 @@ export function Products() {
 
       const zip = await JSZip.loadAsync(file);
 
-      const thumbnailFile =
-        zip.file("Metadata/thumbnail.png") ||
-        zip.file("3D/Thumbnail.png");
+     const thumbnailFile = Object.values(zip.files).find(file =>
+  file.name.toLowerCase().includes("thumbnail") &&
+  (file.name.endsWith(".png") || file.name.endsWith(".jpg"))
+);
 
       if (!thumbnailFile) {
         alert("Esse arquivo 3MF não possui thumbnail.");
