@@ -25,6 +25,7 @@ import { useStore } from '../store';
 import { uploadCatalogAsset } from '../lib/catalogApi';
 import { cn } from '../lib/utils';
 import type { Product } from '../types';
+import JSZip from "jszip";
 
 const MATERIAL_COLORS: Record<string, string> = {
   PLA:    'bg-emerald-100 text-emerald-700',
@@ -84,7 +85,20 @@ function slugifySegment(value: string) {
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '') || 'catalogo';
 }
+async function extractThumbnail(file: File) {
 
+  const zip = await JSZip.loadAsync(file);
+
+  const thumbnailFile =
+    zip.file("Metadata/thumbnail.png") ||
+    zip.file("3D/Thumbnail.png");
+
+  if (!thumbnailFile) return null;
+
+  const blob = await thumbnailFile.async("blob");
+
+  return URL.createObjectURL(blob);
+}
 export function Products() {
   const { products, addProduct, updateProduct, removeProduct, budgets } = useStore();
   const [showForm, setShowForm] = useState(false);
@@ -95,6 +109,7 @@ export function Products() {
   const [activeCollection, setActiveCollection] = useState<string>('Todos');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({ ...EMPTY_FORM });
+  const [thumbnail, setThumbnail] = useState("");
 
   // Collections list
   const collections = ['Todos', ...Array.from(new Set(products.map(p => p.collection || 'Sem Coleção')))];
@@ -136,31 +151,72 @@ export function Products() {
     setShowForm(true);
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      return;
-    }
+ const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
-    setUploadingImage(true);
+  const file = e.target.files?.[0];
+
+  if (!file) {
+    return;
+  }
+
+  // Se for arquivo 3MF
+  if (file.name.toLowerCase().endsWith('.3mf')) {
 
     try {
-      const dataUrl = await readFileAsDataUrl(file);
-      const uploadedAsset = await uploadCatalogAsset({
-        dataUrl,
-        fileName: file.name,
-        folder: `products/${slugifySegment(formData.collection || 'geral')}`,
-      });
 
-      setFormData((prev) => ({ ...prev, imageUrl: uploadedAsset.url }));
+      const zip = await JSZip.loadAsync(file);
+
+      const thumbnailFile =
+        zip.file("Metadata/thumbnail.png") ||
+        zip.file("3D/Thumbnail.png");
+
+      if (!thumbnailFile) {
+        alert("Esse arquivo 3MF não possui thumbnail.");
+        return;
+      }
+
+      const blob = await thumbnailFile.async("blob");
+
+      const imageUrl = URL.createObjectURL(blob);
+
+      setFormData(prev => ({
+        ...prev,
+        imageUrl
+      }));
+
     } catch (error) {
+
       console.error(error);
-      alert('Falha ao enviar a imagem para o catálogo.');
-    } finally {
-      setUploadingImage(false);
-      e.target.value = '';
+      alert("Erro ao ler arquivo 3MF");
+
     }
-  };
+
+    return;
+  }
+
+  // Upload normal de imagem
+  setUploadingImage(true);
+
+  try {
+
+    const imageUrl = await uploadCatalogAsset(file);
+
+    setFormData(prev => ({
+      ...prev,
+      imageUrl
+    }));
+
+  } catch (error) {
+
+    console.error(error);
+    alert("Erro ao enviar imagem");
+
+  } finally {
+
+    setUploadingImage(false);
+
+  }
+};
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -335,7 +391,7 @@ export function Products() {
                   </div>
                 )}
               </div>
-              <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+              <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*,.3mf" />
               <div className="space-y-1">
                 <p className="text-[10px] text-slate-400 uppercase font-bold">Ou cole uma URL de imagem</p>
                 <input type="text" value={formData.imageUrl}
