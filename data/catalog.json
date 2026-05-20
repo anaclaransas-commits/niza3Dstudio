@@ -1,0 +1,36 @@
+{
+  "catalogSettings": {
+    "businessName": "3DPrint Master",
+    "tagline": "Impressão 3D com qualidade e precisão",
+    "primaryColor": "#1e293b",
+    "accentColor": "#3b82f6",
+    "logoUrl": "",
+    "whatsapp": "",
+    "instagram": "",
+    "email": "",
+    "footerNote": ""
+  },
+  "products": [
+    {
+      "id": "pr1",
+      "name": "Vaso Low Poly",
+      "materialType": "PLA",
+      "description": "Vaso decorativo com estilo geométrico moderno.",
+      "imageUrl": "https://images.unsplash.com/photo-1631125915902-58ba9235ff27?auto=format&fit=crop&q=80&w=400",
+      "defaultWeightG": 85,
+      "basePrice": 65,
+      "isPublic": true
+    },
+    {
+      "id": "pr2",
+      "name": "Articulated Dragon",
+      "materialType": "PLA",
+      "description": "Dragão articulado impresso em uma única peça.",
+      "imageUrl": "https://images.unsplash.com/photo-1596489397685-6e0ef6637ef6?auto=format&fit=crop&q=80&w=400",
+      "defaultWeightG": 120,
+      "basePrice": 150,
+      "isPublic": true
+    }
+  ],
+  "updatedAt": "2026-05-20T18:52:38.717Z"
+}

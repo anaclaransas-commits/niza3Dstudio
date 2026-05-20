@@ -4,18 +4,10 @@
  */
 
 import React, { useState } from 'react';
-import { Box, Instagram, Mail, MessageCircle, Palette, Save, X } from 'lucide-react';
+import { Box, Copy, ExternalLink, Instagram, Mail, MessageCircle, Palette, Save, X } from 'lucide-react';
 import { useStore } from '../store';
-import { cn } from '../lib/utils';
+import { uploadCatalogAsset } from '../lib/catalogApi';
 import type { CatalogSettings } from '../types';
-
-/* ── tiny helpers ─────────────────────────────────── */
-function hex2rgb(hex: string) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `${r} ${g} ${b}`;
-}
 
 /* ── Settings panel ───────────────────────────────── */
 function SettingsPanel({ settings, onSave, onClose }: {
@@ -25,13 +17,38 @@ function SettingsPanel({ settings, onSave, onClose }: {
 }) {
   const [form, setForm] = useState({ ...settings });
   const logoRef = React.useRef<HTMLInputElement>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
-  const handleLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => setForm(p => ({ ...p, logoUrl: reader.result as string }));
-    reader.readAsDataURL(file);
+    if (!file) {
+      return;
+    }
+
+    setUploadingLogo(true);
+
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error(`Falha ao carregar ${file.name}.`));
+        reader.readAsDataURL(file);
+      });
+
+      const uploadedAsset = await uploadCatalogAsset({
+        dataUrl,
+        fileName: file.name,
+        folder: 'branding/logo',
+      });
+
+      setForm((prev) => ({ ...prev, logoUrl: uploadedAsset.url }));
+    } catch (error) {
+      console.error(error);
+      alert('Falha ao enviar o logo para o catálogo.');
+    } finally {
+      setUploadingLogo(false);
+      e.target.value = '';
+    }
   };
 
   return (
@@ -56,7 +73,7 @@ function SettingsPanel({ settings, onSave, onClose }: {
               }
               <button type="button" onClick={() => logoRef.current?.click()}
                 className="px-4 py-2 bg-slate-100 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors">
-                {form.logoUrl ? 'Trocar Logo' : 'Enviar Logo'}
+                {uploadingLogo ? 'Enviando...' : form.logoUrl ? 'Trocar Logo' : 'Enviar Logo'}
               </button>
               {form.logoUrl && (
                 <button type="button" onClick={() => setForm(p => ({ ...p, logoUrl: undefined }))}
@@ -159,8 +176,25 @@ export function Catalog() {
   });
 
   const { primaryColor, accentColor, businessName, tagline, logoUrl, whatsapp, instagram, email, footerNote } = catalogSettings;
+  const publicCatalogPath =
+    typeof window !== 'undefined' && window.location.port === '3000'
+      ? '/catalogo.html'
+      : '/catalogo';
+  const publicCatalogUrl = typeof window === 'undefined' ? publicCatalogPath : `${window.location.origin}${publicCatalogPath}`;
 
   const handlePrint = () => window.print();
+  const handleOpenPublicCatalog = () => {
+    window.open(publicCatalogPath, '_blank', 'noopener,noreferrer');
+  };
+  const handleCopyPublicLink = async () => {
+    try {
+      await navigator.clipboard.writeText(publicCatalogUrl);
+      alert('Link público copiado.');
+    } catch (error) {
+      console.error(error);
+      alert(publicCatalogUrl);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -179,6 +213,34 @@ export function Catalog() {
             className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-xl text-xs font-bold hover:bg-amber-700 transition-colors">
             Imprimir / PDF
           </button>
+        </div>
+      </div>
+
+      <div className="bg-white border border-slate-200 rounded-2xl px-5 py-4 no-print">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400">Link público do catálogo</p>
+            <p className="text-sm text-slate-600 mt-1">Esse é o link que o cliente acessa sem entrar no painel.</p>
+          </div>
+          <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-center md:justify-end">
+            <div className="flex-1 md:max-w-xl px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 break-all">
+              {publicCatalogUrl}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleCopyPublicLink}
+                className="flex items-center gap-2 px-4 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors"
+              >
+                <Copy className="w-4 h-4" /> Copiar
+              </button>
+              <button
+                onClick={handleOpenPublicCatalog}
+                className="flex items-center gap-2 px-4 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" /> Abrir
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

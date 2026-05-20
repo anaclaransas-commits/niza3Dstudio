@@ -15,7 +15,6 @@ import {
   Package,
   Plus,
   Search,
-  Tag,
   Trash2,
   Upload,
   X,
@@ -23,7 +22,8 @@ import {
   EyeOff,
 } from 'lucide-react';
 import { useStore } from '../store';
-import { cn, formatCurrency } from '../lib/utils';
+import { uploadCatalogAsset } from '../lib/catalogApi';
+import { cn } from '../lib/utils';
 import type { Product } from '../types';
 
 const MATERIAL_COLORS: Record<string, string> = {
@@ -75,11 +75,22 @@ function readFileAsDataUrl(file: File) {
   });
 }
 
+function slugifySegment(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '') || 'catalogo';
+}
+
 export function Products() {
   const { products, addProduct, updateProduct, removeProduct, budgets } = useStore();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCollection, setActiveCollection] = useState<string>('Todos');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -125,12 +136,30 @@ export function Products() {
     setShowForm(true);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => setFormData(prev => ({ ...prev, imageUrl: reader.result as string }));
-    reader.readAsDataURL(file);
+    if (!file) {
+      return;
+    }
+
+    setUploadingImage(true);
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      const uploadedAsset = await uploadCatalogAsset({
+        dataUrl,
+        fileName: file.name,
+        folder: `products/${slugifySegment(formData.collection || 'geral')}`,
+      });
+
+      setFormData((prev) => ({ ...prev, imageUrl: uploadedAsset.url }));
+    } catch (error) {
+      console.error(error);
+      alert('Falha ao enviar a imagem para o catálogo.');
+    } finally {
+      setUploadingImage(false);
+      e.target.value = '';
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -178,25 +207,44 @@ export function Products() {
       setImporting(true);
       const dir = await (window as any).showDirectoryPicker();
       let count = 0;
+      let failed = 0;
       for await (const { file, relativePath } of getDirectoryImageFiles(dir)) {
-        const imageUrl = await readFileAsDataUrl(file);
-        const segs = relativePath.split('/');
-        const collection = segs.length > 1 ? segs.slice(0, -1).join(' / ') : 'Importados';
-        addProduct({
-          name: file.name.split('.')[0].replace(/[-_]/g, ' '),
-          materialType: 'PLA',
-          description: `Importado de: ${relativePath}`,
-          collection,
-          sourcePath: relativePath,
-          imageUrl,
-          defaultWeightG: 50,
-          basePrice: 0,
-          isPublic: true,
-        });
-        count++;
+        try {
+          const imageDataUrl = await readFileAsDataUrl(file);
+          const segments = relativePath.split('/');
+          const collection = segments.length > 1 ? segments.slice(0, -1).join(' / ') : 'Importados';
+          const uploadedAsset = await uploadCatalogAsset({
+            dataUrl: imageDataUrl,
+            fileName: file.name,
+            folder: `products/${slugifySegment(collection)}`,
+          });
+
+          addProduct({
+            name: file.name.split('.')[0].replace(/[-_]/g, ' '),
+            materialType: 'PLA',
+            description: `Importado de: ${relativePath}`,
+            collection,
+            sourcePath: relativePath,
+            imageUrl: uploadedAsset.url,
+            defaultWeightG: 50,
+            basePrice: 0,
+            isPublic: true,
+          });
+          count++;
+        } catch (error) {
+          console.error(`Falha ao importar ${relativePath}.`, error);
+          failed++;
+        }
       }
-      if (count === 0) { alert('Nenhuma imagem encontrada.'); return; }
-      alert(`${count} produto(s) importado(s).`);
+      if (count === 0) {
+        alert(failed > 0 ? 'Nenhuma imagem foi publicada com sucesso.' : 'Nenhuma imagem encontrada.');
+        return;
+      }
+      alert(
+        failed > 0
+          ? `${count} produto(s) importado(s) e ${failed} arquivo(s) falharam.`
+          : `${count} produto(s) importado(s).`,
+      );
     } catch (err) {
       if ((err as Error).name !== 'AbortError') alert('Erro ao acessar a pasta.');
     } finally {
@@ -268,6 +316,11 @@ export function Products() {
                 {formData.imageUrl ? (
                   <>
                     <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                    {uploadingImage && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 text-white text-xs font-bold">
+                        Enviando imagem...
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                       <p className="text-white text-xs font-bold">Alterar</p>
                     </div>
@@ -275,7 +328,9 @@ export function Products() {
                 ) : (
                   <div className="text-center p-4">
                     <Upload className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                    <p className="text-xs text-slate-500 font-medium">Clique para upload</p>
+                    <p className="text-xs text-slate-500 font-medium">
+                      {uploadingImage ? 'Enviando imagem...' : 'Clique para upload'}
+                    </p>
                     <p className="text-[10px] text-slate-400 mt-1">PNG, JPG ou WEBP</p>
                   </div>
                 )}

@@ -1,9 +1,10 @@
 /**
- * Catálogo público — página para o cliente
- * Lê dados do localStorage (mesmos do sistema de gestão)
+ * Catálogo público — página para o cliente.
+ * Prioriza dados publicados pela API e usa localStorage apenas como fallback local.
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { getCatalogPublicData } from '../lib/catalogApi';
 import type { CatalogSettings, Product } from '../types';
 
 /* ─── helpers ────────────────────────────────────────── */
@@ -234,9 +235,12 @@ function HeroHeader({ s }: { s: CatalogSettings }) {
 
 /* ─── Main export ────────────────────────────────────── */
 export function CatalogPublic() {
-  const settings = readLS<CatalogSettings>('3d_catalog_settings', DEFAULT_SETTINGS);
-  const allProducts = readLS<Product[]>('3d_products', []);
-  const publicProducts = allProducts.filter(p => p.isPublic !== false);
+  const fallbackSettings = readLS<CatalogSettings>('3d_catalog_settings', DEFAULT_SETTINGS);
+  const fallbackProducts = readLS<Product[]>('3d_products', []).filter((product) => product.isPublic !== false);
+  const [settings, setSettings] = useState<CatalogSettings>(fallbackSettings);
+  const [publicProducts, setPublicProducts] = useState<Product[]>(fallbackProducts);
+  const [isLoading, setIsLoading] = useState(true);
+  const [dataSource, setDataSource] = useState<'api' | 'local'>('local');
 
   const { primaryColor: primary, accentColor: accent, whatsapp } = settings;
 
@@ -244,8 +248,6 @@ export function CatalogPublic() {
   const [search, setSearch] = useState('');
   const [activeCollection, setActiveCollection] = useState('Todos');
   const [activeMaterial, setActiveMaterial] = useState('Todos');
-  const [menuOpen, setMenuOpen] = useState(false);
-  const searchRef = useRef<HTMLInputElement>(null);
 
   const collections = useMemo(() => ['Todos', ...Array.from(new Set(publicProducts.map(p => p.collection || 'Geral')))], [publicProducts]);
   const materials   = useMemo(() => ['Todos', ...Array.from(new Set(publicProducts.map(p => p.materialType)))], [publicProducts]);
@@ -259,6 +261,44 @@ export function CatalogPublic() {
     return ok_col && ok_mat && ok_srch;
   }), [publicProducts, activeCollection, activeMaterial, search]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadPublishedCatalog = async () => {
+      try {
+        const publishedCatalog = await getCatalogPublicData();
+
+        if (!isMounted) {
+          return;
+        }
+
+        setSettings(publishedCatalog.catalogSettings);
+        setPublicProducts(publishedCatalog.products);
+        setDataSource('api');
+      } catch (error) {
+        console.warn('Falha ao carregar catálogo publicado.', error);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setSettings(fallbackSettings);
+        setPublicProducts(fallbackProducts);
+        setDataSource('local');
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadPublishedCatalog();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   /* update page title */
   useEffect(() => {
     document.title = `${settings.businessName} — Catálogo`;
@@ -269,6 +309,14 @@ export function CatalogPublic() {
       {/* ── Hero ── */}
       <HeroHeader s={settings} />
 
+      {!isLoading && dataSource !== 'api' && (
+        <div className="max-w-6xl mx-auto px-4 pt-6">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Não foi possível carregar o catálogo publicado agora. Exibindo apenas os dados disponíveis neste navegador.
+          </div>
+        </div>
+      )}
+
       {/* ── Sticky filter bar ── */}
       <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -277,7 +325,7 @@ export function CatalogPublic() {
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <input ref={searchRef} type="text" placeholder="Buscar produto..." value={search}
+            <input type="text" placeholder="Buscar produto..." value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm focus:ring-2 transition-all"
               style={{ '--tw-ring-color': accent + '40' } as any} />
@@ -318,7 +366,11 @@ export function CatalogPublic() {
         {/* Result count */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-slate-500 font-medium">
-            {filtered.length === 0 ? 'Nenhum produto encontrado' : `${filtered.length} produto${filtered.length !== 1 ? 's' : ''}`}
+            {isLoading
+              ? 'Carregando catálogo...'
+              : filtered.length === 0
+                ? 'Nenhum produto encontrado'
+                : `${filtered.length} produto${filtered.length !== 1 ? 's' : ''}`}
           </p>
           {(search || activeCollection !== 'Todos' || activeMaterial !== 'Todos') && (
             <button onClick={() => { setSearch(''); setActiveCollection('Todos'); setActiveMaterial('Todos'); }}
@@ -329,10 +381,26 @@ export function CatalogPublic() {
           )}
         </div>
 
-        {filtered.length > 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div key={index} className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+                <div className="aspect-square animate-pulse bg-slate-100" />
+                <div className="space-y-3 p-5">
+                  <div className="h-4 w-2/3 animate-pulse rounded bg-slate-100" />
+                  <div className="h-3 w-full animate-pulse rounded bg-slate-100" />
+                  <div className="h-3 w-5/6 animate-pulse rounded bg-slate-100" />
+                  <div className="h-10 w-full animate-pulse rounded-2xl bg-slate-100" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filtered.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filtered.map(p => (
-              <ProductCard key={p.id} product={p} accent={accent} primary={primary} whatsapp={whatsapp || ''} />
+              <React.Fragment key={p.id}>
+                <ProductCard product={p} accent={accent} primary={primary} whatsapp={whatsapp || ''} />
+              </React.Fragment>
             ))}
           </div>
         ) : (

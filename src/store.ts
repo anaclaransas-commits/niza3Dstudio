@@ -24,6 +24,13 @@ import {
   type ResinSupply,
   type SalesChannel,
 } from './types';
+import {
+  deleteCatalogProduct,
+  getCatalogAdminData,
+  replaceCatalogAdminData,
+  saveCatalogProduct,
+  saveCatalogSettings,
+} from './lib/catalogApi';
 
 const STORAGE_KEYS = {
   printers: '3d_printers',
@@ -177,6 +184,39 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [catalogSettings, setCatalogSettings] = useState<CatalogSettings>(() => readStoredValue(STORAGE_KEYS.catalogSettings, defaultCatalogSettings));
 
   useEffect(() => {
+    let isMounted = true;
+
+    const syncCatalogFromServer = async () => {
+      try {
+        const remoteCatalog = await getCatalogAdminData();
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!remoteCatalog.fileExists) {
+          await replaceCatalogAdminData({
+            catalogSettings,
+            products,
+          });
+          return;
+        }
+
+        setProducts(remoteCatalog.products);
+        setCatalogSettings(remoteCatalog.catalogSettings);
+      } catch (error) {
+        console.warn('Falha ao sincronizar catálogo com o servidor.', error);
+      }
+    };
+
+    void syncCatalogFromServer();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
     writeStoredValue(STORAGE_KEYS.printers, printers);
     writeStoredValue(STORAGE_KEYS.filaments, filaments);
     writeStoredValue(STORAGE_KEYS.resins, resins);
@@ -214,6 +254,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addProduct = (data: Omit<Product, 'id'>) => {
     const newProduct = { ...data, id: uuidv4() };
     setProducts((currentProducts) => [...currentProducts, newProduct]);
+    void saveCatalogProduct(newProduct).catch((error) => {
+      console.warn('Falha ao publicar produto no catálogo.', error);
+    });
     return newProduct;
   };
 
@@ -241,16 +284,36 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const removeProduct = (productId: string) => {
     setProducts((currentProducts) => currentProducts.filter((product) => product.id !== productId));
+    void deleteCatalogProduct(productId).catch((error) => {
+      console.warn('Falha ao remover produto do catálogo publicado.', error);
+    });
   };
 
   const updateProduct = (id: string, data: Partial<Omit<Product, 'id'>>) => {
-    setProducts((currentProducts) =>
-      currentProducts.map((product) => (product.id === id ? { ...product, ...data } : product)),
-    );
+    setProducts((currentProducts) => {
+      const nextProducts = currentProducts.map((product) =>
+        product.id === id ? { ...product, ...data } : product,
+      );
+      const nextProduct = nextProducts.find((product) => product.id === id);
+
+      if (nextProduct) {
+        void saveCatalogProduct(nextProduct).catch((error) => {
+          console.warn('Falha ao atualizar produto no catálogo.', error);
+        });
+      }
+
+      return nextProducts;
+    });
   };
 
   const updateCatalogSettings = (settings: Partial<CatalogSettings>) => {
-    setCatalogSettings((prev) => ({ ...prev, ...settings }));
+    setCatalogSettings((prev) => {
+      const nextSettings = { ...prev, ...settings };
+      void saveCatalogSettings(nextSettings).catch((error) => {
+        console.warn('Falha ao atualizar configurações do catálogo.', error);
+      });
+      return nextSettings;
+    });
   };
 
   const value = useMemo<StoreContextValue>(
@@ -291,4 +354,3 @@ export function useStore() {
 
   return context;
 }
-

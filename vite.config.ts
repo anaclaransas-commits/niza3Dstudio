@@ -52,5 +52,15 @@ export default defineConfig({
   server: {
     // HMR can be disabled externally during automated edits.
     hmr: process.env.DISABLE_HMR !== 'true',
+    proxy: {
+      '/api': {
+        target: process.env.CATALOG_API_URL || 'http://localhost:4000',
+        changeOrigin: true,
+      },
+      '/uploads': {
+        target: process.env.CATALOG_API_URL || 'http://localhost:4000',
+        changeOrigin: true,
+      },
+    },
   },
 });
