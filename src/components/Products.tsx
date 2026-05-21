@@ -25,7 +25,7 @@ import { useStore } from '../store';
 import { uploadCatalogAsset } from '../lib/catalogApi';
 import { cn } from '../lib/utils';
 import type { Product } from '../types';
-import JSZip from "jszip";
+import JSZip from 'jszip';
 
 const MATERIAL_COLORS: Record<string, string> = {
   PLA:    'bg-emerald-100 text-emerald-700',
@@ -67,13 +67,150 @@ async function* getDirectoryImageFiles(
   }
 }
 
-function readFileAsDataUrl(file: File) {
+function readBlobAsDataUrl(blob: Blob, fileLabel = 'arquivo') {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error(`Falha ao carregar ${file.name}.`));
-    reader.readAsDataURL(file);
+    reader.onerror = () => reject(new Error(`Falha ao carregar ${fileLabel}.`));
+    reader.readAsDataURL(blob);
   });
+}
+
+function readFileAsDataUrl(file: File) {
+  return readBlobAsDataUrl(file, file.name);
+}
+
+const THREE_MF_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp']);
+const THREE_MF_PREVIEW_HINTS = ['thumbnail', 'preview', 'plate', 'render', 'cover', 'image'];
+
+function getFileExtension(fileName: string) {
+  const normalizedName = fileName.toLowerCase();
+  const lastDotIndex = normalizedName.lastIndexOf('.');
+  return lastDotIndex >= 0 ? normalizedName.slice(lastDotIndex + 1) : '';
+}
+
+function inferMimeTypeFromFileName(fileName: string) {
+  switch (getFileExtension(fileName)) {
+    case 'png':
+      return 'image/png';
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'webp':
+      return 'image/webp';
+    default:
+      return undefined;
+  }
+}
+
+function normalizeBlobMimeType(blob: Blob, fileName: string) {
+  const mimeType = blob.type || inferMimeTypeFromFileName(fileName);
+  return mimeType && mimeType !== blob.type ? blob.slice(0, blob.size, mimeType) : blob;
+}
+
+async function getImageDimensions(blob: Blob) {
+  if ('createImageBitmap' in window) {
+    try {
+      const bitmap = await createImageBitmap(blob);
+      const dimensions = { width: bitmap.width, height: bitmap.height };
+      bitmap.close();
+      return dimensions;
+    } catch {
+      // Fallback abaixo para navegadores/arquivos sem suporte ao ImageBitmap.
+    }
+  }
+
+  return new Promise<{ width: number; height: number }>((resolve) => {
+    const objectUrl = URL.createObjectURL(blob);
+    const image = new Image();
+
+    image.onload = () => {
+      resolve({
+        width: image.naturalWidth || image.width,
+        height: image.naturalHeight || image.height,
+      });
+      URL.revokeObjectURL(objectUrl);
+    };
+
+    image.onerror = () => {
+      resolve({ width: 0, height: 0 });
+      URL.revokeObjectURL(objectUrl);
+    };
+
+    image.src = objectUrl;
+  });
+}
+
+function get3mfPreviewPriority(entryPath: string) {
+  const normalizedPath = entryPath.toLowerCase();
+
+  let score = 0;
+  THREE_MF_PREVIEW_HINTS.forEach((hint, index) => {
+    if (normalizedPath.includes(hint)) {
+      score = Math.max(score, (THREE_MF_PREVIEW_HINTS.length - index) * 1000);
+    }
+  });
+
+  if (normalizedPath.includes('/metadata/')) {
+    score += 250;
+  }
+
+  if (normalizedPath.endsWith('.png')) {
+    score += 150;
+  }
+
+  return score;
+}
+
+function build3mfPreviewFileName(sourceFileName: string, previewPath: string) {
+  const sourceBaseName = sourceFileName.replace(/\.3mf$/i, '');
+  const extension = getFileExtension(previewPath) || 'png';
+  return `${sourceBaseName}-preview.${extension}`;
+}
+
+async function extractPreviewFrom3mf(file: File) {
+  const zip = await JSZip.loadAsync(file);
+  const imageEntries = Object.values(zip.files).filter((entry) =>
+    !entry.dir && THREE_MF_IMAGE_EXTENSIONS.has(getFileExtension(entry.name)),
+  );
+
+  if (imageEntries.length === 0) {
+    throw new Error('Esse arquivo 3MF não possui imagens de preview compatíveis.');
+  }
+
+  const rankedImages: Array<{
+    blob: Blob;
+    fileName: string;
+    priority: number;
+    area: number;
+    byteLength: number;
+  }> = [];
+
+  for (const entry of imageEntries) {
+    const blob = normalizeBlobMimeType(await entry.async('blob'), entry.name);
+    const dimensions = await getImageDimensions(blob);
+
+    rankedImages.push({
+      blob,
+      fileName: build3mfPreviewFileName(file.name, entry.name),
+      priority: get3mfPreviewPriority(entry.name),
+      area: dimensions.width * dimensions.height,
+      byteLength: blob.size,
+    });
+  }
+
+  rankedImages.sort((left, right) => (
+    right.priority - left.priority ||
+    right.area - left.area ||
+    right.byteLength - left.byteLength
+  ));
+
+  const bestPreview = rankedImages[0];
+
+  return {
+    dataUrl: await readBlobAsDataUrl(bestPreview.blob, bestPreview.fileName),
+    fileName: bestPreview.fileName,
+  };
 }
 
 function slugifySegment(value: string) {
@@ -96,7 +233,6 @@ export function Products() {
   const [activeCollection, setActiveCollection] = useState<string>('Todos');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({ ...EMPTY_FORM });
-  const [thumbnail, setThumbnail] = useState("");
 
   // Collections list
   const collections = ['Todos', ...Array.from(new Set(products.map(p => p.collection || 'Sem Coleção')))];
@@ -138,103 +274,42 @@ export function Products() {
     setShowForm(true);
   };
 
- const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
 
-  const file = e.target.files?.[0];
-
-  if (!file) {
-    return;
-  }
-
-  setUploadingImage(true);
-
-  try {
-
-    // =========================
-    // ARQUIVO 3MF
-    // =========================
-    if (file.name.toLowerCase().endsWith('.3mf')) {
-
-      const zip = await JSZip.loadAsync(file);
-
-      const imageFile = Object.values(zip.files).find(file =>
-        (
-          file.name.toLowerCase().includes("preview") ||
-          file.name.toLowerCase().includes("thumbnail")
-        ) &&
-        (
-          file.name.endsWith(".png") ||
-          file.name.endsWith(".jpg")
-        )
-      );
-
-      if (!imageFile) {
-        alert("Esse arquivo 3MF não possui thumbnail.");
-        return;
-      }
-
-      const blob = await imageFile.async("blob");
-
-      // Converter blob para dataUrl
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-
-        const reader = new FileReader();
-
-        reader.onloadend = () => {
-          resolve(reader.result as string);
-        };
-
-        reader.onerror = reject;
-
-        reader.readAsDataURL(blob);
-
-      });
-
-      // Upload da thumbnail
-     const uploadedAsset = await uploadCatalogAsset(
-  dataUrl,
-  `${file.name}.png`,
-  `products/${slugifySegment(formData.collection || 'geral')}`
-);
-
-      setFormData((prev) => ({
-        ...prev,
-        imageUrl: uploadedAsset.url
-      }));
-
-    } else {
-
-      // =========================
-      // IMAGEM NORMAL
-      // =========================
-      const dataUrl = await readFileAsDataUrl(file);
-
-      const uploadedAsset = await uploadCatalogAsset(
-  dataUrl,
-  file.name,
-  `products/${slugifySegment(formData.collection || 'geral')}`
-);
-
-      setFormData((prev) => ({
-        ...prev,
-        imageUrl: uploadedAsset.url
-      }));
-
+    if (!file) {
+      return;
     }
 
-  } catch (error) {
+    setUploadingImage(true);
 
-    console.error(error);
-    alert('Falha ao enviar imagem.');
+    try {
+      const folder = `products/${slugifySegment(formData.collection || 'geral')}`;
+      const uploadPayload = file.name.toLowerCase().endsWith('.3mf')
+        ? await extractPreviewFrom3mf(file)
+        : {
+            dataUrl: await readFileAsDataUrl(file),
+            fileName: file.name,
+          };
 
-  } finally {
+      const uploadedAsset = await uploadCatalogAsset({
+        ...uploadPayload,
+        folder,
+      });
 
-    setUploadingImage(false);
-
-    e.target.value = '';
-
-  }
-};
+      setFormData((prev) => ({
+        ...prev,
+        imageUrl: uploadedAsset.url,
+      }));
+    } catch (error) {
+      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'Falha ao enviar imagem.';
+      alert(errorMessage);
+    } finally {
+      setUploadingImage(false);
+      e.target.value = '';
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -287,11 +362,11 @@ export function Products() {
           const imageDataUrl = await readFileAsDataUrl(file);
           const segments = relativePath.split('/');
           const collection = segments.length > 1 ? segments.slice(0, -1).join(' / ') : 'Importados';
-         const uploadedAsset = await uploadCatalogAsset(
-  imageDataUrl,
-  file.name,
-  `products/${slugifySegment(collection)}`
-);
+          const uploadedAsset = await uploadCatalogAsset({
+            dataUrl: imageDataUrl,
+            fileName: file.name,
+            folder: `products/${slugifySegment(collection)}`,
+          });
 
           addProduct({
             name: file.name.split('.')[0].replace(/[-_]/g, ' '),
@@ -405,7 +480,7 @@ export function Products() {
                     <p className="text-xs text-slate-500 font-medium">
                       {uploadingImage ? 'Enviando imagem...' : 'Clique para upload'}
                     </p>
-                    <p className="text-[10px] text-slate-400 mt-1">PNG, JPG ou WEBP</p>
+                    <p className="text-[10px] text-slate-400 mt-1">3MF, PNG, JPG, WEBP e imagens comuns</p>
                   </div>
                 )}
               </div>

@@ -24,8 +24,9 @@
 - Valide criação/edição de dados no navegador.
 
 ## Observações importantes (estado atual do app)
-- Os dados ainda ficam em `localStorage` (por navegador/dispositivo).
-- Para multiusuário e persistência real, será preciso backend + banco + storage.
+- O front pode ser publicado estaticamente no Netlify, mas o catálogo compartilhado entre navegadores depende de uma API ativa para `/api` e `/uploads`.
+- Se o frontend e a API estiverem em hosts diferentes, configure `VITE_CATALOG_API_URL` para apontar para o servidor do catálogo.
+- Sem essa API, os dados ficam apenas no `localStorage` do navegador atual.
 
 ## Próxima etapa recomendada
-- Migrar dados para backend (ex.: Supabase) mantendo frontend no Netlify.
+- Manter um backend com storage persistente para catálogo e imagens (ex.: servidor Node, Supabase ou storage equivalente).

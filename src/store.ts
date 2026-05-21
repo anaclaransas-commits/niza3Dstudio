@@ -148,6 +148,26 @@ function writeStoredValue(key: string, value: unknown) {
   }
 }
 
+let lastCatalogPublishErrorAt = 0;
+
+function notifyCatalogPublishError(action: string, error: unknown) {
+  console.warn(`Falha ao ${action} no catálogo publicado.`, error);
+
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const now = Date.now();
+  if (now - lastCatalogPublishErrorAt < 5000) {
+    return;
+  }
+
+  lastCatalogPublishErrorAt = now;
+  window.alert(
+    'Os dados foram salvos neste navegador, mas não foram publicados no catálogo do cliente. Verifique se a API do catálogo está rodando e acessível.',
+  );
+}
+
 type StoreContextValue = {
   printers: Printer[];
   filaments: Filament[];
@@ -255,7 +275,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const newProduct = { ...data, id: uuidv4() };
     setProducts((currentProducts) => [...currentProducts, newProduct]);
     void saveCatalogProduct(newProduct).catch((error) => {
-      console.warn('Falha ao publicar produto no catálogo.', error);
+      notifyCatalogPublishError('publicar produto', error);
     });
     return newProduct;
   };
@@ -285,7 +305,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const removeProduct = (productId: string) => {
     setProducts((currentProducts) => currentProducts.filter((product) => product.id !== productId));
     void deleteCatalogProduct(productId).catch((error) => {
-      console.warn('Falha ao remover produto do catálogo publicado.', error);
+      notifyCatalogPublishError('remover produto', error);
     });
   };
 
@@ -298,7 +318,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       if (nextProduct) {
         void saveCatalogProduct(nextProduct).catch((error) => {
-          console.warn('Falha ao atualizar produto no catálogo.', error);
+          notifyCatalogPublishError('atualizar produto', error);
         });
       }
 
@@ -310,7 +330,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setCatalogSettings((prev) => {
       const nextSettings = { ...prev, ...settings };
       void saveCatalogSettings(nextSettings).catch((error) => {
-        console.warn('Falha ao atualizar configurações do catálogo.', error);
+        notifyCatalogPublishError('atualizar configurações do catálogo', error);
       });
       return nextSettings;
     });

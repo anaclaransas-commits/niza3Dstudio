@@ -10,7 +10,7 @@ Aplicacao web para gestao de operacoes de impressao 3D, com foco em:
 
 ## Estado atual
 
-O projeto roda como SPA em React + Vite e hoje persiste os dados localmente no navegador. Isso facilita validacao de fluxo e interface, mas ainda nao substitui um backend com autenticacao, banco e armazenamento de arquivos.
+O projeto roda como SPA em React + Vite. Para o catálogo compartilhado entre navegadores/clientes, a publicacao depende de uma API para `/api` e `/uploads`; sem isso, o app cai no `localStorage` do navegador atual. Isso facilita validacao de fluxo e interface, mas ainda nao substitui um backend com autenticacao, banco e armazenamento de arquivos.
 
 ## Como rodar localmente
 
@@ -19,9 +19,10 @@ Prerequisitos:
 
 Passos:
 1. Instale as dependencias com `npm install`
-2. Rode o ambiente local com `npm run dev`
-3. Gere build de producao com `npm run build`
-4. Valide tipos com `npm run lint`
+2. Rode o frontend com `npm run dev`
+3. Rode a API do catálogo em outro terminal com `npm run dev:server`
+4. Gere build de producao com `npm run build`
+5. Valide tipos com `npm run lint`
 
 ## Estrutura principal
 
