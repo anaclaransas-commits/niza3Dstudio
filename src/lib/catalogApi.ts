@@ -160,7 +160,7 @@ export async function uploadCatalogAsset(
   const path = `${payload.folder || folder}/${Date.now()}-${payload.fileName}`;
 
   const { error } = await supabase.storage
-    .from('catalog')
+    .from('catalog-assets')
     .upload(path, blob);
 
   if (error) {
@@ -169,7 +169,7 @@ export async function uploadCatalogAsset(
   }
 
   const { data } = supabase.storage
-    .from('catalog')
+    .from('catalog-assets')
     .getPublicUrl(path);
 
   return {
