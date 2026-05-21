@@ -1,4 +1,5 @@
 import type { CatalogSettings, Product } from '../types';
+import { supabase } from './supabase';
 
 export type CatalogAdminSnapshot = {
   fileExists: boolean;
@@ -135,8 +136,10 @@ export function deleteCatalogProduct(productId: string) {
   });
 }
 
+	
 export function uploadCatalogAsset(payload: CatalogAssetUploadPayload): Promise<CatalogAssetUploadResponse>;
 export function uploadCatalogAsset(dataUrl: string, fileName: string, folder?: string): Promise<CatalogAssetUploadResponse>;
+
 export async function uploadCatalogAsset(
   payloadOrDataUrl: CatalogAssetUploadPayload | string,
   fileName?: string,
@@ -150,12 +153,26 @@ export async function uploadCatalogAsset(
       }
     : payloadOrDataUrl;
 
-  const uploadedAsset = await requestJson<CatalogAssetUploadResponse>('/api/catalog/assets', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
+  // converter dataUrl para blob
+  const response = await fetch(payload.dataUrl);
+  const blob = await response.blob();
+
+  const path = `${payload.folder || folder}/${Date.now()}-${payload.fileName}`;
+
+  const { error } = await supabase.storage
+    .from('catalog')
+    .upload(path, blob);
+
+  if (error) {
+    console.error(error);
+    throw new Error('Falha ao enviar imagem para o Supabase.');
+  }
+
+  const { data } = supabase.storage
+    .from('catalog')
+    .getPublicUrl(path);
 
   return {
-    url: resolveCatalogAssetUrl(uploadedAsset.url) ?? uploadedAsset.url,
+    url: data.publicUrl,
   };
 }
