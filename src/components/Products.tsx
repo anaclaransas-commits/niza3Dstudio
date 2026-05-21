@@ -85,20 +85,7 @@ function slugifySegment(value: string) {
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '') || 'catalogo';
 }
-async function extractThumbnail(file: File) {
 
-  const zip = await JSZip.loadAsync(file);
-
-  const thumbnailFile =
-    zip.file("Metadata/thumbnail.png") ||
-    zip.file("3D/Thumbnail.png");
-
-  if (!thumbnailFile) return null;
-
-  const blob = await thumbnailFile.async("blob");
-
-  return URL.createObjectURL(blob);
-}
 export function Products() {
   const { products, addProduct, updateProduct, removeProduct, budgets } = useStore();
   const [showForm, setShowForm] = useState(false);
@@ -204,11 +191,11 @@ export function Products() {
       });
 
       // Upload da thumbnail
-      const uploadedAsset = await uploadCatalogAsset({
-        dataUrl,
-        fileName: `${file.name}.png`,
-        folder: `products/${slugifySegment(formData.collection || 'geral')}`,
-      });
+     const uploadedAsset = await uploadCatalogAsset(
+  dataUrl,
+  `${file.name}.png`,
+  `products/${slugifySegment(formData.collection || 'geral')}`
+);
 
       setFormData((prev) => ({
         ...prev,
@@ -222,11 +209,11 @@ export function Products() {
       // =========================
       const dataUrl = await readFileAsDataUrl(file);
 
-      const uploadedAsset = await uploadCatalogAsset({
-        dataUrl,
-        fileName: file.name,
-        folder: `products/${slugifySegment(formData.collection || 'geral')}`,
-      });
+      const uploadedAsset = await uploadCatalogAsset(
+  dataUrl,
+  file.name,
+  `products/${slugifySegment(formData.collection || 'geral')}`
+);
 
       setFormData((prev) => ({
         ...prev,
@@ -300,11 +287,11 @@ export function Products() {
           const imageDataUrl = await readFileAsDataUrl(file);
           const segments = relativePath.split('/');
           const collection = segments.length > 1 ? segments.slice(0, -1).join(' / ') : 'Importados';
-          const uploadedAsset = await uploadCatalogAsset({
-            dataUrl: imageDataUrl,
-            fileName: file.name,
-            folder: `products/${slugifySegment(collection)}`,
-          });
+         const uploadedAsset = await uploadCatalogAsset(
+  imageDataUrl,
+  file.name,
+  `products/${slugifySegment(collection)}`
+);
 
           addProduct({
             name: file.name.split('.')[0].replace(/[-_]/g, ' '),
