@@ -159,62 +159,92 @@ export function Products() {
     return;
   }
 
-  // Se for arquivo 3MF
-  if (file.name.toLowerCase().endsWith('.3mf')) {
-
-    try {
-
-      const zip = await JSZip.loadAsync(file);
-
-     const thumbnailFile = Object.values(zip.files).find(file =>
-  file.name.toLowerCase().includes("thumbnail") &&
-  (file.name.endsWith(".png") || file.name.endsWith(".jpg"))
-);
-
-      if (!thumbnailFile) {
-        alert("Esse arquivo 3MF não possui thumbnail.");
-        return;
-      }
-
-      const blob = await thumbnailFile.async("blob");
-
-      const imageUrl = URL.createObjectURL(blob);
-
-      setFormData(prev => ({
-        ...prev,
-        imageUrl
-      }));
-
-    } catch (error) {
-
-      console.error(error);
-      alert("Erro ao ler arquivo 3MF");
-
-    }
-
-    return;
-  }
-
-  // Upload normal de imagem
   setUploadingImage(true);
 
   try {
 
-    const imageUrl = await uploadCatalogAsset(file);
+    // =========================
+    // ARQUIVO 3MF
+    // =========================
+    if (file.name.toLowerCase().endsWith('.3mf')) {
 
-    setFormData(prev => ({
-      ...prev,
-      imageUrl
-    }));
+      const zip = await JSZip.loadAsync(file);
+
+      const imageFile = Object.values(zip.files).find(file =>
+        (
+          file.name.toLowerCase().includes("preview") ||
+          file.name.toLowerCase().includes("thumbnail")
+        ) &&
+        (
+          file.name.endsWith(".png") ||
+          file.name.endsWith(".jpg")
+        )
+      );
+
+      if (!imageFile) {
+        alert("Esse arquivo 3MF não possui thumbnail.");
+        return;
+      }
+
+      const blob = await imageFile.async("blob");
+
+      // Converter blob para dataUrl
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+
+        const reader = new FileReader();
+
+        reader.onloadend = () => {
+          resolve(reader.result as string);
+        };
+
+        reader.onerror = reject;
+
+        reader.readAsDataURL(blob);
+
+      });
+
+      // Upload da thumbnail
+      const uploadedAsset = await uploadCatalogAsset({
+        dataUrl,
+        fileName: `${file.name}.png`,
+        folder: `products/${slugifySegment(formData.collection || 'geral')}`,
+      });
+
+      setFormData((prev) => ({
+        ...prev,
+        imageUrl: uploadedAsset.url
+      }));
+
+    } else {
+
+      // =========================
+      // IMAGEM NORMAL
+      // =========================
+      const dataUrl = await readFileAsDataUrl(file);
+
+      const uploadedAsset = await uploadCatalogAsset({
+        dataUrl,
+        fileName: file.name,
+        folder: `products/${slugifySegment(formData.collection || 'geral')}`,
+      });
+
+      setFormData((prev) => ({
+        ...prev,
+        imageUrl: uploadedAsset.url
+      }));
+
+    }
 
   } catch (error) {
 
     console.error(error);
-    alert("Erro ao enviar imagem");
+    alert('Falha ao enviar imagem.');
 
   } finally {
 
     setUploadingImage(false);
+
+    e.target.value = '';
 
   }
 };
