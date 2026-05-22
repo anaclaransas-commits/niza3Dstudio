@@ -448,11 +448,16 @@ export function Products() {
       </div>
 
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-        <input type="text" placeholder="Buscar por nome, coleção, tags ou material..."
-          value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm" />
+      <div className="space-y-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <input type="text" placeholder="Buscar por nome, coleção, tags ou material..."
+            value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm" />
+        </div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+          Use os botões <strong>Editar</strong> e <strong>Excluir</strong> em cada produto para alterar nome, peso, imagem e demais dados.
+        </div>
       </div>
 
       {/* Collection tabs */}
@@ -510,6 +515,15 @@ export function Products() {
                 )}
               </div>
               <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*,.3mf" />
+              {formData.imageUrl && (
+                <button
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, imageUrl: '' }))}
+                  className="w-full rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 transition-colors hover:bg-rose-100"
+                >
+                  Remover imagem atual
+                </button>
+              )}
               <div className="space-y-1">
                 <p className="text-[10px] text-slate-400 uppercase font-bold">Ou cole uma URL de imagem</p>
                 <input type="text" value={formData.imageUrl}
@@ -623,17 +637,6 @@ export function Products() {
                     </span>
                   ) : null}
                 </div>
-                {/* Actions */}
-                <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => openEdit(product)}
-                    className="p-2 bg-white/90 backdrop-blur-md text-slate-600 rounded-full shadow-lg hover:bg-blue-500 hover:text-white transition-all">
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => handleDelete(product.id, product.name)}
-                    className="p-2 bg-white/90 backdrop-blur-md text-rose-400 rounded-full shadow-lg hover:bg-rose-500 hover:text-white transition-all">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
               </div>
 
               {/* Info */}
@@ -681,6 +684,23 @@ export function Products() {
                       </span>
                     )}
                   </div>
+                </div>
+
+                <div className="mt-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openEdit(product)}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100"
+                  >
+                    <Edit2 className="w-4 h-4" /> Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(product.id, product.name)}
+                    className="flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-bold text-rose-600 transition-colors hover:bg-rose-100"
+                  >
+                    <Trash2 className="w-4 h-4" /> Excluir
+                  </button>
                 </div>
               </div>
             </div>

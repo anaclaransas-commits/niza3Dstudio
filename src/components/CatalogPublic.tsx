@@ -22,6 +22,22 @@ const DEFAULT_SETTINGS: CatalogSettings = {
   tagline: 'Impressão 3D com qualidade e precisão',
   primaryColor: '#0f172a',
   accentColor: '#3b82f6',
+  coverImageUrl: '',
+  announcementText: 'Projetos personalizados, produção sob demanda e acabamento profissional.',
+  heroDescription: 'Transformamos ideias em peças impressas em 3D com acabamento limpo, orientação técnica e atendimento próximo.',
+  highlightOne: 'Modelos decorativos e funcionais',
+  highlightTwo: 'Orçamento rápido pelo WhatsApp',
+  highlightThree: 'Produção sob demanda',
+  catalogHeadline: 'Coleções em destaque',
+  catalogSubheadline: 'Escolha uma categoria, explore os modelos e fale com a gente para personalizar medidas, cor e acabamento.',
+  aboutTitle: 'Por que escolher nossa empresa',
+  aboutText: 'Apresente aqui o diferencial da sua empresa, materiais disponíveis, tempo médio de produção e o tipo de projeto que vocês atendem melhor.',
+  contactHeadline: 'Vamos tirar seu projeto do papel',
+  contactText: 'Use os botões de contato para pedir orçamento, confirmar prazo ou falar sobre personalização.',
+  primaryCtaLabel: 'Solicitar orçamento',
+  primaryCtaUrl: '',
+  secondaryCtaLabel: 'Ver Instagram',
+  secondaryCtaUrl: '',
   whatsapp: '',
   instagram: '',
   email: '',
@@ -45,8 +61,50 @@ function lighten(hex: string, amount = 0.92) {
   return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
 }
 
+type CatalogAction = {
+  label: string;
+  url: string;
+};
+
+function createWhatsappUrl(phone?: string, productName?: string) {
+  if (!phone) return undefined;
+  if (!productName) {
+    return `https://wa.me/${phone}`;
+  }
+
+  const message = encodeURIComponent(`Olá! Tenho interesse no produto: *${productName}*`);
+  return `https://wa.me/${phone}?text=${message}`;
+}
+
+function createInstagramUrl(handle?: string) {
+  if (!handle) return undefined;
+  return `https://instagram.com/${handle.replace('@', '')}`;
+}
+
+function buildCatalogAction(label: string | undefined, url: string | undefined) {
+  if (!label || !url) {
+    return undefined;
+  }
+
+  return { label, url } satisfies CatalogAction;
+}
+
+function resolvePrimaryAction(settings: CatalogSettings) {
+  return buildCatalogAction(
+    settings.primaryCtaLabel || 'Solicitar orçamento',
+    settings.primaryCtaUrl || createWhatsappUrl(settings.whatsapp) || (settings.email ? `mailto:${settings.email}` : undefined),
+  );
+}
+
+function resolveSecondaryAction(settings: CatalogSettings) {
+  return buildCatalogAction(
+    settings.secondaryCtaLabel || 'Ver Instagram',
+    settings.secondaryCtaUrl || createInstagramUrl(settings.instagram) || (settings.email ? `mailto:${settings.email}` : undefined),
+  );
+}
+
 /* ─── WhatsApp floating button ───────────────────────── */
-function WAButton({ phone, accent }: { phone: string; accent: string }) {
+function WAButton({ phone }: { phone: string }) {
   if (!phone) return null;
   return (
     <a
@@ -66,15 +124,14 @@ function WAButton({ phone, accent }: { phone: string; accent: string }) {
 }
 
 /* ─── Product card ───────────────────────────────────── */
-function ProductCard({ product, accent, primary, whatsapp }: {
+function ProductCard({ product, accent, whatsapp, ctaLabel }: {
   product: Product;
   accent: string;
-  primary: string;
   whatsapp: string;
+  ctaLabel: string;
 }) {
   const badgeColor = MATERIAL_BADGE[product.materialType] ?? '#64748b';
-  const msg = encodeURIComponent(`Olá! Tenho interesse no produto: *${product.name}* 😊`);
-  const waLink = whatsapp ? `https://wa.me/${whatsapp}?text=${msg}` : undefined;
+  const waLink = createWhatsappUrl(whatsapp, product.name);
 
   return (
     <div className="group bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-slate-100 flex flex-col">
@@ -161,12 +218,12 @@ function ProductCard({ product, accent, primary, whatsapp }: {
             <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.135.561 4.14 1.535 5.874L.057 23.996l6.305-1.654A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.002-1.366l-.36-.213-3.733.979 1-3.638-.234-.374A9.818 9.818 0 1112 21.818z"/>
             </svg>
-            Solicitar orçamento
+            {ctaLabel}
           </a>
         ) : (
           <div className="w-full py-3 rounded-2xl font-bold text-sm text-white text-center mt-auto"
             style={{ backgroundColor: accent }}>
-            Solicitar orçamento
+            {ctaLabel}
           </div>
         )}
       </div>
@@ -175,10 +232,52 @@ function ProductCard({ product, accent, primary, whatsapp }: {
 }
 
 /* ─── Hero header ────────────────────────────────────── */
-function HeroHeader({ s }: { s: CatalogSettings }) {
-  const { primaryColor: primary, accentColor: accent, businessName, tagline, logoUrl, whatsapp, instagram, email } = s;
+function HeroHeader({
+  s,
+  productCount,
+  collectionCount,
+  materialCount,
+  primaryAction,
+  secondaryAction,
+}: {
+  s: CatalogSettings;
+  productCount: number;
+  collectionCount: number;
+  materialCount: number;
+  primaryAction?: CatalogAction;
+  secondaryAction?: CatalogAction;
+}) {
+  const {
+    primaryColor: primary,
+    accentColor: accent,
+    businessName,
+    tagline,
+    logoUrl,
+    coverImageUrl,
+    heroDescription,
+    highlightOne,
+    highlightTwo,
+    highlightThree,
+    whatsapp,
+    instagram,
+    email,
+  } = s;
+  const highlights = [highlightOne, highlightTwo, highlightThree].filter(Boolean);
+  const stats = [
+    { label: 'Produtos', value: productCount },
+    { label: 'Coleções', value: Math.max(collectionCount, 1) },
+    { label: 'Materiais', value: Math.max(materialCount, 1) },
+  ];
+
   return (
-    <header style={{ background: `linear-gradient(135deg, ${primary} 0%, ${accent} 100%)` }} className="relative overflow-hidden">
+    <header
+      style={{
+        background: coverImageUrl
+          ? `linear-gradient(120deg, ${primary}ee 0%, ${accent}cc 58%, ${primary}f2 100%), url(${coverImageUrl}) center/cover`
+          : `linear-gradient(135deg, ${primary} 0%, ${accent} 100%)`,
+      }}
+      className="relative overflow-hidden"
+    >
       {/* decorative circles */}
       <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full opacity-10" style={{ backgroundColor: '#ffffff' }} />
       <div className="absolute -bottom-10 -left-10 w-64 h-64 rounded-full opacity-10" style={{ backgroundColor: '#ffffff' }} />
@@ -196,9 +295,36 @@ function HeroHeader({ s }: { s: CatalogSettings }) {
         <div className="text-center md:text-left">
           <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">{businessName}</h1>
           <p className="text-white/70 text-lg mt-2 font-medium">{tagline}</p>
+          {heroDescription && (
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80 md:text-base">{heroDescription}</p>
+          )}
 
-          {/* Social links */}
-          <div className="flex flex-wrap gap-3 mt-6 justify-center md:justify-start">
+          {highlights.length > 0 && (
+            <div className="mt-6 flex flex-wrap gap-2.5 justify-center md:justify-start">
+              {highlights.map((highlight) => (
+                <span key={highlight} className="rounded-full border border-white/18 bg-white/10 px-4 py-2 text-xs font-bold tracking-wide text-white/85 backdrop-blur-sm">
+                  {highlight}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {(primaryAction || secondaryAction) && (
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center md:justify-start">
+              {primaryAction && (
+                <a href={primaryAction.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-2xl bg-white px-6 py-3 text-sm font-black text-slate-900 shadow-2xl transition-all hover:-translate-y-0.5 hover:bg-slate-100">
+                  {primaryAction.label}
+                </a>
+              )}
+              {secondaryAction && (
+                <a href={secondaryAction.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-bold text-white backdrop-blur-sm transition-all hover:bg-white/18">
+                  {secondaryAction.label}
+                </a>
+              )}
+            </div>
+          )}
+
+          <div className="mt-6 flex flex-wrap gap-3 justify-center md:justify-start">
             {whatsapp && (
               <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white text-xs font-bold px-4 py-2.5 rounded-full transition-all">
@@ -227,6 +353,15 @@ function HeroHeader({ s }: { s: CatalogSettings }) {
               </a>
             )}
           </div>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            {stats.map((stat) => (
+              <div key={stat.label} className="rounded-2xl border border-white/14 bg-white/10 px-4 py-3 text-left backdrop-blur-sm">
+                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/60">{stat.label}</p>
+                <p className="mt-2 text-2xl font-black text-white">{stat.value}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </header>
@@ -248,18 +383,43 @@ export function CatalogPublic() {
   const [search, setSearch] = useState('');
   const [activeCollection, setActiveCollection] = useState('Todos');
   const [activeMaterial, setActiveMaterial] = useState('Todos');
+  const [sortBy, setSortBy] = useState<'recent' | 'name' | 'material' | 'collection'>('recent');
 
   const collections = useMemo(() => ['Todos', ...Array.from(new Set(publicProducts.map(p => p.collection || 'Geral')))], [publicProducts]);
-  const materials   = useMemo(() => ['Todos', ...Array.from(new Set(publicProducts.map(p => p.materialType)))], [publicProducts]);
+  const materials = useMemo(() => ['Todos', ...Array.from(new Set(publicProducts.map(p => p.materialType)))], [publicProducts]);
+  const primaryAction = useMemo(() => resolvePrimaryAction(settings), [settings]);
+  const secondaryAction = useMemo(() => resolveSecondaryAction(settings), [settings]);
+  const ctaLabel = settings.primaryCtaLabel || 'Solicitar orçamento';
+  const activeFilters = search || activeCollection !== 'Todos' || activeMaterial !== 'Todos';
 
-  const filtered = useMemo(() => publicProducts.filter(p => {
-    const col = p.collection || 'Geral';
-    const ok_col  = activeCollection === 'Todos' || col === activeCollection;
-    const ok_mat  = activeMaterial  === 'Todos' || p.materialType === activeMaterial;
-    const ok_srch = !search || [p.name, p.description, p.tags, p.collection]
-      .filter(Boolean).some(f => f!.toLowerCase().includes(search.toLowerCase()));
-    return ok_col && ok_mat && ok_srch;
-  }), [publicProducts, activeCollection, activeMaterial, search]);
+  const filtered = useMemo(() => {
+    const visibleProducts = publicProducts.filter((product) => {
+      const collection = product.collection || 'Geral';
+      const matchesCollection = activeCollection === 'Todos' || collection === activeCollection;
+      const matchesMaterial = activeMaterial === 'Todos' || product.materialType === activeMaterial;
+      const matchesSearch = !search || [product.name, product.description, product.tags, product.collection]
+        .filter(Boolean)
+        .some((field) => field!.toLowerCase().includes(search.toLowerCase()));
+
+      return matchesCollection && matchesMaterial && matchesSearch;
+    });
+
+    const sortedProducts = [...visibleProducts];
+    sortedProducts.sort((left, right) => {
+      switch (sortBy) {
+        case 'name':
+          return left.name.localeCompare(right.name, 'pt-BR');
+        case 'material':
+          return left.materialType.localeCompare(right.materialType, 'pt-BR') || left.name.localeCompare(right.name, 'pt-BR');
+        case 'collection':
+          return (left.collection || 'Geral').localeCompare(right.collection || 'Geral', 'pt-BR') || left.name.localeCompare(right.name, 'pt-BR');
+        default:
+          return 0;
+      }
+    });
+
+    return sortedProducts;
+  }, [publicProducts, activeCollection, activeMaterial, search, sortBy, settings.primaryCtaLabel]);
 
   useEffect(() => {
     let isMounted = true;
@@ -306,8 +466,21 @@ export function CatalogPublic() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
+      {settings.announcementText && (
+        <div className="border-b border-white/10 bg-slate-950 px-4 py-3 text-center text-xs font-bold tracking-[0.18em] text-white/75 uppercase">
+          {settings.announcementText}
+        </div>
+      )}
+
       {/* ── Hero ── */}
-      <HeroHeader s={settings} />
+      <HeroHeader
+        s={settings}
+        productCount={publicProducts.length}
+        collectionCount={Math.max(collections.length - 1, 0)}
+        materialCount={Math.max(materials.length - 1, 0)}
+        primaryAction={primaryAction}
+        secondaryAction={secondaryAction}
+      />
 
       {!isLoading && dataSource !== 'api' && (
         <div className="max-w-6xl mx-auto px-4 pt-6">
@@ -345,6 +518,17 @@ export function CatalogPublic() {
               </button>
             ))}
           </div>
+
+          <select
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value as 'recent' | 'name' | 'material' | 'collection')}
+            className="min-w-[180px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600 outline-none"
+          >
+            <option value="recent">Ordenar: mais recentes</option>
+            <option value="name">Ordenar: nome</option>
+            <option value="material">Ordenar: material</option>
+            <option value="collection">Ordenar: coleção</option>
+          </select>
         </div>
 
         {/* Collection tabs */}
@@ -365,6 +549,27 @@ export function CatalogPublic() {
 
       {/* ── Products ── */}
       <main className="max-w-6xl mx-auto px-4 py-10">
+        <div className="mb-8 grid gap-4 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[minmax(0,1fr)_280px] lg:items-end">
+          <div>
+            <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-[11px] font-black uppercase tracking-[0.28em] text-slate-500">
+              Vitrine online
+            </span>
+            <h2 className="mt-4 text-2xl font-black tracking-tight text-slate-900 md:text-3xl">
+              {settings.catalogHeadline || 'Coleções em destaque'}
+            </h2>
+            {settings.catalogSubheadline && (
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500 md:text-base">
+                {settings.catalogSubheadline}
+              </p>
+            )}
+          </div>
+          <div className="rounded-[28px] bg-slate-950 p-5 text-white shadow-2xl">
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-white/50">Atendimento</p>
+            <p className="mt-3 text-lg font-black">Personalize cor, escala e acabamento.</p>
+            <p className="mt-2 text-sm leading-6 text-white/70">Cada item do catálogo pode virar um projeto sob medida para seu cliente.</p>
+          </div>
+        </div>
+
         {/* Result count */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-slate-500 font-medium">
@@ -374,8 +579,8 @@ export function CatalogPublic() {
                 ? 'Nenhum produto encontrado'
                 : `${filtered.length} produto${filtered.length !== 1 ? 's' : ''}`}
           </p>
-          {(search || activeCollection !== 'Todos' || activeMaterial !== 'Todos') && (
-            <button onClick={() => { setSearch(''); setActiveCollection('Todos'); setActiveMaterial('Todos'); }}
+          {activeFilters && (
+            <button onClick={() => { setSearch(''); setActiveCollection('Todos'); setActiveMaterial('Todos'); setSortBy('recent'); }}
               className="text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
               style={{ color: accent }}>
               Limpar filtros ×
@@ -401,7 +606,7 @@ export function CatalogPublic() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filtered.map(p => (
               <React.Fragment key={p.id}>
-                <ProductCard product={p} accent={accent} primary={primary} whatsapp={whatsapp || ''} />
+                <ProductCard product={p} accent={accent} whatsapp={whatsapp || ''} ctaLabel={ctaLabel} />
               </React.Fragment>
             ))}
           </div>
@@ -415,6 +620,42 @@ export function CatalogPublic() {
           </div>
         )}
       </main>
+
+      <section className="max-w-6xl mx-auto px-4 pb-6">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_0.8fr]">
+          <article className="rounded-[32px] border border-slate-200 bg-white p-7 shadow-sm">
+            <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Identidade da empresa</p>
+            <h3 className="mt-4 text-2xl font-black tracking-tight text-slate-900">
+              {settings.aboutTitle || 'Por que escolher nossa empresa'}
+            </h3>
+            {settings.aboutText && (
+              <p className="mt-4 text-sm leading-7 text-slate-500 md:text-base">{settings.aboutText}</p>
+            )}
+          </article>
+
+          <article className="rounded-[32px] border border-slate-900 bg-slate-950 p-7 text-white shadow-2xl">
+            <p className="text-[11px] font-black uppercase tracking-[0.28em] text-white/45">Contato</p>
+            <h3 className="mt-4 text-2xl font-black tracking-tight">
+              {settings.contactHeadline || 'Vamos tirar seu projeto do papel'}
+            </h3>
+            {settings.contactText && (
+              <p className="mt-4 text-sm leading-7 text-white/68">{settings.contactText}</p>
+            )}
+            <div className="mt-6 flex flex-col gap-3">
+              {primaryAction && (
+                <a href={primaryAction.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-black text-slate-950 transition-all hover:bg-slate-100">
+                  {primaryAction.label}
+                </a>
+              )}
+              {secondaryAction && (
+                <a href={secondaryAction.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-2xl border border-white/16 bg-white/10 px-5 py-3 text-sm font-bold text-white transition-all hover:bg-white/16">
+                  {secondaryAction.label}
+                </a>
+              )}
+            </div>
+          </article>
+        </div>
+      </section>
 
       {/* ── Footer ── */}
       <footer className="mt-16 text-white py-12 px-6"
@@ -431,13 +672,10 @@ export function CatalogPublic() {
           </div>
 
           <div className="flex flex-col items-center md:items-end gap-3">
-            {whatsapp && (
-              <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noopener noreferrer"
+            {primaryAction && (
+              <a href={primaryAction.url} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white text-sm font-bold px-5 py-3 rounded-2xl transition-all">
-                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.135.561 4.14 1.535 5.874L.057 23.996l6.305-1.654A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.002-1.366l-.36-.213-3.733.979 1-3.638-.234-.374A9.818 9.818 0 1112 21.818z"/>
-                </svg>
-                Solicitar Orçamento
+                {primaryAction.label}
               </a>
             )}
             <p className="text-white/30 text-xs">© {new Date().getFullYear()} {settings.businessName}</p>
@@ -446,7 +684,7 @@ export function CatalogPublic() {
       </footer>
 
       {/* ── Floating WhatsApp ── */}
-      <WAButton phone={whatsapp || ''} accent={accent} />
+      <WAButton phone={whatsapp || ''} />
     </div>
   );
 }

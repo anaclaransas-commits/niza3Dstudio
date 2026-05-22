@@ -17,15 +17,16 @@ function SettingsPanel({ settings, onSave, onClose }: {
 }) {
   const [form, setForm] = useState({ ...settings });
   const logoRef = React.useRef<HTMLInputElement>(null);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const coverRef = React.useRef<HTMLInputElement>(null);
+  const [uploadingAsset, setUploadingAsset] = useState<'logo' | 'cover' | null>(null);
 
-  const handleLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    setUploadingLogo(true);
+  const uploadBrandAsset = async (
+    file: File,
+    folder: string,
+    field: 'logoUrl' | 'coverImageUrl',
+    errorMessage: string,
+  ) => {
+    setUploadingAsset(field === 'logoUrl' ? 'logo' : 'cover');
 
     try {
       const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -38,22 +39,41 @@ function SettingsPanel({ settings, onSave, onClose }: {
       const uploadedAsset = await uploadCatalogAsset({
         dataUrl,
         fileName: file.name,
-        folder: 'branding/logo',
+        folder,
       });
 
-      setForm((prev) => ({ ...prev, logoUrl: uploadedAsset.url }));
+      setForm((prev) => ({ ...prev, [field]: uploadedAsset.url }));
     } catch (error) {
       console.error(error);
-      alert('Falha ao enviar o logo para o catálogo.');
+      alert(errorMessage);
     } finally {
-      setUploadingLogo(false);
-      e.target.value = '';
+      setUploadingAsset(null);
     }
+  };
+
+  const handleLogo = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    await uploadBrandAsset(file, 'branding/logo', 'logoUrl', 'Falha ao enviar o logo para o catálogo.');
+    event.target.value = '';
+  };
+
+  const handleCover = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    await uploadBrandAsset(file, 'branding/cover', 'coverImageUrl', 'Falha ao enviar a capa do catálogo.');
+    event.target.value = '';
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-slate-100">
           <h3 className="font-black text-slate-800 text-lg flex items-center gap-2">
             <Palette className="w-5 h-5 text-blue-500" /> Personalizar Catálogo
@@ -73,7 +93,7 @@ function SettingsPanel({ settings, onSave, onClose }: {
               }
               <button type="button" onClick={() => logoRef.current?.click()}
                 className="px-4 py-2 bg-slate-100 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors">
-                {uploadingLogo ? 'Enviando...' : form.logoUrl ? 'Trocar Logo' : 'Enviar Logo'}
+                {uploadingAsset === 'logo' ? 'Enviando...' : form.logoUrl ? 'Trocar Logo' : 'Enviar Logo'}
               </button>
               {form.logoUrl && (
                 <button type="button" onClick={() => setForm(p => ({ ...p, logoUrl: undefined }))}
@@ -82,6 +102,34 @@ function SettingsPanel({ settings, onSave, onClose }: {
                 </button>
               )}
               <input type="file" ref={logoRef} onChange={handleLogo} className="hidden" accept="image/*" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-500 uppercase">Imagem de Capa</label>
+            <div className="space-y-3">
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 aspect-[16/7]">
+                {form.coverImageUrl ? (
+                  <img src={form.coverImageUrl} alt="capa do catálogo" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-xs font-bold uppercase tracking-[0.24em] text-slate-400">
+                    Sem capa
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <button type="button" onClick={() => coverRef.current?.click()}
+                  className="px-4 py-2 bg-slate-100 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors">
+                  {uploadingAsset === 'cover' ? 'Enviando...' : form.coverImageUrl ? 'Trocar Capa' : 'Enviar Capa'}
+                </button>
+                {form.coverImageUrl && (
+                  <button type="button" onClick={() => setForm(p => ({ ...p, coverImageUrl: undefined }))}
+                    className="px-3 py-2 bg-rose-50 rounded-xl text-sm font-bold text-rose-500 hover:bg-rose-100 transition-colors">
+                    Remover
+                  </button>
+                )}
+                <input type="file" ref={coverRef} onChange={handleCover} className="hidden" accept="image/*" />
+              </div>
             </div>
           </div>
 
@@ -116,6 +164,102 @@ function SettingsPanel({ settings, onSave, onClose }: {
                   className="w-10 h-10 rounded-lg border border-slate-200 cursor-pointer p-0.5" />
                 <span className="text-xs text-slate-500 font-mono">{form.accentColor}</span>
               </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Barra de anúncio</label>
+              <input value={form.announcementText || ''} onChange={e => setForm(p => ({ ...p, announcementText: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                placeholder="Ex: produção sob demanda, envio para todo o Brasil..." />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Descrição principal</label>
+              <textarea value={form.heroDescription || ''} onChange={e => setForm(p => ({ ...p, heroDescription: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm h-20 resize-none"
+                placeholder="Descreva o posicionamento da sua empresa e o tipo de projeto que vocês atendem." />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Destaque 1</label>
+              <input value={form.highlightOne || ''} onChange={e => setForm(p => ({ ...p, highlightOne: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Destaque 2</label>
+              <input value={form.highlightTwo || ''} onChange={e => setForm(p => ({ ...p, highlightTwo: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Destaque 3</label>
+              <input value={form.highlightThree || ''} onChange={e => setForm(p => ({ ...p, highlightThree: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Título da vitrine</label>
+              <input value={form.catalogHeadline || ''} onChange={e => setForm(p => ({ ...p, catalogHeadline: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Subtítulo da vitrine</label>
+              <input value={form.catalogSubheadline || ''} onChange={e => setForm(p => ({ ...p, catalogSubheadline: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Título institucional</label>
+              <input value={form.aboutTitle || ''} onChange={e => setForm(p => ({ ...p, aboutTitle: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Título do bloco de contato</label>
+              <input value={form.contactHeadline || ''} onChange={e => setForm(p => ({ ...p, contactHeadline: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm" />
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-xs font-bold text-slate-500 uppercase">Texto institucional</label>
+              <textarea value={form.aboutText || ''} onChange={e => setForm(p => ({ ...p, aboutText: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm h-20 resize-none" />
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-xs font-bold text-slate-500 uppercase">Texto do bloco de contato</label>
+              <textarea value={form.contactText || ''} onChange={e => setForm(p => ({ ...p, contactText: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm h-20 resize-none" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Rótulo do botão principal</label>
+              <input value={form.primaryCtaLabel || ''} onChange={e => setForm(p => ({ ...p, primaryCtaLabel: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                placeholder="Solicitar orçamento" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Link do botão principal</label>
+              <input value={form.primaryCtaUrl || ''} onChange={e => setForm(p => ({ ...p, primaryCtaUrl: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                placeholder="Deixe vazio para usar o WhatsApp" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Rótulo do botão secundário</label>
+              <input value={form.secondaryCtaLabel || ''} onChange={e => setForm(p => ({ ...p, secondaryCtaLabel: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                placeholder="Ver Instagram" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Link do botão secundário</label>
+              <input value={form.secondaryCtaUrl || ''} onChange={e => setForm(p => ({ ...p, secondaryCtaUrl: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                placeholder="Deixe vazio para usar Instagram ou e-mail" />
             </div>
           </div>
 
@@ -185,7 +329,36 @@ export function Catalog() {
     return matchCollection && matchSearch;
   });
 
-  const { primaryColor, accentColor, businessName, tagline, logoUrl, whatsapp, instagram, email, footerNote } = catalogSettings;
+  const {
+    primaryColor,
+    accentColor,
+    businessName,
+    tagline,
+    logoUrl,
+    coverImageUrl,
+    announcementText,
+    heroDescription,
+    highlightOne,
+    highlightTwo,
+    highlightThree,
+    catalogHeadline,
+    catalogSubheadline,
+    aboutTitle,
+    aboutText,
+    contactHeadline,
+    contactText,
+    primaryCtaLabel,
+    primaryCtaUrl,
+    secondaryCtaLabel,
+    secondaryCtaUrl,
+    whatsapp,
+    instagram,
+    email,
+    footerNote,
+  } = catalogSettings;
+  const previewHighlights = [highlightOne, highlightTwo, highlightThree].filter(Boolean);
+  const previewPrimaryUrl = primaryCtaUrl || (whatsapp ? `https://wa.me/${whatsapp}` : email ? `mailto:${email}` : undefined);
+  const previewSecondaryUrl = secondaryCtaUrl || (instagram ? `https://instagram.com/${instagram.replace('@', '')}` : email ? `mailto:${email}` : undefined);
   const publicCatalogPath =
     typeof window !== 'undefined' && window.location.port === '3000'
       ? '/catalogo.html'
@@ -374,8 +547,21 @@ export function Catalog() {
         className="catalog-print-area rounded-3xl overflow-hidden"
         style={{ '--primary': primaryColor, '--accent': accentColor } as React.CSSProperties}
       >
+        {announcementText && (
+          <div className="bg-slate-950 px-6 py-3 text-center text-[11px] font-black uppercase tracking-[0.22em] text-white/70">
+            {announcementText}
+          </div>
+        )}
+
         {/* Header */}
-        <div className="px-8 py-10 text-white" style={{ backgroundColor: primaryColor }}>
+        <div
+          className="px-8 py-10 text-white"
+          style={{
+            background: coverImageUrl
+              ? `linear-gradient(120deg, ${primaryColor}ee 0%, ${accentColor}cc 58%, ${primaryColor}f2 100%), url(${coverImageUrl}) center/cover`
+              : primaryColor,
+          }}
+        >
           <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-6">
             {logoUrl ? (
               <img src={logoUrl} alt="logo" className="h-20 w-auto object-contain rounded-2xl bg-white/10 p-2" />
@@ -387,6 +573,32 @@ export function Catalog() {
             <div>
               <h1 className="text-3xl font-black tracking-tight">{businessName}</h1>
               <p className="mt-1 text-sm opacity-75">{tagline}</p>
+              {heroDescription && <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80">{heroDescription}</p>}
+              {previewHighlights.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {previewHighlights.map((highlight) => (
+                    <span key={highlight} className="rounded-full border border-white/16 bg-white/12 px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/80">
+                      {highlight}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {(previewPrimaryUrl || previewSecondaryUrl) && (
+                <div className="flex flex-wrap gap-3 mt-5">
+                  {previewPrimaryUrl && (
+                    <a href={previewPrimaryUrl} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs font-black bg-white text-slate-900 px-4 py-2 rounded-full transition-colors">
+                      {primaryCtaLabel || 'Solicitar orçamento'}
+                    </a>
+                  )}
+                  {previewSecondaryUrl && (
+                    <a href={previewSecondaryUrl} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs font-bold bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full transition-colors">
+                      {secondaryCtaLabel || 'Ver Instagram'}
+                    </a>
+                  )}
+                </div>
+              )}
               <div className="flex flex-wrap gap-3 mt-4">
                 {whatsapp && (
                   <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noopener noreferrer"
@@ -413,6 +625,10 @@ export function Catalog() {
 
         {/* Search + filters */}
         <div className="bg-white px-8 py-5 border-b border-slate-100 no-print">
+          <div className="max-w-4xl mx-auto mb-4">
+            <h2 className="text-2xl font-black text-slate-900">{catalogHeadline || 'Coleções em destaque'}</h2>
+            {catalogSubheadline && <p className="mt-2 text-sm text-slate-500">{catalogSubheadline}</p>}
+          </div>
           <div className="max-w-4xl mx-auto flex flex-col sm:flex-row gap-3">
             <input type="text" placeholder="Buscar produto..." value={search} onChange={e => setSearch(e.target.value)}
               className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm focus:ring-2"
@@ -471,7 +687,7 @@ export function Catalog() {
                   <div className="flex items-center justify-between pt-3 border-t border-slate-50">
                     <span className="text-xs font-bold px-3 py-1.5 rounded-xl text-white"
                       style={{ backgroundColor: primaryColor }}>
-                      Peça seu orçamento
+                      {primaryCtaLabel || 'Peça seu orçamento'}
                     </span>
                     {whatsapp && (
                       <a href={`https://wa.me/${whatsapp}?text=Olá! Tenho interesse no produto: ${encodeURIComponent(product.name)}`}
