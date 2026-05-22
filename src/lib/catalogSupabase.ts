@@ -51,6 +51,23 @@ const SUPABASE_SETTINGS_ROW_ID = 'default';
 
 let supabaseClient: SupabaseClient | null | undefined;
 
+function isPlaceholderSupabaseUrl(value: string) {
+  return /(?:SEU|seu)-PROJETO|seu-projeto/i.test(value);
+}
+
+function isPlaceholderSupabaseAnonKey(value: string) {
+  return /(?:SUA|sua)-CHAVE-ANON|sua-chave-anon/i.test(value);
+}
+
+function hasUsableSupabaseConfig() {
+  return Boolean(
+    SUPABASE_URL &&
+    SUPABASE_ANON_KEY &&
+    !isPlaceholderSupabaseUrl(SUPABASE_URL) &&
+    !isPlaceholderSupabaseAnonKey(SUPABASE_ANON_KEY),
+  );
+}
+
 function sanitizeText(value: unknown, fallback = '') {
   return typeof value === 'string' ? value.trim() : fallback;
 }
@@ -167,7 +184,7 @@ function getSupabaseClient() {
     return supabaseClient;
   }
 
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  if (!hasUsableSupabaseConfig()) {
     supabaseClient = null;
     return supabaseClient;
   }
@@ -186,7 +203,9 @@ function requireSupabaseClient() {
   const client = getSupabaseClient();
 
   if (!client) {
-    throw new Error('Supabase não configurado para o catálogo.');
+    throw new Error(
+      'Supabase não configurado para o catálogo. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY válidos no build do frontend.',
+    );
   }
 
   return client;
@@ -234,6 +253,26 @@ function mapProductToRow(product: Product): CatalogProductRow {
 
 export function isSupabaseCatalogConfigured() {
   return Boolean(getSupabaseClient());
+}
+
+export function getSupabaseCatalogDebugInfo() {
+  let projectHost: string | undefined;
+
+  if (hasUsableSupabaseConfig()) {
+    try {
+      projectHost = new URL(SUPABASE_URL).host;
+    } catch {
+      projectHost = SUPABASE_URL;
+    }
+  }
+
+  return {
+    configured: hasUsableSupabaseConfig(),
+    projectHost,
+    productsTable: SUPABASE_PRODUCTS_TABLE,
+    settingsTable: SUPABASE_SETTINGS_TABLE,
+    storageBucket: SUPABASE_STORAGE_BUCKET,
+  };
 }
 
 export async function getCatalogAdminDataFromSupabase(): Promise<CatalogAdminSnapshot> {

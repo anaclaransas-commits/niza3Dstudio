@@ -3,6 +3,7 @@ import {
   deleteCatalogProductOnSupabase,
   getCatalogAdminDataFromSupabase,
   getCatalogPublicDataFromSupabase,
+  getSupabaseCatalogDebugInfo,
   isSupabaseCatalogConfigured,
   replaceCatalogAdminDataOnSupabase,
   saveCatalogProductOnSupabase,
@@ -18,6 +19,16 @@ type CatalogAssetUploadResponse = {
 };
 
 const API_BASE_URL = (import.meta.env.VITE_CATALOG_API_URL ?? '').trim().replace(/\/+$/, '');
+
+export function getCatalogBackendDebugInfo() {
+  const supabase = getSupabaseCatalogDebugInfo();
+
+  return {
+    supabase,
+    apiBaseUrl: API_BASE_URL || undefined,
+    sharedBackendAvailable: supabase.configured || Boolean(API_BASE_URL),
+  };
+}
 
 function createCatalogBackendError(operation: string, errors: unknown[]) {
   if (errors.length === 0) {

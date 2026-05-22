@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
-import { Box, Copy, ExternalLink, Instagram, Mail, MessageCircle, Palette, Save, X } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { AlertTriangle, Box, CheckCircle2, Copy, ExternalLink, Instagram, Mail, MessageCircle, Palette, RefreshCw, Save, X } from 'lucide-react';
 import { useStore } from '../store';
-import { uploadCatalogAsset } from '../lib/catalogApi';
+import { getCatalogAdminData, getCatalogBackendDebugInfo, getCatalogPublicData, uploadCatalogAsset } from '../lib/catalogApi';
 import type { CatalogSettings } from '../types';
 
 /* ── Settings panel ───────────────────────────────── */
@@ -156,13 +156,23 @@ function SettingsPanel({ settings, onSave, onClose }: {
   );
 }
 
+type CatalogDiagnostics = {
+  status: 'idle' | 'loading' | 'success' | 'error';
+  message?: string;
+  errorDetails?: string;
+  remoteProducts?: number;
+  remotePublicProducts?: number;
+};
+
 /* ── Main Catalog page ────────────────────────────── */
 export function Catalog() {
   const { products, catalogSettings, updateCatalogSettings } = useStore();
   const [showSettings, setShowSettings] = useState(false);
   const [activeCollection, setActiveCollection] = useState('Todos');
   const [search, setSearch] = useState('');
+  const [diagnostics, setDiagnostics] = useState<CatalogDiagnostics>({ status: 'idle' });
 
+  const backendInfo = useMemo(() => getCatalogBackendDebugInfo(), []);
   const publicProducts = products.filter(p => p.isPublic !== false);
   const collections = ['Todos', ...Array.from(new Set(publicProducts.map(p => p.collection || 'Sem Coleção')))];
 
@@ -193,6 +203,42 @@ export function Catalog() {
     } catch (error) {
       console.error(error);
       alert(publicCatalogUrl);
+    }
+  };
+
+  const handleRunDiagnostics = async () => {
+    setDiagnostics({ status: 'loading' });
+
+    try {
+      const [adminSnapshot, publicSnapshot] = await Promise.all([
+        getCatalogAdminData(),
+        getCatalogPublicData(),
+      ]);
+
+      const remoteProducts = adminSnapshot.products.length;
+      const remotePublicProducts = publicSnapshot.products.length;
+      let message = 'O backend compartilhado respondeu normalmente.';
+
+      if (remoteProducts === 0 && products.length > 0) {
+        message = 'Os produtos deste navegador ainda não foram publicados no backend compartilhado.';
+      } else if (remoteProducts > 0 && remotePublicProducts === 0) {
+        message = 'O backend tem produtos, mas todos estão privados no catálogo do cliente.';
+      } else if (remotePublicProducts > 0) {
+        message = 'O catálogo público já está recebendo produtos do backend compartilhado.';
+      }
+
+      setDiagnostics({
+        status: 'success',
+        message,
+        remoteProducts,
+        remotePublicProducts,
+      });
+    } catch (error) {
+      setDiagnostics({
+        status: 'error',
+        message: 'Falha ao acessar o backend compartilhado do catálogo.',
+        errorDetails: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -242,6 +288,75 @@ export function Catalog() {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="bg-white border border-slate-200 rounded-2xl px-5 py-4 no-print space-y-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400">Diagnóstico do catálogo</p>
+            <p className="text-sm text-slate-600 mt-1">Use este teste para confirmar se este build está lendo e publicando no backend compartilhado.</p>
+          </div>
+          <button
+            onClick={handleRunDiagnostics}
+            disabled={diagnostics.status === 'loading'}
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors disabled:opacity-60"
+          >
+            <RefreshCw className={`w-4 h-4 ${diagnostics.status === 'loading' ? 'animate-spin' : ''}`} />
+            {diagnostics.status === 'loading' ? 'Testando...' : 'Testar publicação'}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Backend detectado</p>
+            <p className="mt-2 text-sm font-bold text-slate-800">
+              {backendInfo.supabase.configured
+                ? `Supabase (${backendInfo.supabase.projectHost})`
+                : backendInfo.apiBaseUrl
+                  ? `API (${backendInfo.apiBaseUrl})`
+                  : 'Nenhum backend compartilhado detectado'}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Produtos neste navegador</p>
+            <p className="mt-2 text-sm font-bold text-slate-800">{products.length} total / {publicProducts.length} públicos</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Tabelas</p>
+            <p className="mt-2 text-sm font-bold text-slate-800">{backendInfo.supabase.productsTable} / {backendInfo.supabase.settingsTable}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Bucket</p>
+            <p className="mt-2 text-sm font-bold text-slate-800">{backendInfo.supabase.storageBucket}</p>
+          </div>
+        </div>
+
+        {diagnostics.status !== 'idle' && (
+          <div className={`rounded-2xl border px-4 py-4 text-sm ${diagnostics.status === 'success'
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+            : diagnostics.status === 'error'
+              ? 'border-rose-200 bg-rose-50 text-rose-900'
+              : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+            <div className="flex items-start gap-3">
+              {diagnostics.status === 'success' ? (
+                <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0" />
+              ) : diagnostics.status === 'error' ? (
+                <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0" />
+              ) : (
+                <RefreshCw className="mt-0.5 h-5 w-5 flex-shrink-0 animate-spin" />
+              )}
+              <div className="space-y-2">
+                <p className="font-bold">{diagnostics.message}</p>
+                {typeof diagnostics.remoteProducts === 'number' && (
+                  <p>Produtos no backend: {diagnostics.remoteProducts} total / {diagnostics.remotePublicProducts ?? 0} públicos</p>
+                )}
+                {diagnostics.errorDetails && (
+                  <p className="break-words font-mono text-xs">{diagnostics.errorDetails}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {showSettings && (

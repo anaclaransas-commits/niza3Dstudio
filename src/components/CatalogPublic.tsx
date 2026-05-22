@@ -312,7 +312,9 @@ export function CatalogPublic() {
       {!isLoading && dataSource !== 'api' && (
         <div className="max-w-6xl mx-auto px-4 pt-6">
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Não foi possível carregar o catálogo publicado agora. Exibindo apenas os dados disponíveis neste navegador.
+            {publicProducts.length > 0
+              ? 'Não foi possível carregar o catálogo publicado agora. Este navegador está exibindo apenas uma cópia local.'
+              : 'Não foi possível carregar o catálogo publicado agora. Este navegador não possui uma cópia local. Verifique as variáveis VITE_SUPABASE_* do deploy ou a API /api do catálogo.'}
           </div>
         </div>
       )}

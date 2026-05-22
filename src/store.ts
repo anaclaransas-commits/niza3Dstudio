@@ -164,7 +164,7 @@ function notifyCatalogPublishError(action: string, error: unknown) {
 
   lastCatalogPublishErrorAt = now;
   window.alert(
-    'Os dados ficaram salvos neste navegador, mas não foram publicados no catálogo do cliente. Para sincronizar automaticamente entre navegadores, configure o Supabase no frontend ou mantenha a API do catálogo ativa.',
+    'Os dados ficaram salvos neste navegador, mas não foram publicados no catálogo do cliente. Se o site estiver no Netlify, configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY nas variáveis do deploy ou mantenha a API do catálogo ativa.',
   );
 }
 
@@ -225,7 +225,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setProducts(remoteCatalog.products);
         setCatalogSettings(remoteCatalog.catalogSettings);
       } catch (error) {
-        console.warn('Falha ao sincronizar catálogo com o servidor.', error);
+        notifyCatalogPublishError('sincronizar catálogo', error);
       }
     };
 
