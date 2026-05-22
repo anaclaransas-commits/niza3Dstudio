@@ -164,7 +164,7 @@ function notifyCatalogPublishError(action: string, error: unknown) {
 
   lastCatalogPublishErrorAt = now;
   window.alert(
-    'Os dados foram salvos neste navegador, mas não foram publicados no catálogo do cliente. Verifique se a API do catálogo está rodando e acessível.',
+    'Os dados ficaram salvos neste navegador, mas não foram publicados no catálogo do cliente. Para sincronizar automaticamente entre navegadores, configure o Supabase no frontend ou mantenha a API do catálogo ativa.',
   );
 }
 

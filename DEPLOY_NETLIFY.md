@@ -24,9 +24,12 @@
 - Valide criação/edição de dados no navegador.
 
 ## Observações importantes (estado atual do app)
-- O front pode ser publicado estaticamente no Netlify, mas o catálogo compartilhado entre navegadores depende de uma API ativa para `/api` e `/uploads`.
+- O front pode ser publicado estaticamente no Netlify.
+- Para o catálogo compartilhado entre navegadores, use uma destas opções:
+  - manter uma API ativa para `/api` e `/uploads`
+  - configurar o Supabase no frontend para produtos, configurações e imagens
 - Se o frontend e a API estiverem em hosts diferentes, configure `VITE_CATALOG_API_URL` para apontar para o servidor do catálogo.
-- Sem essa API, os dados ficam apenas no `localStorage` do navegador atual.
+- Sem API ou Supabase, os dados ficam apenas no `localStorage` do navegador atual.
 
 ## Próxima etapa recomendada
-- Manter um backend com storage persistente para catálogo e imagens (ex.: servidor Node, Supabase ou storage equivalente).
+- Configurar o Supabase seguindo `SUPABASE_SETUP.md` ou manter um backend com storage persistente para catálogo e imagens.

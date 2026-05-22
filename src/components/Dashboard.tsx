@@ -38,7 +38,7 @@ interface DashboardProps {
 
 export function Dashboard({ onNavigate }: DashboardProps) {
   
- const senha = prompt(32162069)
+ const senha = prompt('32162069')
 
   if (senha !== "1234") {
     window.location.href = "/catalog"

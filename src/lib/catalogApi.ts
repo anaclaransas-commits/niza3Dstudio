@@ -1,28 +1,76 @@
 import type { CatalogSettings, Product } from '../types';
-import { supabase } from './supabase';
-
-export type CatalogAdminSnapshot = {
-  fileExists: boolean;
-  catalogSettings: CatalogSettings;
-  products: Product[];
-};
-
-export type CatalogPublicSnapshot = {
-  catalogSettings: CatalogSettings;
-  products: Product[];
-};
-
-type CatalogAssetUploadPayload = {
-  dataUrl: string;
-  fileName: string;
-  folder?: string;
-};
+import {
+  deleteCatalogProductOnSupabase,
+  getCatalogAdminDataFromSupabase,
+  getCatalogPublicDataFromSupabase,
+  isSupabaseCatalogConfigured,
+  replaceCatalogAdminDataOnSupabase,
+  saveCatalogProductOnSupabase,
+  saveCatalogSettingsOnSupabase,
+  uploadCatalogAssetToSupabase,
+  type CatalogAdminSnapshot,
+  type CatalogAssetUploadPayload,
+  type CatalogPublicSnapshot,
+} from './catalogSupabase';
 
 type CatalogAssetUploadResponse = {
   url: string;
 };
 
 const API_BASE_URL = (import.meta.env.VITE_CATALOG_API_URL ?? '').trim().replace(/\/+$/, '');
+
+function createCatalogBackendError(operation: string, errors: unknown[]) {
+  if (errors.length === 0) {
+    return new Error(
+      `Nenhum backend compartilhado do catálogo está disponível para ${operation}. Configure o Supabase ou rode a API Node do catálogo.`,
+    );
+  }
+
+  const messages = errors
+    .map((error) => (error instanceof Error ? error.message : String(error)))
+    .filter(Boolean);
+
+  const uniqueMessages = Array.from(new Set(messages));
+
+  return new Error(
+    uniqueMessages.length > 0
+      ? uniqueMessages.join(' | ')
+      : `Falha ao ${operation} no catálogo compartilhado.`,
+  );
+}
+
+async function runCatalogOperation<T>(
+  operation: string,
+  options: {
+    supabase?: () => Promise<T>;
+    api?: () => Promise<T>;
+    fallback?: () => Promise<T> | T;
+  },
+) {
+  const errors: unknown[] = [];
+
+  if (isSupabaseCatalogConfigured() && options.supabase) {
+    try {
+      return await options.supabase();
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+
+  if (options.api) {
+    try {
+      return await options.api();
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+
+  if (options.fallback) {
+    return await options.fallback();
+  }
+
+  throw createCatalogBackendError(operation, errors);
+}
 
 function buildApiUrl(input: RequestInfo | URL) {
   if (typeof input !== 'string') {
@@ -90,53 +138,83 @@ async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit) {
     throw new Error(errorMessage || `Falha na requisição (${response.status}).`);
   }
 
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(
+      'A rota do catálogo não respondeu JSON. Se o site estiver estático, configure o Supabase ou a URL da API do catálogo.',
+    );
+  }
+
   return (await response.json()) as T;
 }
 
 export async function getCatalogAdminData() {
-  const snapshot = await requestJson<CatalogAdminSnapshot>('/api/catalog/admin');
+  const snapshot = await runCatalogOperation('carregar o catálogo administrativo', {
+    supabase: () => getCatalogAdminDataFromSupabase(),
+    api: () => requestJson<CatalogAdminSnapshot>('/api/catalog/admin'),
+  });
+
   return normalizeCatalogSnapshot(snapshot);
 }
 
 export async function replaceCatalogAdminData(payload: Omit<CatalogAdminSnapshot, 'fileExists'>) {
-  const snapshot = await requestJson<CatalogAdminSnapshot>('/api/catalog/admin', {
-    method: 'PUT',
-    body: JSON.stringify(payload),
+  const snapshot = await runCatalogOperation('publicar o catálogo administrativo', {
+    supabase: () => replaceCatalogAdminDataOnSupabase(payload),
+    api: () =>
+      requestJson<CatalogAdminSnapshot>('/api/catalog/admin', {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      }),
   });
 
   return normalizeCatalogSnapshot(snapshot);
 }
 
 export async function getCatalogPublicData() {
-  const snapshot = await requestJson<CatalogPublicSnapshot>('/api/catalog/public');
+  const snapshot = await runCatalogOperation('carregar o catálogo público', {
+    supabase: () => getCatalogPublicDataFromSupabase(),
+    api: () => requestJson<CatalogPublicSnapshot>('/api/catalog/public'),
+  });
+
   return normalizeCatalogSnapshot(snapshot);
 }
 
 export async function saveCatalogSettings(settings: CatalogSettings) {
-  const savedSettings = await requestJson<CatalogSettings>('/api/catalog/settings', {
-    method: 'PUT',
-    body: JSON.stringify(settings),
+  const savedSettings = await runCatalogOperation('salvar as configurações do catálogo', {
+    supabase: () => saveCatalogSettingsOnSupabase(settings),
+    api: () =>
+      requestJson<CatalogSettings>('/api/catalog/settings', {
+        method: 'PUT',
+        body: JSON.stringify(settings),
+      }),
   });
 
   return normalizeCatalogSettings(savedSettings);
 }
 
 export async function saveCatalogProduct(product: Product) {
-  const savedProduct = await requestJson<Product>(`/api/catalog/products/${product.id}`, {
-    method: 'PUT',
-    body: JSON.stringify(product),
+  const savedProduct = await runCatalogOperation('salvar o produto no catálogo', {
+    supabase: () => saveCatalogProductOnSupabase(product),
+    api: () =>
+      requestJson<Product>(`/api/catalog/products/${product.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(product),
+      }),
   });
 
   return normalizeProduct(savedProduct);
 }
 
 export function deleteCatalogProduct(productId: string) {
-  return requestJson<{ success: boolean }>(`/api/catalog/products/${productId}`, {
-    method: 'DELETE',
+  return runCatalogOperation('remover o produto do catálogo', {
+    supabase: () => deleteCatalogProductOnSupabase(productId),
+    api: () =>
+      requestJson<{ success: boolean }>(`/api/catalog/products/${productId}`, {
+        method: 'DELETE',
+      }),
   });
 }
 
-	
 export function uploadCatalogAsset(payload: CatalogAssetUploadPayload): Promise<CatalogAssetUploadResponse>;
 export function uploadCatalogAsset(dataUrl: string, fileName: string, folder?: string): Promise<CatalogAssetUploadResponse>;
 
@@ -153,26 +231,19 @@ export async function uploadCatalogAsset(
       }
     : payloadOrDataUrl;
 
-  // converter dataUrl para blob
-  const response = await fetch(payload.dataUrl);
-  const blob = await response.blob();
-
-  const path = `${payload.folder || folder}/${Date.now()}-${payload.fileName}`;
-
-  const { error } = await supabase.storage
-    .from('catalog-assets')
-    .upload(path, blob);
-
-  if (error) {
-    console.error(error);
-    throw new Error('Falha ao enviar imagem para o Supabase.');
-  }
-
-  const { data } = supabase.storage
-    .from('catalog-assets')
-    .getPublicUrl(path);
+  const asset = await runCatalogOperation('enviar a imagem do catálogo', {
+    supabase: () => uploadCatalogAssetToSupabase(payload),
+    api: () =>
+      requestJson<CatalogAssetUploadResponse>('/api/catalog/assets', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
+    fallback: () => ({
+      url: payload.dataUrl,
+    }),
+  });
 
   return {
-    url: data.publicUrl,
+    url: resolveCatalogAssetUrl(asset.url) ?? asset.url,
   };
 }

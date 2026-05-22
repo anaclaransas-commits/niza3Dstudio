@@ -10,7 +10,12 @@ Aplicacao web para gestao de operacoes de impressao 3D, com foco em:
 
 ## Estado atual
 
-O projeto roda como SPA em React + Vite. Para o catálogo compartilhado entre navegadores/clientes, a publicacao depende de uma API para `/api` e `/uploads`; sem isso, o app cai no `localStorage` do navegador atual. Isso facilita validacao de fluxo e interface, mas ainda nao substitui um backend com autenticacao, banco e armazenamento de arquivos.
+O projeto roda como SPA em React + Vite. O catálogo compartilhado pode funcionar de duas formas:
+
+- API Node local/remota atendendo `/api` e `/uploads`
+- Supabase configurado direto no frontend para produtos, configuracoes e imagens
+
+Sem uma dessas opcoes, o app continua funcionando no navegador atual com `localStorage`, mas o link publico do cliente nao recebe as alteracoes automaticamente.
 
 ## Como rodar localmente
 
@@ -20,7 +25,9 @@ Prerequisitos:
 Passos:
 1. Instale as dependencias com `npm install`
 2. Rode o frontend com `npm run dev`
-3. Rode a API do catálogo em outro terminal com `npm run dev:server`
+3. Escolha uma forma de publicacao compartilhada:
+   - rode a API do catálogo em outro terminal com `npm run dev:server`
+   - ou configure as variaveis do Supabase mostradas em `.env.example`
 4. Gere build de producao com `npm run build`
 5. Valide tipos com `npm run lint`
 
@@ -37,6 +44,16 @@ Passos:
 - migrar persistencia para backend com autenticacao e backup
 - evoluir o fluxo de pedido para producao, envio e entrega
 - aprofundar o motor financeiro da calculadora
+
+## Supabase para site estatico
+
+Se o painel estiver publicado sem a API Node, configure o Supabase para que:
+
+- o cadastro de produtos publique no link do cliente
+- as imagens enviadas fiquem acessiveis por URL publica
+- o catalogo continue funcionando no Netlify/Vercel sem backend proprio
+
+Veja [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) para criar as tabelas e o bucket.
 
 ## Deploy no Netlify
 

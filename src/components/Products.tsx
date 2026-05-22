@@ -80,8 +80,9 @@ function readFileAsDataUrl(file: File) {
   return readBlobAsDataUrl(file, file.name);
 }
 
-const THREE_MF_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp']);
-const THREE_MF_PREVIEW_HINTS = ['thumbnail', 'preview', 'plate', 'render', 'cover', 'image'];
+const THREE_MF_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp', 'gif', 'avif']);
+const THREE_MF_PREVIEW_HINTS = ['preview', 'render', 'plate', 'cover', 'image', 'thumbnail', 'thumb'];
+const THREE_MF_LOW_QUALITY_HINTS = ['thumbnail', 'thumb', 'icon', 'small'];
 
 function getFileExtension(fileName: string) {
   const normalizedName = fileName.toLowerCase();
@@ -98,6 +99,14 @@ function inferMimeTypeFromFileName(fileName: string) {
       return 'image/jpeg';
     case 'webp':
       return 'image/webp';
+    case 'gif':
+      return 'image/gif';
+    case 'avif':
+      return 'image/avif';
+    case 'bmp':
+      return 'image/bmp';
+    case 'svg':
+      return 'image/svg+xml';
     default:
       return undefined;
   }
@@ -141,22 +150,33 @@ async function getImageDimensions(blob: Blob) {
   });
 }
 
+function isLikely3mfPreviewImage(entryPath: string) {
+  const normalizedPath = entryPath.toLowerCase();
+
+  return normalizedPath.includes('/metadata/') ||
+    THREE_MF_PREVIEW_HINTS.some((hint) => normalizedPath.includes(hint));
+}
+
 function get3mfPreviewPriority(entryPath: string) {
   const normalizedPath = entryPath.toLowerCase();
 
   let score = 0;
   THREE_MF_PREVIEW_HINTS.forEach((hint, index) => {
     if (normalizedPath.includes(hint)) {
-      score = Math.max(score, (THREE_MF_PREVIEW_HINTS.length - index) * 1000);
+      score = Math.max(score, (THREE_MF_PREVIEW_HINTS.length - index) * 100);
     }
   });
 
   if (normalizedPath.includes('/metadata/')) {
-    score += 250;
+    score += 25;
   }
 
   if (normalizedPath.endsWith('.png')) {
-    score += 150;
+    score += 10;
+  }
+
+  if (THREE_MF_LOW_QUALITY_HINTS.some((hint) => normalizedPath.includes(hint))) {
+    score -= 200;
   }
 
   return score;
@@ -184,6 +204,7 @@ async function extractPreviewFrom3mf(file: File) {
     priority: number;
     area: number;
     byteLength: number;
+    isLikelyPreview: boolean;
   }> = [];
 
   for (const entry of imageEntries) {
@@ -196,16 +217,20 @@ async function extractPreviewFrom3mf(file: File) {
       priority: get3mfPreviewPriority(entry.name),
       area: dimensions.width * dimensions.height,
       byteLength: blob.size,
+      isLikelyPreview: isLikely3mfPreviewImage(entry.name),
     });
   }
 
-  rankedImages.sort((left, right) => (
+  const preferredImages = rankedImages.filter((image) => image.isLikelyPreview);
+  const previewCandidates = preferredImages.length > 0 ? preferredImages : rankedImages;
+
+  previewCandidates.sort((left, right) => (
     right.priority - left.priority ||
     right.area - left.area ||
     right.byteLength - left.byteLength
   ));
 
-  const bestPreview = rankedImages[0];
+  const bestPreview = previewCandidates[0];
 
   return {
     dataUrl: await readBlobAsDataUrl(bestPreview.blob, bestPreview.fileName),
@@ -480,7 +505,7 @@ export function Products() {
                     <p className="text-xs text-slate-500 font-medium">
                       {uploadingImage ? 'Enviando imagem...' : 'Clique para upload'}
                     </p>
-                    <p className="text-[10px] text-slate-400 mt-1">3MF, PNG, JPG, WEBP e imagens comuns</p>
+                    <p className="text-[10px] text-slate-400 mt-1">3MF, PNG, JPG, WEBP, GIF, AVIF e imagens comuns</p>
                   </div>
                 )}
               </div>
