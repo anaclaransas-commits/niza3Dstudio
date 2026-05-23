@@ -3,13 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Calendar,
-  CheckCircle,
   DollarSign,
-  FileText,
-  TrendingUp,
+  Plus,
+  Receipt,
+  Trash2,
+  TrendingDown,
+  Wallet,
 } from 'lucide-react';
 import {
   Bar,
@@ -23,204 +25,307 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { downloadCsvFile, formatCurrency, getBudgetQuantity, isApprovedBudget } from '../lib/utils';
+import {
+  buildExpenseBreakdown,
+  buildMonthlyFinancialSeries,
+  buildRecentSales,
+  calculateBusinessMetrics,
+} from '../lib/finance';
+import { downloadCsvFile, formatCurrency } from '../lib/utils';
 import { useStore } from '../store';
+import type { FinanceEntryType } from '../types';
+
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#a855f7'];
 
 export function Reports() {
-  const { budgets, filaments, clients, products } = useStore();
+  const {
+    budgets,
+    financeEntries,
+    addFinanceEntry,
+    removeFinanceEntry,
+    clients,
+    products,
+  } = useStore();
 
-  const approvedBudgets = budgets.filter((budget) => isApprovedBudget(budget.status));
-  const totalRevenue = approvedBudgets.reduce((sum, budget) => sum + budget.price, 0);
-  const totalProfit = approvedBudgets.reduce((sum, budget) => sum + budget.profit, 0);
-  const approvalRate = budgets.length > 0 ? (approvedBudgets.length / budgets.length) * 100 : 0;
+  const metrics = calculateBusinessMetrics(budgets, financeEntries);
+  const monthlySeries = buildMonthlyFinancialSeries(budgets, financeEntries, 6);
+  const expenseBreakdown = buildExpenseBreakdown(budgets, financeEntries);
+  const recentSales = buildRecentSales(budgets, clients, products, 6);
+  const salesForExport = buildRecentSales(budgets, clients, products, budgets.length);
 
-  const materialUsageMap = approvedBudgets.reduce((acc, budget) => {
-    const filament = filaments.find((item) => item.id === budget.filamentId);
-    const material = filament ? filament.material : 'Outros';
-    acc[material] = (acc[material] || 0) + getBudgetQuantity(budget);
-    return acc;
-  }, {} as Record<string, number>);
+  const [entryTypeFilter, setEntryTypeFilter] = useState<'Todos' | FinanceEntryType>('Todos');
+  const [formData, setFormData] = useState({
+    type: 'Despesa' as FinanceEntryType,
+    title: '',
+    category: '',
+    amount: '',
+    date: new Date().toISOString().slice(0, 10),
+    notes: '',
+  });
 
-  const materialData = Object.keys(materialUsageMap).map((name) => ({
-    name,
-    value: materialUsageMap[name],
-  }));
-
-  const chartData = [...approvedBudgets]
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .reduce<Array<{ date: string; vendas: number; lucro: number }>>((acc, budget) => {
-      const dateLabel = new Date(budget.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-      const existingEntry = acc.find((item) => item.date === dateLabel);
-
-      if (existingEntry) {
-        existingEntry.vendas += budget.price;
-        existingEntry.lucro += budget.profit;
-        return acc;
-      }
-
-      acc.push({ date: dateLabel, vendas: budget.price, lucro: budget.profit });
-      return acc;
-    }, [])
-    .slice(-10);
+  const filteredEntries = useMemo(
+    () => financeEntries.filter((entry) => entryTypeFilter === 'Todos' || entry.type === entryTypeFilter),
+    [financeEntries, entryTypeFilter],
+  );
 
   const stats = [
-    { label: 'Receita Total', value: totalRevenue, trend: '+sinc', icon: DollarSign, format: 'currency' },
-    { label: 'Lucro Total', value: totalProfit, trend: '+sinc', icon: TrendingUp, format: 'currency' },
-    { label: 'Orçamentos', value: budgets.length, trend: 'Total', icon: FileText, format: 'number' },
-    { label: 'Taxa de Aprovação', value: `${approvalRate.toFixed(1)}%`, trend: 'Vendas', icon: CheckCircle, format: 'text' },
+    { label: 'Receita total', value: formatCurrency(metrics.totalRevenue), helper: `${salesForExport.length} venda(s) aprovadas/concluídas`, icon: DollarSign, color: 'bg-emerald-50 text-emerald-600' },
+    { label: 'Gastos totais', value: formatCurrency(metrics.totalExpenses), helper: 'Produção + despesas manuais', icon: TrendingDown, color: 'bg-rose-50 text-rose-600' },
+    { label: 'Lucro acumulado', value: formatCurrency(metrics.totalProfit), helper: `Lucro do mês: ${formatCurrency(metrics.monthProfit)}`, icon: Wallet, color: 'bg-blue-50 text-blue-600' },
+    { label: 'Movimentações extras', value: String(financeEntries.length), helper: 'Receitas e despesas lançadas manualmente', icon: Receipt, color: 'bg-amber-50 text-amber-600' },
   ];
 
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    const amount = Number(formData.amount.replace(',', '.'));
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      window.alert('Informe um valor financeiro maior que zero.');
+      return;
+    }
+
+    addFinanceEntry({
+      type: formData.type,
+      title: formData.title.trim(),
+      category: formData.category.trim() || (formData.type === 'Receita' ? 'Receitas extras' : 'Despesas gerais'),
+      amount,
+      date: formData.date,
+      notes: formData.notes.trim() || undefined,
+    });
+
+    setFormData({
+      type: 'Despesa',
+      title: '',
+      category: '',
+      amount: '',
+      date: new Date().toISOString().slice(0, 10),
+      notes: '',
+    });
+  };
 
   const handleExportCsv = () => {
     const rows = [
-      ['ID', 'Data', 'Status', 'Cliente', 'Produto', 'Quantidade', 'Valor', 'Lucro', 'Material'],
-      ...[...budgets]
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        .map((budget) => {
-          const filament = filaments.find((item) => item.id === budget.filamentId);
-          const client = clients.find((item) => item.id === budget.clientId);
-          const product = products.find((item) => item.id === budget.productId);
-
-          return [
-            budget.id,
-            new Date(budget.date).toLocaleDateString('pt-BR'),
-            budget.status,
-            client?.name || 'Cliente Avulso',
-            product?.name || 'Peça Customizada',
-            getBudgetQuantity(budget),
-            budget.price.toFixed(2),
-            budget.profit.toFixed(2),
-            filament?.material || 'Outros',
-          ];
-        }),
+      ['origem', 'id', 'data', 'tipo', 'categoria', 'descricao', 'cliente', 'produto', 'quantidade', 'receita', 'gasto', 'lucro'],
+      ...salesForExport.map((sale) => ['Venda', sale.id, new Date(sale.date).toLocaleDateString('pt-BR'), sale.status, 'Orçamento aprovado', sale.productName, sale.clientName, sale.productName, sale.quantity, sale.price.toFixed(2), '0.00', sale.profit.toFixed(2)]),
+      ...financeEntries.slice().sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime()).map((entry) => ['Financeiro manual', entry.id, new Date(entry.date).toLocaleDateString('pt-BR'), entry.type, entry.category, entry.title, '', '', '', entry.type === 'Receita' ? entry.amount.toFixed(2) : '0.00', entry.type === 'Despesa' ? entry.amount.toFixed(2) : '0.00', entry.type === 'Receita' ? entry.amount.toFixed(2) : (-entry.amount).toFixed(2)]),
     ];
 
-    downloadCsvFile(`relatorio-orcamentos-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+    downloadCsvFile(`financeiro-3dprint-${new Date().toISOString().slice(0, 10)}.csv`, rows);
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-black text-slate-800">Business Analytics</h2>
-          <p className="text-slate-500">Relatórios gerados em tempo real com base em seus orçamentos aprovados.</p>
+      <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="space-y-2">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600">Financeiro</p>
+          <h2 className="text-3xl font-black tracking-tight text-slate-900">Receita, gastos, lucro e histórico da empresa</h2>
+          <p className="max-w-3xl text-sm leading-6 text-slate-500">Lance despesas extras, organize entradas fora dos orçamentos e acompanhe o resultado consolidado da operação em um só lugar.</p>
         </div>
-        
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={handleExportCsv}
-            className="flex items-center px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors"
-          >
-            <Calendar className="w-4 h-4 mr-2" /> Exportar CSV
-          </button>
-        </div>
-      </div>
+        <button onClick={handleExportCsv} className="inline-flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+          <Calendar className="mr-2 h-4 w-4" /> Exportar CSV financeiro
+        </button>
+      </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-600 shadow-inner">
-                <stat.icon className="w-6 h-6" />
-              </div>
-              <div className="text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-tighter text-emerald-600 bg-emerald-50">
-                {stat.trend}
-              </div>
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+        {stats.map((stat) => (
+          <article key={stat.label} className="rounded-[32px] border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="mb-5 flex items-center justify-between">
+              <div className={`rounded-2xl p-3 ${stat.color}`}><stat.icon className="h-5 w-5" /></div>
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-300">Consolidado</span>
             </div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{stat.label}</p>
-            <h3 className="text-2xl font-black text-slate-800 mt-1">
-              {stat.format === 'currency' ? formatCurrency(stat.value as number) : stat.value}
-            </h3>
-          </div>
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">{stat.label}</p>
+            <h3 className="mt-2 text-3xl font-black text-slate-900">{stat.value}</h3>
+            <p className="mt-2 text-sm text-slate-500">{stat.helper}</p>
+          </article>
         ))}
-      </div>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="font-black text-slate-800 text-lg uppercase tracking-tight">Performance de Vendas</h3>
-            <div className="flex space-x-4">
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase">Receita</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-emerald-500 rounded-full mr-2"></div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase">Lucro</span>
-              </div>
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.8fr_1fr]">
+        <article className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
+          <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Resumo mensal</p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">Fluxo financeiro recente</h3>
+            </div>
+            <div className="flex flex-wrap gap-3 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-blue-500" />Receita</span>
+              <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-rose-400" />Gastos</span>
+              <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />Lucro</span>
             </div>
           </div>
-          <div className="h-[350px]">
-            {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}} />
-                  <Tooltip 
-                    cursor={{fill: '#f8fafc', radius: 12}} 
-                    contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '16px'}}
-                  />
-                  <Bar dataKey="vendas" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={24} />
-                  <Bar dataKey="lucro" fill="#10b981" radius={[6, 6, 0, 0]} barSize={24} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-slate-300">
-                <p className="font-bold underline decoration-slate-200 underline-offset-8">Aguardando mais orçamentos para gerar gráfico</p>
-              </div>
-            )}
+          <div className="h-[340px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlySeries}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b', fontWeight: 700 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 700 }} />
+                <Tooltip formatter={(value: number) => formatCurrency(value)} contentStyle={{ borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgb(15 23 42 / 0.08)' }} />
+                <Bar dataKey="revenue" fill="#3b82f6" radius={[8, 8, 0, 0]} maxBarSize={34} />
+                <Bar dataKey="expenses" fill="#fb7185" radius={[8, 8, 0, 0]} maxBarSize={34} />
+                <Bar dataKey="profit" fill="#10b981" radius={[8, 8, 0, 0]} maxBarSize={34} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-        </div>
+        </article>
 
-        <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
-          <h3 className="font-black text-slate-800 text-lg uppercase tracking-tight mb-8">Uso de Materiais</h3>
-          <div className="flex flex-col items-center justify-center h-full pb-8">
-            {materialData.length > 0 ? (
-              <>
-                <div className="h-[250px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={materialData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={70}
-                        outerRadius={100}
-                        paddingAngle={8}
-                        dataKey="value"
-                      >
-                        {materialData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} cornerRadius={10} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="grid grid-cols-2 gap-4 w-full mt-8">
-                  {materialData.map((material, index) => (
-                    <div key={index} className="bg-slate-50 p-3 rounded-2xl flex flex-col">
-                      <div className="flex items-center mb-1">
-                        <div className="w-2 h-2 rounded-full mr-2" style={{backgroundColor: COLORS[index % COLORS.length]}}></div>
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{material.name}</span>
-                      </div>
-                      <span className="text-sm font-black text-slate-700">{material.value} peças</span>
+        <article className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Composição dos gastos</p>
+          <h3 className="mt-2 text-2xl font-black text-slate-900">Para onde o dinheiro está indo</h3>
+          {expenseBreakdown.length > 0 ? (
+            <>
+              <div className="mt-6 h-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={expenseBreakdown} dataKey="value" cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={6}>
+                      {expenseBreakdown.map((entry, index) => (
+                        <Cell key={entry.name} fill={COLORS[index % COLORS.length]} cornerRadius={8} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-4 grid grid-cols-1 gap-3">
+                {expenseBreakdown.slice(0, 6).map((entry, index) => (
+                  <div key={entry.name} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm">
+                    <span className="flex items-center gap-2 font-bold text-slate-700">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                      {entry.name}
+                    </span>
+                    <strong className="font-black text-slate-900">{formatCurrency(entry.value)}</strong>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="mt-8 rounded-[32px] border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center text-sm font-medium text-slate-400">
+              Sem gastos suficientes para montar a composição ainda.
+            </div>
+          )}
+        </article>
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_1fr]">
+        <article className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
+          <div className="mb-6">
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Nova movimentação</p>
+            <h3 className="mt-2 text-2xl font-black text-slate-900">Registrar receita ou despesa manual</h3>
+          </div>
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <label className="space-y-2 text-sm font-bold text-slate-700">
+              Tipo
+              <select value={formData.type} onChange={(event) => setFormData((current) => ({ ...current, type: event.target.value as FinanceEntryType }))} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none">
+                <option value="Despesa">Despesa</option>
+                <option value="Receita">Receita</option>
+              </select>
+            </label>
+            <label className="space-y-2 text-sm font-bold text-slate-700">
+              Data
+              <input type="date" value={formData.date} onChange={(event) => setFormData((current) => ({ ...current, date: event.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none" />
+            </label>
+            <label className="space-y-2 text-sm font-bold text-slate-700 md:col-span-2">
+              Descrição
+              <input required type="text" value={formData.title} onChange={(event) => setFormData((current) => ({ ...current, title: event.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none" placeholder="Ex.: Conta de energia, marketing, venda avulsa, manutenção" />
+            </label>
+            <label className="space-y-2 text-sm font-bold text-slate-700">
+              Categoria
+              <input type="text" value={formData.category} onChange={(event) => setFormData((current) => ({ ...current, category: event.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none" placeholder="Energia, frete, imposto, receita extra..." />
+            </label>
+            <label className="space-y-2 text-sm font-bold text-slate-700">
+              Valor
+              <input required type="text" inputMode="decimal" value={formData.amount} onChange={(event) => setFormData((current) => ({ ...current, amount: event.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none" placeholder="0,00" />
+            </label>
+            <label className="space-y-2 text-sm font-bold text-slate-700 md:col-span-2">
+              Observações
+              <textarea value={formData.notes} onChange={(event) => setFormData((current) => ({ ...current, notes: event.target.value }))} className="h-28 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none" placeholder="Informações complementares para lembrar do contexto dessa movimentação." />
+            </label>
+            <div className="md:col-span-2">
+              <button type="submit" className="inline-flex items-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-black text-white transition-colors hover:bg-slate-800">
+                <Plus className="mr-2 h-4 w-4" /> Salvar movimentação
+              </button>
+            </div>
+          </form>
+        </article>
+
+        <article className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Vendas recentes</p>
+          <h3 className="mt-2 text-2xl font-black text-slate-900">Pedidos que já geram receita</h3>
+          <div className="mt-6 space-y-4">
+            {recentSales.length > 0 ? (
+              recentSales.map((sale) => (
+                <div key={sale.id} className="rounded-3xl border border-slate-100 bg-slate-50 px-5 py-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-black text-slate-800">{sale.productName}</p>
+                      <p className="mt-1 text-xs text-slate-500">{sale.clientName} • {new Date(sale.date).toLocaleDateString('pt-BR')}</p>
                     </div>
-                  ))}
+                    <div className="text-right">
+                      <p className="text-sm font-black text-slate-900">{formatCurrency(sale.price)}</p>
+                      <p className="mt-1 text-xs font-bold text-emerald-600">Lucro {formatCurrency(sale.profit)}</p>
+                    </div>
+                  </div>
                 </div>
-              </>
+              ))
             ) : (
-              <div className="h-[300px] flex items-center justify-center text-slate-300 font-bold">
-                Sem dados de materiais
+              <div className="rounded-[32px] border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center text-sm font-medium text-slate-400">
+                Nenhuma venda aprovada ou concluída encontrada ainda.
               </div>
             )}
           </div>
+        </article>
+      </section>
+
+      <section className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Histórico manual</p>
+            <h3 className="mt-2 text-2xl font-black text-slate-900">Receitas e despesas extras da empresa</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {(['Todos', 'Despesa', 'Receita'] as const).map((filter) => (
+              <button key={filter} onClick={() => setEntryTypeFilter(filter)} className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.2em] transition-colors ${entryTypeFilter === filter ? 'bg-slate-900 text-white' : 'border border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}>
+                {filter}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+        {filteredEntries.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left">
+              <thead>
+                <tr className="border-b border-slate-100 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
+                  <th className="pb-4">Data</th>
+                  <th className="pb-4">Tipo</th>
+                  <th className="pb-4">Descrição</th>
+                  <th className="pb-4">Categoria</th>
+                  <th className="pb-4 text-right">Valor</th>
+                  <th className="pb-4 text-right">Ação</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {filteredEntries.slice().sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime()).map((entry) => (
+                  <tr key={entry.id} className="text-sm text-slate-600">
+                    <td className="py-4">{new Date(entry.date).toLocaleDateString('pt-BR')}</td>
+                    <td className="py-4"><span className={`rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.15em] ${entry.type === 'Receita' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>{entry.type}</span></td>
+                    <td className="py-4"><p className="font-bold text-slate-800">{entry.title}</p>{entry.notes ? <p className="mt-1 text-xs text-slate-500">{entry.notes}</p> : null}</td>
+                    <td className="py-4 font-medium text-slate-600">{entry.category}</td>
+                    <td className={`py-4 text-right font-black ${entry.type === 'Receita' ? 'text-emerald-600' : 'text-rose-600'}`}>{entry.type === 'Receita' ? '+' : '-'}{formatCurrency(entry.amount)}</td>
+                    <td className="py-4 text-right">
+                      <button onClick={() => removeFinanceEntry(entry.id)} className="inline-flex items-center rounded-xl border border-rose-200 px-3 py-2 text-xs font-bold text-rose-600 transition-colors hover:bg-rose-50">
+                        <Trash2 className="mr-1 h-3.5 w-3.5" /> Excluir
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="rounded-[32px] border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center text-sm font-medium text-slate-400">
+            Nenhuma movimentação manual registrada para esse filtro.
+          </div>
+        )}
+      </section>
     </div>
   );
 }

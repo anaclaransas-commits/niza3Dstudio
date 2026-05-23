@@ -16,9 +16,11 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   type Budget,
   type BudgetStatus,
+  type CalculatorDefaults,
   type CatalogSettings,
   type Client,
   type Filament,
+  type FinanceEntry,
   type Printer,
   type Product,
   type ResinSupply,
@@ -39,6 +41,8 @@ const STORAGE_KEYS = {
   clients: '3d_clients',
   products: '3d_products',
   budgets: '3d_budgets',
+  financeEntries: '3d_finance_entries',
+  calculatorDefaults: '3d_calculator_defaults',
   channels: '3d_channels',
   catalogSettings: '3d_catalog_settings',
 } as const;
@@ -138,6 +142,18 @@ const defaultProducts: Product[] = [
   },
 ];
 
+const defaultCalculatorDefaults: CalculatorDefaults = {
+  selectedFilamentId: '',
+  selectedPrinterId: '',
+  manualFilamentPrice: '120',
+  manualPowerConsumptionW: '200',
+  energyPriceKWh: '0.85858',
+  laborCostFixed: '0',
+  fixedCostPerPiece: '0',
+  margin: '30',
+  quantity: '1',
+};
+
 function readStoredValue<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') {
     return fallback;
@@ -191,6 +207,8 @@ type StoreContextValue = {
   clients: Client[];
   products: Product[];
   budgets: Budget[];
+  financeEntries: FinanceEntry[];
+  calculatorDefaults: CalculatorDefaults;
   channels: SalesChannel[];
   catalogSettings: CatalogSettings;
   addPrinter: (data: Omit<Printer, 'id'>) => Printer;
@@ -200,10 +218,13 @@ type StoreContextValue = {
   addProduct: (data: Omit<Product, 'id'>) => Product;
   updateProduct: (id: string, data: Partial<Omit<Product, 'id'>>) => void;
   addBudget: (data: Omit<Budget, 'id'>) => Budget;
+  addFinanceEntry: (data: Omit<FinanceEntry, 'id'>) => FinanceEntry;
+  removeFinanceEntry: (entryId: string) => void;
   addChannel: (data: Omit<SalesChannel, 'id'>) => SalesChannel;
   updateBudgetStatus: (budgetId: string, status: BudgetStatus) => void;
   deleteBudget: (budgetId: string) => void;
   removeProduct: (productId: string) => void;
+  updateCalculatorDefaults: (settings: Partial<CalculatorDefaults>) => void;
   updateCatalogSettings: (settings: Partial<CatalogSettings>) => void;
 };
 
@@ -216,6 +237,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [clients, setClients] = useState<Client[]>(() => readStoredValue(STORAGE_KEYS.clients, defaultClients));
   const [products, setProducts] = useState<Product[]>(() => readStoredValue(STORAGE_KEYS.products, defaultProducts));
   const [budgets, setBudgets] = useState<Budget[]>(() => readStoredValue(STORAGE_KEYS.budgets, []));
+  const [financeEntries, setFinanceEntries] = useState<FinanceEntry[]>(() => readStoredValue(STORAGE_KEYS.financeEntries, []));
+  const [calculatorDefaults, setCalculatorDefaults] = useState<CalculatorDefaults>(() => readStoredValue(STORAGE_KEYS.calculatorDefaults, defaultCalculatorDefaults));
   const [channels, setChannels] = useState<SalesChannel[]>(() => readStoredValue(STORAGE_KEYS.channels, []));
   const [catalogSettings, setCatalogSettings] = useState<CatalogSettings>(() => readStoredValue(STORAGE_KEYS.catalogSettings, defaultCatalogSettings));
 
@@ -259,9 +282,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     writeStoredValue(STORAGE_KEYS.clients, clients);
     writeStoredValue(STORAGE_KEYS.products, products);
     writeStoredValue(STORAGE_KEYS.budgets, budgets);
+    writeStoredValue(STORAGE_KEYS.financeEntries, financeEntries);
+    writeStoredValue(STORAGE_KEYS.calculatorDefaults, calculatorDefaults);
     writeStoredValue(STORAGE_KEYS.channels, channels);
     writeStoredValue(STORAGE_KEYS.catalogSettings, catalogSettings);
-  }, [printers, filaments, resins, clients, products, budgets, channels, catalogSettings]);
+  }, [
+    printers,
+    filaments,
+    resins,
+    clients,
+    products,
+    budgets,
+    financeEntries,
+    calculatorDefaults,
+    channels,
+    catalogSettings,
+  ]);
 
   const addPrinter = (data: Omit<Printer, 'id'>) => {
     const newPrinter = { ...data, id: uuidv4() };
@@ -300,6 +336,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const newBudget = { ...data, id: uuidv4() };
     setBudgets((currentBudgets) => [newBudget, ...currentBudgets]);
     return newBudget;
+  };
+
+  const addFinanceEntry = (data: Omit<FinanceEntry, 'id'>) => {
+    const newEntry = { ...data, id: uuidv4() };
+    setFinanceEntries((currentEntries) => [newEntry, ...currentEntries]);
+    return newEntry;
+  };
+
+  const removeFinanceEntry = (entryId: string) => {
+    setFinanceEntries((currentEntries) => currentEntries.filter((entry) => entry.id !== entryId));
   };
 
   const addChannel = (data: Omit<SalesChannel, 'id'>) => {
@@ -342,6 +388,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const updateCalculatorDefaults = (settings: Partial<CalculatorDefaults>) => {
+    setCalculatorDefaults((prev) => {
+      const next = { ...prev, ...settings };
+      const hasChanges = (Object.keys(next) as Array<keyof CalculatorDefaults>).some(
+        (key) => prev[key] !== next[key],
+      );
+
+      return hasChanges ? next : prev;
+    });
+  };
+
   const updateCatalogSettings = (settings: Partial<CatalogSettings>) => {
     setCatalogSettings((prev) => {
       const nextSettings = { ...prev, ...settings };
@@ -360,6 +417,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       clients,
       products,
       budgets,
+      financeEntries,
+      calculatorDefaults,
       channels,
       catalogSettings,
       addPrinter,
@@ -369,13 +428,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addProduct,
       updateProduct,
       addBudget,
+      addFinanceEntry,
+      removeFinanceEntry,
       addChannel,
       updateBudgetStatus,
       deleteBudget,
       removeProduct,
+      updateCalculatorDefaults,
       updateCatalogSettings,
     }),
-    [printers, filaments, resins, clients, products, budgets, channels, catalogSettings],
+    [
+      printers,
+      filaments,
+      resins,
+      clients,
+      products,
+      budgets,
+      financeEntries,
+      calculatorDefaults,
+      channels,
+      catalogSettings,
+    ],
   );
 
   return createElement(StoreContext.Provider, { value }, children);

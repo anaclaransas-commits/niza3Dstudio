@@ -36,7 +36,7 @@ export function Sidebar({ activePage, onPageChange }: SidebarProps) {
     { id: 'products', icon: Package, label: 'Produtos' },
     { id: 'catalog', icon: BookOpen, label: 'Catálogo Cliente' },
     { id: 'clients', icon: Users, label: 'Clientes' },
-    { id: 'reports', icon: BarChart3, label: 'Relatórios' },
+    { id: 'reports', icon: BarChart3, label: 'Financeiro' },
   ] as const;
 
   return (

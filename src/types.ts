@@ -99,6 +99,30 @@ export interface CalculationResult {
   batchTotalProfit: number;
 }
 
+export interface CalculatorDefaults {
+  selectedFilamentId: string;
+  selectedPrinterId: string;
+  manualFilamentPrice: string;
+  manualPowerConsumptionW: string;
+  energyPriceKWh: string;
+  laborCostFixed: string;
+  fixedCostPerPiece: string;
+  margin: string;
+  quantity: string;
+}
+
+export type FinanceEntryType = "Receita" | "Despesa";
+
+export interface FinanceEntry {
+  id: string;
+  title: string;
+  category: string;
+  type: FinanceEntryType;
+  amount: number;
+  date: string;
+  notes?: string;
+}
+
 export type BudgetStatus = "Pendente" | "Aprovado" | "Recusado" | "Concluido";
 
 export interface Budget {

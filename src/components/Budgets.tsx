@@ -13,7 +13,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useStore } from '../store';
-import { cn, formatCurrency, getBudgetQuantity } from '../lib/utils';
+import { cn, formatCurrency, getBudgetQuantity, isApprovedBudget } from '../lib/utils';
 import { type BudgetStatus } from '../types';
 
 const statusFilters: Array<'Todos' | BudgetStatus> = ['Todos', 'Pendente', 'Aprovado', 'Concluido', 'Recusado'];
@@ -56,6 +56,11 @@ export function Budgets() {
         }),
     [budgets, clients, products, searchTerm, statusFilter],
   );
+
+  const approvedBudgets = budgets.filter((budget) => isApprovedBudget(budget.status));
+  const approvalRate = budgets.length > 0 ? (approvedBudgets.length / budgets.length) * 100 : 0;
+  const pendingBudgets = budgets.filter((budget) => budget.status === 'Pendente');
+  const totalApprovedRevenue = approvedBudgets.reduce((total, budget) => total + budget.price, 0);
 
   const handlePrint = () => {
     window.print();
@@ -239,8 +244,8 @@ export function Budgets() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Meus Orçamentos</h2>
-          <p className="text-slate-500">Acompanhe a aprovação, produção e fechamento dos seus pedidos.</p>
+          <h2 className="text-2xl font-bold text-slate-800">Orçamentos e histórico de vendas</h2>
+          <p className="text-slate-500">Acompanhe a aprovação, produção, fechamento e o valor comercial de cada pedido.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <div className="relative w-full md:w-64">
@@ -264,6 +269,29 @@ export function Budgets() {
               </option>
             ))}
           </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Total cadastrado</p>
+          <p className="mt-2 text-3xl font-black text-slate-900">{budgets.length}</p>
+          <p className="mt-2 text-sm text-slate-500">Todos os pedidos registrados.</p>
+        </div>
+        <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Pendentes</p>
+          <p className="mt-2 text-3xl font-black text-amber-600">{pendingBudgets.length}</p>
+          <p className="mt-2 text-sm text-slate-500">Aguardando resposta do cliente.</p>
+        </div>
+        <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Receita aprovada</p>
+          <p className="mt-2 text-3xl font-black text-emerald-600">{formatCurrency(totalApprovedRevenue)}</p>
+          <p className="mt-2 text-sm text-slate-500">Somando aprovados e concluídos.</p>
+        </div>
+        <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Taxa de aprovação</p>
+          <p className="mt-2 text-3xl font-black text-slate-900">{approvalRate.toFixed(1)}%</p>
+          <p className="mt-2 text-sm text-slate-500">Conversão comercial dos pedidos.</p>
         </div>
       </div>
 

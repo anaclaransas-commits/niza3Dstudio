@@ -4,31 +4,35 @@
  */
 
 import React from 'react';
-import { 
-  DollarSign, 
-  TrendingUp, 
-  Users, 
-  FileText, 
-  Layers,
-  Zap,
-  Weight,
-  AlertCircle,
-  ChevronRight,
-  Printer,
+import {
+  ArrowRight,
+  Calculator as CalculatorIcon,
+  Clock3,
+  FileText,
   Package,
-  Calendar,
-  CheckCircle
+  PiggyBank,
+  Receipt,
+  TrendingDown,
+  TrendingUp,
+  Users,
+  Wallet,
+  Wrench,
 } from 'lucide-react';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
-import { formatCurrency, cn, getBudgetQuantity, isApprovedBudget } from '../lib/utils';
+import {
+  buildMonthlyFinancialSeries,
+  buildRecentSales,
+  calculateBusinessMetrics,
+} from '../lib/finance';
+import { formatCurrency } from '../lib/utils';
 import { useStore } from '../store';
 import { type PageId } from './Sidebar';
 
@@ -37,334 +41,304 @@ interface DashboardProps {
 }
 
 export function Dashboard({ onNavigate }: DashboardProps) {
-  
- const senha = prompt('32162069')
+  const { budgets, clients, products, filaments, financeEntries } = useStore();
 
-  if (senha !== "1234") {
-    window.location.href = "/catalog"
-}
-	
-  const { budgets, clients, products, filaments } = useStore();
+  const metrics = calculateBusinessMetrics(budgets, financeEntries);
+  const monthlySeries = buildMonthlyFinancialSeries(budgets, financeEntries, 6);
+  const recentSales = buildRecentSales(budgets, clients, products, 5);
 
-  // Real Stats calculation
-  const approvedBudgets = budgets.filter((budget) => isApprovedBudget(budget.status));
-  const pendingBudgets = budgets.filter(b => b.status === 'Pendente');
-  
-  const totalRevenue = approvedBudgets.reduce((sum, b) => sum + b.price, 0);
-  const totalProfit = approvedBudgets.reduce((sum, b) => sum + b.profit, 0);
-  
-  const totalWeight = approvedBudgets.reduce((sum, budget) => sum + (budget.weightG * getBudgetQuantity(budget)), 0);
-  const totalPrintHours = approvedBudgets.reduce(
-    (sum, budget) => sum + (budget.printTimeHours * getBudgetQuantity(budget)),
-    0,
-  );
-  const avgMargin = approvedBudgets.length > 0 
-    ? (totalProfit / totalRevenue) * 100 
-    : 0;
-
-  // Cost breakdown for approved budgets
-  const costStats = approvedBudgets.reduce((acc, budget) => {
-    if (budget.calculation) {
-      const quantity = getBudgetQuantity(budget);
-      acc.material += (budget.calculation.unitMaterialCost || 0) * quantity;
-      acc.energy += (budget.calculation.unitEnergyCost || 0) * quantity;
-      acc.maintenance += (budget.calculation.unitFixedCost || 0) * quantity;
-    }
-    return acc;
-  }, { material: 0, energy: 0, maintenance: 0 });
-
-  const chartData = [...approvedBudgets]
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(-10)
-    .map((budget) => ({
-      name: new Date(budget.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-      profit: budget.profit,
-      revenue: budget.price,
-    }));
-
-  const stats = [
-    { label: 'Receita Total', value: totalRevenue, icon: DollarSign, trend: '+12%', color: 'blue', format: 'currency' },
-    { label: 'Lucro Líquido', value: totalProfit, icon: TrendingUp, trend: '+18%', color: 'emerald', format: 'currency' },
-    { label: 'Orçamentos', value: budgets.length, icon: FileText, trend: budgets.length > 0 ? 'Ativos' : 'Vazio', color: 'indigo', format: 'number' },
-    { label: 'Margem Média', value: `${avgMargin.toFixed(1)}%`, icon: Layers, trend: 'Saudável', color: 'amber', format: 'text' },
+  const statCards = [
+    {
+      label: 'Receita da semana',
+      value: formatCurrency(metrics.weekRevenue),
+      helper: `${metrics.pendingCount} orçamento(s) pendente(s)`,
+      icon: TrendingUp,
+      color: 'bg-emerald-50 text-emerald-600',
+    },
+    {
+      label: 'Lucro líquido do mês',
+      value: formatCurrency(metrics.monthProfit),
+      helper: `Receita ${formatCurrency(metrics.monthRevenue)}`,
+      icon: PiggyBank,
+      color: 'bg-blue-50 text-blue-600',
+    },
+    {
+      label: 'Gastos do mês',
+      value: formatCurrency(metrics.monthExpenses),
+      helper: 'Custos de produção + despesas extras',
+      icon: TrendingDown,
+      color: 'bg-rose-50 text-rose-600',
+    },
+    {
+      label: 'Ticket médio do mês',
+      value: formatCurrency(metrics.averageTicketThisMonth),
+      helper: `${metrics.monthSalesCount} venda(s) fechada(s)`,
+      icon: Wallet,
+      color: 'bg-amber-50 text-amber-600',
+    },
+    {
+      label: 'Clientes ativos no mês',
+      value: String(metrics.activeClientsThisMonth),
+      helper: `${clients.length} cliente(s) no cadastro`,
+      icon: Users,
+      color: 'bg-indigo-50 text-indigo-600',
+    },
+    {
+      label: 'Produtos no catálogo',
+      value: String(products.filter((product) => product.isPublic !== false).length),
+      helper: `${products.length} produto(s) cadastrado(s)`,
+      icon: Package,
+      color: 'bg-slate-100 text-slate-700',
+    },
   ];
 
-  const recentBudgets = [...budgets]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 4);
+  const quickActions: Array<{
+    label: string;
+    description: string;
+    page: PageId;
+    icon: typeof CalculatorIcon;
+  }> = [
+    {
+      label: 'Novo orçamento',
+      description: 'Abrir a calculadora com seus parâmetros salvos.',
+      page: 'calculator',
+      icon: CalculatorIcon,
+    },
+    {
+      label: 'Histórico de vendas',
+      description: 'Ver aprovações, produção e fechamento dos pedidos.',
+      page: 'budgets',
+      icon: FileText,
+    },
+    {
+      label: 'Financeiro',
+      description: 'Registrar gastos e acompanhar receita e lucro.',
+      page: 'reports',
+      icon: Receipt,
+    },
+    {
+      label: 'Clientes',
+      description: 'Consultar contatos e receita por cliente.',
+      page: 'clients',
+      icon: Users,
+    },
+  ];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tight">Painel de Controle</h2>
-          <p className="text-slate-500 font-medium">Gestão centralizada da sua oficina de impressão 3D.</p>
-        </div>
-        
-        <div className="flex bg-white p-1 rounded-2xl border border-slate-100 shadow-sm space-x-1">
-          <button 
-            onClick={() => onNavigate('clients')}
-            className="flex items-center px-4 py-2.5 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all active:scale-95 border border-transparent hover:border-slate-100"
-          >
-            <Users className="w-4 h-4 mr-2" /> Cliente
-          </button>
-          <button 
-            onClick={() => onNavigate('products')}
-            className="flex items-center px-4 py-2.5 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all active:scale-95 border border-transparent hover:border-slate-100"
-          >
-            <Package className="w-4 h-4 mr-2" /> Produto
-          </button>
-          <button 
-            onClick={() => onNavigate('calculator')}
-            className="flex items-center px-5 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 active:scale-95"
-          >
-            Novo Orçamento
-          </button>
-        </div>
-      </div>
-
-      {/* Primary Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, i) => (
-          <div key={i} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 group">
-            <div className="flex items-center justify-between mb-4">
-              <div className={cn(
-                "w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110",
-                stat.color === 'blue' ? "bg-blue-50 text-blue-600" :
-                stat.color === 'emerald' ? "bg-emerald-50 text-emerald-600" :
-                stat.color === 'indigo' ? "bg-indigo-50 text-indigo-600" : "bg-amber-50 text-amber-600"
-              )}>
-                <stat.icon className="w-6 h-6" />
-              </div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 group-hover:text-slate-400">
-                {stat.trend}
-              </span>
-            </div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
-            <h3 className="text-2xl font-black text-slate-800">
-              {stat.format === 'currency' ? formatCurrency(stat.value as number) : stat.value}
-            </h3>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <section className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl space-y-3">
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-blue-600">Gestão da empresa</p>
+            <h2 className="text-3xl font-black tracking-tight text-slate-900 md:text-4xl">
+              Dashboard financeiro, operacional e comercial da sua produção 3D.
+            </h2>
+            <p className="text-sm leading-6 text-slate-500 md:text-base">
+              Aqui você acompanha receita, gastos, lucro, produção acumulada, histórico de vendas e atalhos para as áreas que mais usa no dia a dia.
+            </p>
           </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {quickActions.map((action) => (
+              <button
+                key={action.page}
+                onClick={() => onNavigate(action.page)}
+                className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md"
+              >
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="rounded-2xl bg-white p-3 text-slate-700 shadow-sm">
+                    <action.icon className="h-5 w-5" />
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-slate-300" />
+                </div>
+                <p className="text-sm font-black text-slate-800">{action.label}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">{action.description}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+        {statCards.map((stat) => (
+          <article key={stat.label} className="rounded-[32px] border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="mb-5 flex items-center justify-between">
+              <div className={`rounded-2xl p-3 ${stat.color}`}>
+                <stat.icon className="h-5 w-5" />
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-300">Agora</span>
+            </div>
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">{stat.label}</p>
+            <h3 className="mt-2 text-3xl font-black text-slate-900">{stat.value}</h3>
+            <p className="mt-2 text-sm text-slate-500">{stat.helper}</p>
+          </article>
         ))}
-      </div>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Performance Chart */}
-        <div className="lg:col-span-2 bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.8fr_1fr]">
+        <article className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
+          <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <h3 className="font-black text-slate-800 text-lg uppercase tracking-tight">Histórico de Lucro</h3>
-              <p className="text-xs text-slate-400 font-bold uppercase mt-1">Desempenho financeiro dos últimos orçamentos</p>
+              <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Fluxo mensal</p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">Receita, gastos e lucro dos últimos 6 meses</h3>
             </div>
-            <div className="flex space-x-4">
-              <div className="flex items-center">
-                <div className="w-2.5 h-2.5 bg-blue-500 rounded-full mr-2"></div>
-                <span className="text-[10px] font-black text-slate-400 uppercase">Receita</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full mr-2"></div>
-                <span className="text-[10px] font-black text-slate-400 uppercase">Lucro</span>
-              </div>
+            <div className="flex flex-wrap gap-3 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-blue-500" />Receita</span>
+              <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-rose-400" />Gastos</span>
+              <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />Lucro</span>
             </div>
           </div>
-          
-          <div className="h-[300px]">
-            {chartData.length > 1 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#cbd5e1'}} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#cbd5e1'}} />
-                  <Tooltip 
-                    contentStyle={{borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '20px'}}
-                  />
-                  <Area type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
-                  <Area type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorProfit)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-slate-300 font-bold border-2 border-dashed border-slate-50 rounded-3xl">
-                Realize mais orçamentos para gerar o gráfico
-              </div>
-            )}
+
+          <div className="h-[340px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlySeries}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b', fontWeight: 700 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 700 }} />
+                <Tooltip
+                  formatter={(value: number) => formatCurrency(value)}
+                  contentStyle={{ borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgb(15 23 42 / 0.08)' }}
+                />
+                <Bar dataKey="revenue" fill="#3b82f6" radius={[8, 8, 0, 0]} maxBarSize={34} />
+                <Bar dataKey="expenses" fill="#fb7185" radius={[8, 8, 0, 0]} maxBarSize={34} />
+                <Bar dataKey="profit" fill="#10b981" radius={[8, 8, 0, 0]} maxBarSize={34} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
+        </article>
+
+        <div className="space-y-6">
+          <article className="rounded-[36px] border border-slate-100 bg-slate-900 p-8 text-white shadow-2xl shadow-slate-200">
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Operação acumulada</p>
+            <div className="mt-8 space-y-5">
+              <div className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
+                <span className="flex items-center gap-2 text-sm text-slate-300"><Package className="h-4 w-4" />Peças vendidas</span>
+                <strong className="text-lg font-black text-white">{metrics.totalPiecesSold}</strong>
+              </div>
+              <div className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
+                <span className="flex items-center gap-2 text-sm text-slate-300"><Clock3 className="h-4 w-4" />Horas produzidas</span>
+                <strong className="text-lg font-black text-white">{metrics.totalPrintHours.toFixed(1)}h</strong>
+              </div>
+              <div className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
+                <span className="flex items-center gap-2 text-sm text-slate-300"><Wrench className="h-4 w-4" />Filamentos cadastrados</span>
+                <strong className="text-lg font-black text-white">{filaments.length}</strong>
+              </div>
+              <div className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
+                <span className="flex items-center gap-2 text-sm text-slate-300"><Receipt className="h-4 w-4" />Movimentações extras</span>
+                <strong className="text-lg font-black text-white">{financeEntries.length}</strong>
+              </div>
+            </div>
+          </article>
+
+          <article className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Leitura rápida</p>
+            <div className="mt-6 grid grid-cols-2 gap-4">
+              <div className="rounded-3xl bg-slate-50 p-4">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Receita total</p>
+                <p className="mt-2 text-xl font-black text-slate-900">{formatCurrency(metrics.totalRevenue)}</p>
+              </div>
+              <div className="rounded-3xl bg-slate-50 p-4">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Lucro total</p>
+                <p className="mt-2 text-xl font-black text-emerald-600">{formatCurrency(metrics.totalProfit)}</p>
+              </div>
+              <div className="rounded-3xl bg-slate-50 p-4">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Orçamentos</p>
+                <p className="mt-2 text-xl font-black text-slate-900">{budgets.length}</p>
+              </div>
+              <div className="rounded-3xl bg-slate-50 p-4">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Cadastros</p>
+                <p className="mt-2 text-xl font-black text-slate-900">{clients.length + products.length}</p>
+              </div>
+            </div>
+          </article>
         </div>
+      </section>
 
-        {/* Planilha de Custos / Cost Sheet */}
-        <div className="bg-slate-900 text-white p-8 rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col h-full ring-1 ring-white/10">
-          <div className="relative z-10">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] mb-8 text-slate-400">Distribuição de Custos</h3>
-            
-            <div className="space-y-6 mb-10">
-              <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors">
-                <div className="flex items-center">
-                  <div className="p-2 bg-amber-500/20 text-amber-400 rounded-lg mr-3">
-                    <Package className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">Materiais</p>
-                    <p className="text-sm font-bold">{formatCurrency(costStats.material)}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-black text-amber-500">{((costStats.material / (totalRevenue || 1)) * 100).toFixed(0)}%</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors">
-                <div className="flex items-center">
-                  <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg mr-3">
-                    <Zap className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">Energia</p>
-                    <p className="text-sm font-bold">{formatCurrency(costStats.energy)}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-black text-blue-500">{((costStats.energy / (totalRevenue || 1)) * 100).toFixed(0)}%</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors">
-                <div className="flex items-center">
-                  <div className="p-2 bg-purple-500/20 text-purple-400 rounded-lg mr-3">
-                    <Printer className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">Manutenção</p>
-                    <p className="text-sm font-bold">{formatCurrency(costStats.maintenance)}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-black text-purple-500">{((costStats.maintenance / (totalRevenue || 1)) * 100).toFixed(0)}%</p>
-                </div>
-              </div>
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.5fr_1fr]">
+        <article className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Histórico de vendas</p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">Últimas vendas aprovadas e concluídas</h3>
             </div>
-
-            <div className="mt-8 pt-8 border-t border-white/10">
-              <div className="flex justify-between items-end mb-6">
-                <div>
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Carga Horária Total</p>
-                  <p className="text-3xl font-black text-white">{totalPrintHours}h</p>
-                  <p className="text-xs font-bold text-slate-500 mt-1">{totalWeight}g produzidos</p>
-                </div>
-                <Calendar className="w-10 h-10 text-white/10" />
-              </div>
-            </div>
-          </div>
-          <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-blue-600/20 rounded-full blur-3xl"></div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Activity */}
-        <div className="lg:col-span-1 bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm flex flex-col h-full">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="font-black text-slate-800 text-lg uppercase tracking-tight">Orçamentos Recentes</h3>
-            <button 
+            <button
               onClick={() => onNavigate('budgets')}
-              className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-colors"
+              className="rounded-full bg-slate-900 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-white transition-colors hover:bg-slate-800"
             >
-              Ver Tudo
+              Abrir pedidos
             </button>
           </div>
-          <div className="space-y-5 flex-1">
-            {recentBudgets.map((budget, index) => {
-              const client = clients.find(c => c.id === budget.clientId);
-              const product = products.find(p => p.id === budget.productId);
-              return (
-                <div key={budget.id || index} className="flex items-center justify-between group cursor-pointer">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all shadow-sm">
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-black text-slate-800 leading-none mb-1 line-clamp-1">{client?.name || 'Cliente Direto'}</p>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight italic line-clamp-1">
-                        {product?.name || 'Item Avulso'} • {new Date(budget.date).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs font-black text-slate-900">{formatCurrency(budget.price || 0)}</p>
-                    <span className={cn(
-                      "text-[8px] font-black uppercase px-2 py-0.5 rounded-full",
-                      budget.status === 'Aprovado' ? "bg-emerald-50 text-emerald-600" :
-                      budget.status === 'Concluido' ? "bg-blue-50 text-blue-600" : "bg-amber-50 text-amber-600"
-                    )}>
-                      {budget.status}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-            {budgets.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-full text-slate-300 py-10">
-                <AlertCircle className="w-8 h-8 mb-2 opacity-20" />
-                <p className="text-xs font-bold uppercase tracking-widest leading-relaxed text-center">Nenhuma movimentação<br/>recente registrada</p>
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* Quick Inventory Insights */}
-        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm relative overflow-hidden group">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Status dos Insumos</h4>
-            <div className="flex items-end justify-between mb-4">
-              <div>
-                <p className="text-xs font-bold text-slate-500 mb-1">Materiais Cadastrados</p>
-                <p className="text-3xl font-black text-slate-800">{filaments.length}</p>
-              </div>
-              <div className="w-16 h-16 bg-blue-50 rounded-3xl flex items-center justify-center text-blue-500">
-                <Weight className="w-8 h-8" />
-              </div>
+          {recentSales.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left">
+                <thead>
+                  <tr className="border-b border-slate-100 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
+                    <th className="pb-4">Cliente</th>
+                    <th className="pb-4">Produto</th>
+                    <th className="pb-4">Data</th>
+                    <th className="pb-4 text-center">Qtd</th>
+                    <th className="pb-4 text-right">Valor</th>
+                    <th className="pb-4 text-right">Lucro</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {recentSales.map((sale) => (
+                    <tr key={sale.id} className="text-sm text-slate-600">
+                      <td className="py-4 font-bold text-slate-800">{sale.clientName}</td>
+                      <td className="py-4">{sale.productName}</td>
+                      <td className="py-4">{new Date(sale.date).toLocaleDateString('pt-BR')}</td>
+                      <td className="py-4 text-center font-bold text-slate-700">{sale.quantity}</td>
+                      <td className="py-4 text-right font-bold text-slate-900">{formatCurrency(sale.price)}</td>
+                      <td className="py-4 text-right font-bold text-emerald-600">{formatCurrency(sale.profit)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <button 
+          ) : (
+            <div className="rounded-[32px] border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center text-sm font-medium text-slate-400">
+              Ainda não existem vendas aprovadas ou concluídas para alimentar o histórico.
+            </div>
+          )}
+        </article>
+
+        <article className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Atalhos estratégicos</p>
+          <div className="mt-6 space-y-4">
+            <button
               onClick={() => onNavigate('registration')}
-              className="w-full py-3 bg-slate-50 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-colors flex items-center justify-center"
+              className="flex w-full items-center justify-between rounded-3xl border border-slate-200 px-5 py-4 text-left transition-colors hover:bg-slate-50"
             >
-              Estoque <ChevronRight className="w-3 h-3 ml-1" />
+              <div>
+                <p className="text-sm font-black text-slate-800">Cadastros e estoque</p>
+                <p className="mt-1 text-xs text-slate-500">Impressoras, filamentos, insumos e canais de venda.</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-slate-300" />
+            </button>
+            <button
+              onClick={() => onNavigate('products')}
+              className="flex w-full items-center justify-between rounded-3xl border border-slate-200 px-5 py-4 text-left transition-colors hover:bg-slate-50"
+            >
+              <div>
+                <p className="text-sm font-black text-slate-800">Produtos e catálogo</p>
+                <p className="mt-1 text-xs text-slate-500">Editar produtos, imagens, visibilidade e coleção pública.</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-slate-300" />
+            </button>
+            <button
+              onClick={() => onNavigate('catalog')}
+              className="flex w-full items-center justify-between rounded-3xl border border-slate-200 px-5 py-4 text-left transition-colors hover:bg-slate-50"
+            >
+              <div>
+                <p className="text-sm font-black text-slate-800">Página do catálogo</p>
+                <p className="mt-1 text-xs text-slate-500">Ver o link público e validar o que o cliente enxerga.</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-slate-300" />
             </button>
           </div>
-
-          <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm relative overflow-hidden group">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Alertas Operacionais</h4>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between text-xs font-bold">
-                <span className="text-amber-500 flex items-center">
-                  <AlertCircle className="w-3 h-3 mr-1.5" /> Pendentes
-                </span>
-                <span className="text-slate-800">{pendingBudgets.length} orç.</span>
-              </div>
-              <div className="flex items-center justify-between text-xs font-bold">
-                <span className="text-blue-500 flex items-center">
-                  <Printer className="w-3 h-3 mr-1.5" /> Em Produção
-                </span>
-                <span className="text-slate-800">{budgets.filter(b => b.status === 'Aprovado').length} un</span>
-              </div>
-              <div className="flex items-center justify-between text-xs font-bold">
-                <span className="text-emerald-500 flex items-center">
-                  <CheckCircle className="w-3 h-3 mr-1.5" /> Concluídos
-                </span>
-                <span className="text-slate-800">{budgets.filter(b => b.status === 'Concluido').length} un</span>
-              </div>
-            </div>
-            <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-full blur-3xl -mr-12 -mt-12"></div>
-          </div>
-        </div>
-      </div>
+        </article>
+      </section>
     </div>
   );
 }

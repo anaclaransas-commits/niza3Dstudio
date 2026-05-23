@@ -29,22 +29,32 @@ const DEFAULT_CEMIG_ENERGY_PRICE_KWH = '0.85858';
 const DEFAULT_MANUAL_POWER_CONSUMPTION_W = '200';
 
 export function Calculator() {
-  const { filaments, printers, clients, addBudget, products } = useStore();
+  const {
+    filaments,
+    printers,
+    clients,
+    addBudget,
+    products,
+    calculatorDefaults,
+    updateCalculatorDefaults,
+  } = useStore();
   
-  const [selectedFilamentId, setSelectedFilamentId] = useState('');
-  const [selectedPrinterId, setSelectedPrinterId] = useState('');
+  const [selectedFilamentId, setSelectedFilamentId] = useState(calculatorDefaults.selectedFilamentId);
+  const [selectedPrinterId, setSelectedPrinterId] = useState(calculatorDefaults.selectedPrinterId);
   const [selectedClientId, setSelectedClientId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
-  
-  const [manualFilamentPrice, setManualFilamentPrice] = useState('120');
-  const [manualPowerConsumptionW, setManualPowerConsumptionW] = useState(DEFAULT_MANUAL_POWER_CONSUMPTION_W);
+
+  const [manualFilamentPrice, setManualFilamentPrice] = useState(calculatorDefaults.manualFilamentPrice || '120');
+  const [manualPowerConsumptionW, setManualPowerConsumptionW] = useState(
+    calculatorDefaults.manualPowerConsumptionW || DEFAULT_MANUAL_POWER_CONSUMPTION_W,
+  );
   const [weightG, setWeightG] = useState('50');
   const [printTimeHours, setPrintTimeHours] = useState('5');
-  const [energyPriceKWh, setEnergyPriceKWh] = useState(DEFAULT_CEMIG_ENERGY_PRICE_KWH);
-  const [laborCostFixed, setLaborCostFixed] = useState('0');
-  const [fixedCostPerPiece, setFixedCostPerPiece] = useState('0');
-  const [margin, setMargin] = useState('30');
-  const [quantity, setQuantity] = useState('1');
+  const [energyPriceKWh, setEnergyPriceKWh] = useState(calculatorDefaults.energyPriceKWh || DEFAULT_CEMIG_ENERGY_PRICE_KWH);
+  const [laborCostFixed, setLaborCostFixed] = useState(calculatorDefaults.laborCostFixed || '0');
+  const [fixedCostPerPiece, setFixedCostPerPiece] = useState(calculatorDefaults.fixedCostPerPiece || '0');
+  const [margin, setMargin] = useState(calculatorDefaults.margin || '30');
+  const [quantity, setQuantity] = useState(calculatorDefaults.quantity || '1');
 
   const [result, setResult] = useState<CalculationResult | null>(null);
 
@@ -58,6 +68,30 @@ export function Calculator() {
       setWeightG(selectedProduct.defaultWeightG.toString());
     }
   }, [selectedProduct]);
+
+  useEffect(() => {
+    updateCalculatorDefaults({
+      selectedFilamentId,
+      selectedPrinterId,
+      manualFilamentPrice,
+      manualPowerConsumptionW,
+      energyPriceKWh,
+      laborCostFixed,
+      fixedCostPerPiece,
+      margin,
+      quantity,
+    });
+  }, [
+    selectedFilamentId,
+    selectedPrinterId,
+    manualFilamentPrice,
+    manualPowerConsumptionW,
+    energyPriceKWh,
+    laborCostFixed,
+    fixedCostPerPiece,
+    margin,
+    quantity,
+  ]);
 
   useEffect(() => {
     const calc = calculate3DPrintCost({
@@ -119,6 +153,22 @@ export function Calculator() {
     alert('Orçamento de lote salvo com sucesso!');
   };
 
+  const handleResetDefaults = () => {
+    setSelectedFilamentId('');
+    setSelectedPrinterId('');
+    setSelectedClientId('');
+    setSelectedProductId('');
+    setManualFilamentPrice('120');
+    setManualPowerConsumptionW(DEFAULT_MANUAL_POWER_CONSUMPTION_W);
+    setWeightG('50');
+    setPrintTimeHours('5');
+    setEnergyPriceKWh(DEFAULT_CEMIG_ENERGY_PRICE_KWH);
+    setLaborCostFixed('0');
+    setFixedCostPerPiece('0');
+    setMargin('30');
+    setQuantity('1');
+  };
+
   const normalizedPowerConsumptionW = selectedPrinter
     ? selectedPrinter.powerConsumption
     : parseLocalizedNumber(manualPowerConsumptionW, 0);
@@ -127,18 +177,34 @@ export function Calculator() {
       ? (normalizedPowerConsumptionW / 1000) * parseLocalizedNumber(energyPriceKWh, 0)
       : 0;
 
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-2 space-y-6">
         <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden">
-          <div className="flex items-center space-x-3 mb-8">
-            <div className="p-3 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-100">
-              <CalcIcon className="w-6 h-6" />
+          <div className="flex flex-col gap-4 mb-8 md:flex-row md:items-start md:justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-100">
+                <CalcIcon className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-black text-slate-800 text-xl">Calculadora Inteligente</h3>
+                <p className="text-slate-500 text-sm">Use cadastros existentes ou calcule manualmente, sem precisar cadastrar nada.</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-black text-slate-800 text-xl">Calculadora Inteligente</h3>
-              <p className="text-slate-500 text-sm">Use cadastros existentes ou calcule manualmente, sem precisar cadastrar nada.</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-bold text-blue-700">
+                Lembra material, impressora, margem e custos
+              </span>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600">
+                Peso e tempo continuam livres para cada peça
+              </span>
+              <button
+                type="button"
+                onClick={handleResetDefaults}
+                className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-bold text-slate-600 transition-colors hover:bg-slate-50"
+              >
+                Restaurar padrões
+              </button>
             </div>
           </div>
 
@@ -289,7 +355,7 @@ export function Calculator() {
                 className="w-full p-3 border border-slate-200 rounded-2xl text-sm font-bold"
               />
               <p className="text-xs text-slate-500">
-                Padrão CEMIG B1 residencial, bandeira verde, antes de impostos. Vigente de 28/05/2025 a 27/05/2026.
+                Valor editável. Use a tarifa da sua conta de energia ou mantenha a referência padrão para orçamentos rápidos.
               </p>
             </div>
             <div className="space-y-2">
