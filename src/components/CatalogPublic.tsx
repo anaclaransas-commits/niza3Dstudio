@@ -421,10 +421,11 @@ function HeroHeader({
       />
 
    
-  </div>
-</div>
+      </div>
+   </div>
 
 </div>
+
    </header>
 );
 }
