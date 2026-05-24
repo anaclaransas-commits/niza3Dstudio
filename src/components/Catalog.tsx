@@ -359,10 +359,7 @@ export function Catalog() {
   const previewHighlights = [highlightOne, highlightTwo, highlightThree].filter(Boolean);
   const previewPrimaryUrl = primaryCtaUrl || (whatsapp ? `https://wa.me/${whatsapp}` : email ? `mailto:${email}` : undefined);
   const previewSecondaryUrl = secondaryCtaUrl || (instagram ? `https://instagram.com/${instagram.replace('@', '')}` : email ? `mailto:${email}` : undefined);
-  const publicCatalogPath =
-    typeof window !== 'undefined' && window.location.port === '3000'
-      ? '/catalogo.html'
-      : '/catalogo';
+  const publicCatalogPath = '/catalogo.html';
   const publicCatalogUrl = typeof window === 'undefined' ? publicCatalogPath : `${window.location.origin}${publicCatalogPath}`;
 
   const handlePrint = () => window.print();
@@ -716,7 +713,7 @@ export function Catalog() {
         <div className="px-8 py-6 text-white text-center" style={{ backgroundColor: primaryColor }}>
           <p className="text-sm font-bold opacity-90">{businessName}</p>
           {footerNote && <p className="text-xs opacity-60 mt-1">{footerNote}</p>}
-          <p className="text-xs opacity-40 mt-2">Catálogo gerado com 3DPrint Master</p>
+          <p className="text-xs opacity-40 mt-2">Catálogo digital {businessName}</p>
         </div>
       </div>
 

@@ -8,7 +8,7 @@ const CATALOG_UPLOADS_DIR = path.join(UPLOADS_ROOT_DIR, 'catalog');
 const CATALOG_FILE_PATH = path.join(DATA_DIR, 'catalog.json');
 
 const DEFAULT_CATALOG_SETTINGS = {
-  businessName: '3DPrint Master',
+  businessName: 'Niza3D Studio',
   tagline: 'Impressão 3D com qualidade e precisão',
   primaryColor: '#1e293b',
   accentColor: '#3b82f6',

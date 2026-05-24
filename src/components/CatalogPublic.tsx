@@ -18,7 +18,7 @@ function readLS<T>(key: string, fallback: T): T {
 }
 
 const DEFAULT_SETTINGS: CatalogSettings = {
-  businessName: '3DPrint Master',
+  businessName: 'Niza3D Studio',
   tagline: 'Impressão 3D com qualidade e precisão',
   primaryColor: '#0f172a',
   accentColor: '#3b82f6',

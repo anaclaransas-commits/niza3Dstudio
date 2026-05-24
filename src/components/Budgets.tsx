@@ -30,7 +30,7 @@ const statusActions: Array<{
 ];
 
 export function Budgets() {
-  const { budgets, clients, products, updateBudgetStatus, deleteBudget } = useStore();
+  const { budgets, clients, products, updateBudgetStatus, deleteBudget, catalogSettings } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBudgetId, setSelectedBudgetId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'Todos' | BudgetStatus>('Todos');
@@ -148,9 +148,10 @@ export function Budgets() {
               <p className="text-slate-500 font-medium">Data: {new Date(selectedBudget.date).toLocaleDateString('pt-BR')}</p>
             </div>
             <div className="text-right">
-              <h2 className="text-xl font-bold text-blue-600">3DPrint Master Manager</h2>
-              <p className="text-sm text-slate-500">contato@3dprintmaster.com</p>
-              <p className="text-sm text-slate-500">São Paulo, SP</p>
+              <h2 className="text-xl font-bold text-blue-600">{catalogSettings.businessName}</h2>
+              {catalogSettings.email && (
+                <p className="text-sm text-slate-500">{catalogSettings.email}</p>
+              )}
             </div>
           </div>
 

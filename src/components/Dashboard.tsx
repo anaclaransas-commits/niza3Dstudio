@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ArrowRight,
   Calculator as CalculatorIcon,
@@ -31,63 +31,86 @@ import {
   buildMonthlyFinancialSeries,
   buildRecentSales,
   calculateBusinessMetrics,
+  calculateRangeSummary,
 } from '../lib/finance';
 import { formatCurrency } from '../lib/utils';
 import { useStore } from '../store';
+import type { AnalyticsRange } from '../types';
 import { type PageId } from './Sidebar';
 
 interface DashboardProps {
   onNavigate: (page: PageId) => void;
 }
 
+const RANGE_OPTIONS: Array<{ value: AnalyticsRange; label: string }> = [
+  { value: '7d', label: '7 dias' },
+  { value: '30d', label: '30 dias' },
+  { value: '90d', label: '90 dias' },
+  { value: '12m', label: '12 meses' },
+  { value: 'all', label: 'Tudo' },
+];
+
 export function Dashboard({ onNavigate }: DashboardProps) {
   const { budgets, clients, products, filaments, financeEntries } = useStore();
+  const [selectedRange, setSelectedRange] = useState<AnalyticsRange>('30d');
 
   const metrics = calculateBusinessMetrics(budgets, financeEntries);
-  const monthlySeries = buildMonthlyFinancialSeries(budgets, financeEntries, 6);
-  const recentSales = buildRecentSales(budgets, clients, products, 5);
+  const rangeSummary = useMemo(
+    () => calculateRangeSummary(budgets, financeEntries, selectedRange),
+    [budgets, financeEntries, selectedRange],
+  );
+  const chartMonths = selectedRange === '12m' || selectedRange === 'all' ? 12 : 6;
+  const monthlySeries = useMemo(
+    () => buildMonthlyFinancialSeries(budgets, financeEntries, chartMonths),
+    [budgets, financeEntries, chartMonths],
+  );
+  const recentSales = useMemo(
+    () => buildRecentSales(budgets, clients, products, 5, selectedRange),
+    [budgets, clients, products, selectedRange],
+  );
+  const publicProductsCount = products.filter((product) => product.isPublic !== false).length;
 
   const statCards = [
     {
-      label: 'Receita da semana',
-      value: formatCurrency(metrics.weekRevenue),
-      helper: `${metrics.pendingCount} orçamento(s) pendente(s)`,
+      label: 'Receita do período',
+      value: formatCurrency(rangeSummary.revenue),
+      helper: `${rangeSummary.pendingCount} orçamento(s) pendente(s) no período`,
       icon: TrendingUp,
       color: 'bg-emerald-50 text-emerald-600',
     },
     {
-      label: 'Lucro líquido do mês',
-      value: formatCurrency(metrics.monthProfit),
-      helper: `Receita ${formatCurrency(metrics.monthRevenue)}`,
+      label: 'Lucro do período',
+      value: formatCurrency(rangeSummary.profit),
+      helper: `Receita ${formatCurrency(rangeSummary.revenue)}`,
       icon: PiggyBank,
       color: 'bg-blue-50 text-blue-600',
     },
     {
-      label: 'Gastos do mês',
-      value: formatCurrency(metrics.monthExpenses),
-      helper: 'Custos de produção + despesas extras',
+      label: 'Gastos do período',
+      value: formatCurrency(rangeSummary.expenses),
+      helper: 'Produção + despesas extras',
       icon: TrendingDown,
       color: 'bg-rose-50 text-rose-600',
     },
     {
-      label: 'Ticket médio do mês',
-      value: formatCurrency(metrics.averageTicketThisMonth),
-      helper: `${metrics.monthSalesCount} venda(s) fechada(s)`,
+      label: 'Ticket médio do período',
+      value: formatCurrency(rangeSummary.averageTicket),
+      helper: `${rangeSummary.salesCount} venda(s) fechada(s)`,
       icon: Wallet,
       color: 'bg-amber-50 text-amber-600',
     },
     {
-      label: 'Clientes ativos no mês',
-      value: String(metrics.activeClientsThisMonth),
+      label: 'Clientes ativos no período',
+      value: String(rangeSummary.activeClients),
       helper: `${clients.length} cliente(s) no cadastro`,
       icon: Users,
       color: 'bg-indigo-50 text-indigo-600',
     },
     {
-      label: 'Produtos no catálogo',
-      value: String(products.filter((product) => product.isPublic !== false).length),
-      helper: `${products.length} produto(s) cadastrado(s)`,
-      icon: Package,
+      label: 'Despesas fixas mensais',
+      value: formatCurrency(rangeSummary.recurringExpensesMonthly),
+      helper: `${rangeSummary.extraEntriesCount} lançamento(s) extras no período`,
+      icon: Receipt,
       color: 'bg-slate-100 text-slate-700',
     },
   ];
@@ -134,8 +157,19 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               Dashboard financeiro, operacional e comercial da sua produção 3D.
             </h2>
             <p className="text-sm leading-6 text-slate-500 md:text-base">
-              Aqui você acompanha receita, gastos, lucro, produção acumulada, histórico de vendas e atalhos para as áreas que mais usa no dia a dia.
+              Aqui você acompanha receita, gastos, lucro, despesas fixas mensais, produção acumulada, histórico de vendas e atalhos para as áreas que mais usa no dia a dia.
             </p>
+            <div className="flex flex-wrap gap-2 pt-2">
+              {RANGE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setSelectedRange(option.value)}
+                  className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.2em] transition-colors ${selectedRange === option.value ? 'bg-slate-900 text-white' : 'border border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -180,7 +214,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Fluxo mensal</p>
-              <h3 className="mt-2 text-2xl font-black text-slate-900">Receita, gastos e lucro dos últimos 6 meses</h3>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">Receita, gastos e lucro dos últimos {chartMonths} meses</h3>
             </div>
             <div className="flex flex-wrap gap-3 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
               <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-blue-500" />Receita</span>
@@ -227,6 +261,10 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                 <span className="flex items-center gap-2 text-sm text-slate-300"><Receipt className="h-4 w-4" />Movimentações extras</span>
                 <strong className="text-lg font-black text-white">{financeEntries.length}</strong>
               </div>
+              <div className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
+                <span className="flex items-center gap-2 text-sm text-slate-300"><Package className="h-4 w-4" />Produtos no catálogo</span>
+                <strong className="text-lg font-black text-white">{publicProductsCount}</strong>
+              </div>
             </div>
           </article>
 
@@ -259,7 +297,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           <div className="mb-6 flex items-center justify-between gap-4">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Histórico de vendas</p>
-              <h3 className="mt-2 text-2xl font-black text-slate-900">Últimas vendas aprovadas e concluídas</h3>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">Últimas vendas aprovadas no período selecionado</h3>
             </div>
             <button
               onClick={() => onNavigate('budgets')}

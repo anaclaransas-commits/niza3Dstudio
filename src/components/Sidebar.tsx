@@ -56,7 +56,7 @@ export function Sidebar({ activePage, onPageChange }: SidebarProps) {
         <div className="flex flex-col h-full">
           <div className="p-6">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-              3DPrint Master
+              Niza3D Studio
             </h1>
             <p className="text-slate-400 text-xs mt-1">Gestão Inteligente</p>
           </div>

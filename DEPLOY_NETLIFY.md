@@ -1,4 +1,4 @@
-# Deploy no Netlify - 3DPrint Master Manager
+# Deploy no Netlify - Niza3D Studio Manager
 
 ## Pré-requisitos
 - Conta no Netlify

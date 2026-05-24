@@ -48,7 +48,7 @@ const STORAGE_KEYS = {
 } as const;
 
 const defaultCatalogSettings: CatalogSettings = {
-  businessName: '3DPrint Master',
+  businessName: 'Niza3D Studio',
   tagline: 'Impressão 3D com qualidade e precisão',
   primaryColor: '#1e293b',
   accentColor: '#3b82f6',
@@ -339,7 +339,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   };
 
   const addFinanceEntry = (data: Omit<FinanceEntry, 'id'>) => {
-    const newEntry = { ...data, id: uuidv4() };
+    const newEntry = {
+      ...data,
+      id: uuidv4(),
+      recurrence: data.recurrence ?? 'Unica',
+    };
     setFinanceEntries((currentEntries) => [newEntry, ...currentEntries]);
     return newEntry;
   };

@@ -111,7 +111,10 @@ export interface CalculatorDefaults {
   quantity: string;
 }
 
+export type AnalyticsRange = "7d" | "30d" | "90d" | "12m" | "all";
+
 export type FinanceEntryType = "Receita" | "Despesa";
+export type FinanceEntryRecurrence = "Unica" | "Mensal";
 
 export interface FinanceEntry {
   id: string;
@@ -120,6 +123,7 @@ export interface FinanceEntry {
   type: FinanceEntryType;
   amount: number;
   date: string;
+  recurrence?: FinanceEntryRecurrence;
   notes?: string;
 }
 

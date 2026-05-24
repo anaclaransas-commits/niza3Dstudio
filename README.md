@@ -1,4 +1,4 @@
-# 3DPrint Master Manager
+# Niza3D Studio Manager
 
 Aplicacao web para gestao de operacoes de impressao 3D, com foco em:
 
