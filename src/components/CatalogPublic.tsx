@@ -108,18 +108,38 @@ function WAButton({ phone }: { phone: string }) {
   if (!phone) return null;
   return (
     <a
-      href={`https://wa.me/${phone}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-5 py-3 rounded-full shadow-2xl text-white font-bold text-sm transition-transform hover:scale-105 active:scale-95"
-      style={{ backgroundColor: '#25d366' }}
-    >
-      <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-        <path d="M12 0C5.373 0 0 5.373 0 12c0 2.135.561 4.14 1.535 5.874L.057 23.996l6.305-1.654A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.002-1.366l-.36-.213-3.733.979 1-3.638-.234-.374A9.818 9.818 0 1112 21.818z"/>
-      </svg>
-      Falar pelo WhatsApp
-    </a>
+  href={`https://wa.me/${phone}`}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="
+    fixed bottom-6 right-6 z-50
+    flex items-center gap-3
+    px-6 py-4
+    rounded-full
+    bg-[#7d8a52]
+    hover:bg-[#8f9b61]
+    text-white
+    font-semibold
+    shadow-[0_10px_40px_rgba(0,0,0,0.35)]
+    backdrop-blur-md
+    border border-[#b9c48a33]
+    transition-all duration-300
+    hover:scale-105
+    active:scale-95
+  "
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M20.52 3.48A11.82 11.82 0 0012.04 0C5.5 0 .18 5.32.18 11.86c0 2.09.55 4.14 1.59 5.94L0 24l6.38-1.67a11.82 11.82 0 005.66 1.44h.01c6.54 0 11.86-5.32 11.86-11.86 0-3.17-1.24-6.15-3.39-8.43zM12.05 21.7h-.01a9.8 9.8 0 01-4.99-1.37l-.36-.21-3.79.99 1.01-3.69-.24-.38a9.77 9.77 0 01-1.5-5.18c0-5.42 4.41-9.83 9.84-9.83 2.63 0 5.1 1.02 6.95 2.88a9.76 9.76 0 012.88 6.95c0 5.42-4.41 9.84-9.79 9.84zm5.39-7.36c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15s-.77.97-.94 1.17c-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.47-.88-.79-1.47-1.76-1.64-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.5h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.89 1.22 3.09c.15.2 2.1 3.21 5.1 4.5.71.31 1.27.5 1.7.64.71.23 1.36.2 1.87.12.57-.08 1.77-.72 2.02-1.42.25-.69.25-1.29.17-1.42-.08-.13-.27-.2-.57-.35z" />
+  </svg>
+
+  <span>Fale no WhatsApp</span>
+</a>
   );
 }
 
@@ -271,26 +291,145 @@ function HeroHeader({
 
   return (
     <header
-      style={{
-        background: coverImageUrl
-          ? `linear-gradient(120deg, ${primary}ee 0%, ${accent}cc 58%, ${primary}f2 100%), url(${coverImageUrl}) center/cover`
-          : `linear-gradient(135deg, ${primary} 0%, ${accent} 100%)`,
-      }}
-      className="relative overflow-hidden"
-    >
-      {/* decorative circles */}
-      <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full opacity-10" style={{ backgroundColor: '#ffffff' }} />
-      <div className="absolute -bottom-10 -left-10 w-64 h-64 rounded-full opacity-10" style={{ backgroundColor: '#ffffff' }} />
+<div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#8a9461]/10 rounded-full blur-3xl" />
+<div className="absolute bottom-0 left-0 w-[350px] h-[350px] bg-[#c6b98f]/10 rounded-full blur-3xl" />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-16 flex flex-col md:flex-row items-center md:items-start gap-8">
-        {/* Logo / initials */}
-        {logoUrl ? (
-          <img src={logoUrl} alt="logo" className="w-24 h-24 rounded-3xl object-contain bg-white/10 p-2 shadow-xl flex-shrink-0" />
-        ) : (
-          <div className="w-24 h-24 rounded-3xl bg-white/20 flex items-center justify-center text-white font-black text-3xl shadow-xl flex-shrink-0">
-            {businessName.slice(0, 2).toUpperCase()}
-          </div>
-        )}
+<div className="relative z-10 max-w-7xl mx-auto px-6 py-24 flex flex-col lg:flex-row items-center justify-between gap-14">
+
+  {/* LEFT SIDE */}
+  <div className="max-w-2xl">
+
+    {/* LOGO */}
+    {logoUrl && (
+      <div className="mb-8">
+        <img
+          src={logoUrl}
+          alt="Logo"
+          className="
+            h-24
+            object-contain
+            drop-shadow-2xl
+          "
+        />
+      </div>
+    )}
+
+    {/* TITLE */}
+    <h1 className="
+      text-5xl
+      md:text-7xl
+      font-black
+      leading-[0.95]
+      tracking-tight
+      text-white
+    ">
+      Impressão 3D
+      <span className="block text-[#b7c58b]">
+        Premium
+      </span>
+    </h1>
+
+    {/* DESCRIPTION */}
+    <p className="
+      mt-8
+      text-lg
+      md:text-xl
+      text-[#d8d5ca]
+      leading-relaxed
+      max-w-xl
+    ">
+      Produtos personalizados, decoração, organização,
+      presentes e soluções criativas produzidas com
+      acabamento profissional e design moderno.
+    </p>
+
+    {/* BUTTONS */}
+    <div className="flex flex-wrap gap-4 mt-10">
+
+      <a
+        href={`https://wa.me/${phone}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="
+          px-7 py-4
+          rounded-2xl
+          bg-[#8a9461]
+          hover:bg-[#9ca872]
+          text-white
+          font-bold
+          shadow-2xl
+          transition-all
+          duration-300
+          hover:scale-105
+        "
+      >
+        Solicitar Orçamento
+      </a>
+
+      <a
+        href="#produtos"
+        className="
+          px-7 py-4
+          rounded-2xl
+          border border-white/10
+          bg-white/5
+          backdrop-blur-md
+          text-white
+          font-semibold
+          hover:bg-white/10
+          transition-all
+        "
+      >
+        Ver Catálogo
+      </a>
+
+    </div>
+  </div>
+
+  {/* RIGHT SIDE */}
+  <div className="relative">
+
+    <div className="
+      absolute
+      inset-0
+      bg-[#8a9461]/20
+      blur-3xl
+      rounded-full
+    " />
+
+    <div className="
+      relative
+      bg-white/5
+      backdrop-blur-xl
+      border border-white/10
+      rounded-[32px]
+      p-6
+      shadow-[0_20px_80px_rgba(0,0,0,0.45)]
+    ">
+
+      <img
+        src={coverImageUrl || logoUrl}
+        alt="Preview"
+        className="
+          w-[420px]
+          max-w-full
+          rounded-2xl
+          object-cover
+        "
+      />
+
+    </div>
+  </div>
+</div>
+  className="relative overflow-hidden bg-[#1d2116]"
+  style={{
+    backgroundImage: coverImageUrl
+      ? `linear-gradient(to right, rgba(15,15,10,0.96), rgba(29,33,22,0.88)), url(${coverImageUrl})`
+      : `linear-gradient(to right, #11140d, #2a2f1f)`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+  }}
+>
 
         <div className="text-center md:text-left">
           <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">{businessName}</h1>
