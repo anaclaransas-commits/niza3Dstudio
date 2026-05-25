@@ -359,7 +359,8 @@ export function Catalog() {
   const previewHighlights = [highlightOne, highlightTwo, highlightThree].filter(Boolean);
   const previewPrimaryUrl = primaryCtaUrl || (whatsapp ? `https://wa.me/${whatsapp}` : email ? `mailto:${email}` : undefined);
   const previewSecondaryUrl = secondaryCtaUrl || (instagram ? `https://instagram.com/${instagram.replace('@', '')}` : email ? `mailto:${email}` : undefined);
-  const publicCatalogPath = '/catalogo.html';
+  const isLocalPreview = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  const publicCatalogPath = isLocalPreview ? '/catalogo.html' : '/catalogo';
   const publicCatalogUrl = typeof window === 'undefined' ? publicCatalogPath : `${window.location.origin}${publicCatalogPath}`;
 
   const handlePrint = () => window.print();

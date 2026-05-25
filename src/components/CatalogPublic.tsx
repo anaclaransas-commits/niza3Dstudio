@@ -19,29 +19,29 @@ function readLS<T>(key: string, fallback: T): T {
 
 const DEFAULT_SETTINGS: CatalogSettings = {
   businessName: 'Niza3D Studio',
-  tagline: 'Impressão 3D com qualidade e precisão',
-  primaryColor: '#0f172a',
-  accentColor: '#3b82f6',
+  tagline: 'Peças impressas em 3D com acabamento premium e produção sob medida.',
+  primaryColor: '#22271b',
+  accentColor: '#8b9964',
   coverImageUrl: '',
-  announcementText: 'Projetos personalizados, produção sob demanda e acabamento profissional.',
-  heroDescription: 'Transformamos ideias em peças impressas em 3D com acabamento limpo, orientação técnica e atendimento próximo.',
-  highlightOne: 'Modelos decorativos e funcionais',
-  highlightTwo: 'Orçamento rápido pelo WhatsApp',
-  highlightThree: 'Produção sob demanda',
-  catalogHeadline: 'Coleções em destaque',
-  catalogSubheadline: 'Escolha uma categoria, explore os modelos e fale com a gente para personalizar medidas, cor e acabamento.',
-  aboutTitle: 'Por que escolher nossa empresa',
-  aboutText: 'Apresente aqui o diferencial da sua empresa, materiais disponíveis, tempo médio de produção e o tipo de projeto que vocês atendem melhor.',
-  contactHeadline: 'Vamos tirar seu projeto do papel',
-  contactText: 'Use os botões de contato para pedir orçamento, confirmar prazo ou falar sobre personalização.',
-  primaryCtaLabel: 'Solicitar orçamento',
+  announcementText: 'Catálogo sob encomenda • personalização de cor, escala e acabamento • atendimento direto',
+  heroDescription: 'A Niza3D Studio cria peças decorativas, utilitárias e presentes personalizados com visual limpo, produção cuidadosa e contato rápido para orçamento.',
+  highlightOne: 'Decoração, organização e presentes',
+  highlightTwo: 'Escala, cor e acabamento sob medida',
+  highlightThree: 'Atendimento rápido pelo WhatsApp',
+  catalogHeadline: 'Peças que saem do catálogo para o seu projeto',
+  catalogSubheadline: 'Explore as coleções, escolha o modelo ideal e fale com a Niza3D Studio para personalizar cada detalhe.',
+  aboutTitle: 'Feito com atenção aos detalhes',
+  aboutText: 'Na Niza3D Studio, cada peça é produzida sob demanda com foco em acabamento, proporção e apresentação. Trabalhamos com modelos decorativos, organizadores e itens personalizados para presente ou uso diário.',
+  contactHeadline: 'Vamos montar sua versão ideal',
+  contactText: 'Se você já escolheu um modelo, fale com a gente para ajustar medidas, cor, quantidade e prazo de produção.',
+  primaryCtaLabel: 'Pedir orçamento',
   primaryCtaUrl: '',
   secondaryCtaLabel: 'Ver Instagram',
   secondaryCtaUrl: '',
   whatsapp: '',
   instagram: '',
   email: '',
-  footerNote: '',
+  footerNote: 'Produção sob demanda em impressão 3D.',
 };
 
 const MATERIAL_BADGE: Record<string, string> = {
@@ -289,145 +289,153 @@ function HeroHeader({
     { label: 'Materiais', value: Math.max(materialCount, 1) },
   ];
 
-  
-   
- return (
-  <header
-    className="relative overflow-hidden bg-[#1d2116]"
-    style={{
-      backgroundImage: coverImageUrl
-        ? `linear-gradient(to right, rgba(15,15,10,0.96), rgba(29,33,22,0.88)), url(${coverImageUrl})`
-        : `linear-gradient(to right, #11140d, #2a2f1f)`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-    }}
-  >
+  return (
+    <header
+      className="relative overflow-hidden"
+      style={{
+        backgroundImage: coverImageUrl
+          ? `linear-gradient(120deg, ${primary}f2, ${primary}d9 55%, ${accent}bf), url(${coverImageUrl})`
+          : `linear-gradient(135deg, ${primary} 0%, ${accent} 100%)`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.12),transparent_28%)]" />
+      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-50 to-transparent" />
 
-    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#8a9461]/10 rounded-full blur-3xl" />
-
-    <div className="absolute bottom-0 left-0 w-[350px] h-[350px] bg-[#c6b98f]/10 rounded-full blur-3xl" />
-
-    <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 flex flex-col lg:flex-row items-center justify-between gap-14">
-
-        {/* LEFT SIDE */}
-        <div className="max-w-2xl">
-
-          {/* LOGO */}
+      <div className="relative z-10 mx-auto grid max-w-7xl gap-12 px-6 py-20 lg:grid-cols-[minmax(0,1.1fr)_420px] lg:items-center">
+        <div className="max-w-3xl text-white">
           {logoUrl && (
-            <div className="mb-8">
-              <img
-                src={logoUrl}
-                alt="Logo"
-                className="h-24 object-contain drop-shadow-2xl"
-              />
+            <img
+              src={logoUrl}
+              alt={`${businessName} logo`}
+              className="mb-8 h-20 w-auto rounded-2xl bg-white/10 p-2 backdrop-blur-sm"
+            />
+          )}
+
+          <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.28em] text-white/80 backdrop-blur-sm">
+            Catálogo oficial
+          </div>
+
+          <h1 className="mt-6 text-4xl font-black tracking-tight md:text-6xl">
+            {businessName}
+          </h1>
+          <p className="mt-4 max-w-2xl text-lg font-medium text-white/80 md:text-xl">
+            {tagline}
+          </p>
+          {heroDescription && (
+            <p className="mt-6 max-w-2xl text-sm leading-7 text-white/72 md:text-base">
+              {heroDescription}
+            </p>
+          )}
+
+          {highlights.length > 0 && (
+            <div className="mt-8 flex flex-wrap gap-3">
+              {highlights.map((highlight) => (
+                <span
+                  key={highlight}
+                  className="rounded-full border border-white/14 bg-white/10 px-4 py-2 text-xs font-bold text-white/88 backdrop-blur-sm"
+                >
+                  {highlight}
+                </span>
+              ))}
             </div>
           )}
 
-          {/* TITLE */}
-          <h1 className="text-5xl md:text-7xl font-black leading-[0.95] tracking-tight text-white">
-            Impressão 3D
-            <span className="block text-[#b7c58b]">
-              Premium
-            </span>
-          </h1>
+          <div className="mt-10 flex flex-wrap gap-3">
+            {primaryAction && (
+              <a
+                href={primaryAction.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-black text-slate-950 shadow-2xl transition-transform hover:scale-[1.02]"
+                style={{ backgroundColor: '#f8f6ef' }}
+              >
+                {primaryAction.label}
+              </a>
+            )}
+            <a
+              href="#produtos"
+              className="inline-flex items-center justify-center rounded-2xl border border-white/16 bg-white/10 px-6 py-3 text-sm font-bold text-white backdrop-blur-sm transition-colors hover:bg-white/16"
+            >
+              Ver catálogo
+            </a>
+            {secondaryAction && (
+              <a
+                href={secondaryAction.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-2xl border border-white/16 px-6 py-3 text-sm font-bold text-white/88 transition-colors hover:bg-white/10"
+              >
+                {secondaryAction.label}
+              </a>
+            )}
+          </div>
 
+          <div className="mt-10 flex flex-wrap gap-3 text-xs font-bold text-white/75">
+            {whatsapp && (
+              <a
+                href={createWhatsappUrl(whatsapp)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-white/14 bg-white/10 px-4 py-2 backdrop-blur-sm transition-colors hover:bg-white/16"
+              >
+                WhatsApp
+              </a>
+            )}
+            {instagram && (
+              <a
+                href={createInstagramUrl(instagram)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-white/14 bg-white/10 px-4 py-2 backdrop-blur-sm transition-colors hover:bg-white/16"
+              >
+                {instagram}
+              </a>
+            )}
+            {email && (
+              <a
+                href={`mailto:${email}`}
+                className="rounded-full border border-white/14 bg-white/10 px-4 py-2 backdrop-blur-sm transition-colors hover:bg-white/16"
+              >
+                {email}
+              </a>
+            )}
+          </div>
+        </div>
 
+        <div className="relative">
+          <div className="absolute inset-6 rounded-[36px] bg-white/10 blur-3xl" />
+          <div className="relative overflow-hidden rounded-[36px] border border-white/12 bg-slate-950/45 p-5 text-white shadow-[0_24px_80px_rgba(0,0,0,0.35)] backdrop-blur-md">
+            <div className="overflow-hidden rounded-[28px] border border-white/10 bg-white/8">
+              {coverImageUrl || logoUrl ? (
+                <img
+                  src={coverImageUrl || logoUrl}
+                  alt={businessName}
+                  className="aspect-[4/5] w-full object-cover"
+                />
+              ) : (
+                <div className="flex aspect-[4/5] w-full items-center justify-center bg-[linear-gradient(160deg,rgba(255,255,255,0.16),rgba(255,255,255,0.04))] text-5xl font-black text-white/55">
+                  3D
+                </div>
+              )}
+            </div>
 
-    {/* DESCRIPTION */}
-   <p className="
-  mt-8
-  text-lg
-  md:text-xl
-  text-[#d8d5ca]
-  leading-relaxed
-  max-w-xl
-">
-  Produtos personalizados...
-</p>
-
-{/* BUTTONS */}
-<div className="flex flex-wrap gap-4 mt-10">
-
-      <a
-        href={`https://wa.me/${phone}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="
-          px-7 py-4
-          rounded-2xl
-          bg-[#8a9461]
-          hover:bg-[#9ca872]
-          text-white
-          font-bold
-          shadow-2xl
-          transition-all
-          duration-300
-          hover:scale-105
-        "
-      >
-        Solicitar Orçamento
-      </a>
-
-      <a
-        href="#produtos"
-        className="
-          px-7 py-4
-          rounded-2xl
-          border border-white/10
-          bg-white/5
-          backdrop-blur-md
-          text-white
-          font-semibold
-          hover:bg-white/10
-          transition-all
-        "
-      >
-        Ver Catálogo
-      </a>
-
-    </div>
-  </div>
-
-  {/* RIGHT SIDE */}
-  <div className="relative">
-
-    <div className="
-      absolute
-      inset-0
-      bg-[#8a9461]/20
-      blur-3xl
-      rounded-full
-    " />
-
-    <div className="
-      relative
-      bg-white/5
-      backdrop-blur-xl
-      border border-white/10
-      rounded-[32px]
-      p-6
-      shadow-[0_20px_80px_rgba(0,0,0,0.45)]
-    ">
-
-      <img
-        src={coverImageUrl || logoUrl}
-        alt="Preview"
-        className="
-          w-[420px]
-          max-w-full
-          rounded-2xl
-          object-cover
-        "
-      />
-
-   
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              {stats.map((stat) => (
+                <div key={stat.label} className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3">
+                  <p className="text-[11px] font-black uppercase tracking-[0.22em] text-white/45">
+                    {stat.label}
+                  </p>
+                  <p className="mt-2 text-2xl font-black text-white">{stat.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
-   </div>
-
-</div>
-
-   </header>
-);
+    </header>
+  );
 }
 /* ─── Main export ────────────────────────────────────── */
 export function CatalogPublic() {
@@ -609,7 +617,7 @@ export function CatalogPublic() {
       </div>
 
       {/* ── Products ── */}
-      <main className="max-w-6xl mx-auto px-4 py-10">
+      <main id="produtos" className="max-w-6xl mx-auto px-4 py-10">
         <div className="mb-8 grid gap-4 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[minmax(0,1fr)_280px] lg:items-end">
           <div>
             <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-[11px] font-black uppercase tracking-[0.28em] text-slate-500">
