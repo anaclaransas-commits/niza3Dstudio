@@ -1,8 +1,3 @@
-/**
- * Catálogo público — Versão com Modal
- * Mantém o design original
- */
-
 import React, { useEffect, useMemo, useState } from 'react';
 import { getCatalogPublicData } from '../lib/catalogApi';
 import type { CatalogSettings, Product } from '../types';
@@ -196,17 +191,6 @@ function ProductCard({ product, accent, whatsapp, ctaLabel, onQuickView }: {
           <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 mb-3 flex-1">{product.description}</p>
         )}
 
-        {product.tags && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {product.tags.split(',').slice(0, 4).map(tag => tag.trim()).filter(Boolean).map(tag => (
-              <span key={tag} className="text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide"
-                style={{ backgroundColor: lighten(accent, 0.88), color: accent }}>
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-
         <div className="flex items-center gap-3 text-xs text-slate-400 mb-4">
           {product.defaultWeightG && <span>{product.defaultWeightG}g</span>}
           {product.avgPrintTimeHours && <span>{product.avgPrintTimeHours}h</span>}
@@ -244,11 +228,10 @@ export function CatalogPublic() {
   const [isLoading, setIsLoading] = useState(true);
   const [dataSource, setDataSource] = useState<'api' | 'local'>('local');
 
-  // Modal
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { primaryColor: primary, accentColor: accent, whatsapp } = settings;
+  const { accentColor: accent, whatsapp } = settings;
 
   const [search, setSearch] = useState('');
   const [activeCollection, setActiveCollection] = useState('Todos');
@@ -339,8 +322,6 @@ export function CatalogPublic() {
       {/* HeroHeader, filtros, etc. - mantenha o resto do seu código original aqui */}
 
       <main id="produtos" className="max-w-6xl mx-auto px-4 py-10">
-        {/* ... seu conteúdo original da vitrine ... */}
-
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, index) => (
@@ -386,8 +367,6 @@ export function CatalogPublic() {
         accent={accent} 
         whatsapp={whatsapp || ''} 
       />
-
-      {/* Footer e WAButton - mantenha o seu original aqui */}
     </div>
   );
 }
