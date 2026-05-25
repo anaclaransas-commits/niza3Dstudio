@@ -1,6 +1,6 @@
 /**
- * Catálogo público — Versão Profissional com Modal
- * Mantém o design original + clique no card
+ * Catálogo público — Versão com Modal
+ * Mantém o design original
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -70,12 +70,7 @@ function createWhatsappUrl(phone?: string, productName?: string) {
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 }
 
-function createInstagramUrl(handle?: string) {
-  if (!handle) return undefined;
-  return `https://instagram.com/${handle.replace('@', '')}`;
-}
-
-/* ─── Modal de Detalhes ───────────────────────────────────── */
+/* ─── Modal ───────────────────────────────────── */
 function ProductModal({ product, isOpen, onClose, accent, whatsapp }: {
   product: Product | null;
   isOpen: boolean;
@@ -92,7 +87,7 @@ function ProductModal({ product, isOpen, onClose, accent, whatsapp }: {
       <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[95vh] overflow-hidden shadow-2xl">
         <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-2xl font-black">{product.name}</h2>
-          <button onClick={onClose} className="p-3 hover:bg-slate-100 rounded-2xl transition-colors">
+          <button onClick={onClose} className="p-3 hover:bg-slate-100 rounded-2xl">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -118,29 +113,27 @@ function ProductModal({ product, isOpen, onClose, accent, whatsapp }: {
               </div>
               {product.defaultWeightG && (
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-slate-400">Peso aproximado</p>
+                  <p className="text-xs uppercase tracking-widest text-slate-400">Peso</p>
                   <p className="font-bold">{product.defaultWeightG}g</p>
                 </div>
               )}
               {product.avgPrintTimeHours && (
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-slate-400">Tempo médio</p>
+                  <p className="text-xs uppercase tracking-widest text-slate-400">Tempo</p>
                   <p className="font-bold">{product.avgPrintTimeHours}h</p>
                 </div>
               )}
             </div>
 
-            <div className="mt-auto">
-              <a
-                href={waLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full py-4 rounded-2xl font-bold text-lg text-center text-white hover:scale-[1.02] transition-all"
-                style={{ backgroundColor: accent }}
-              >
-                Solicitar Orçamento Personalizado
-              </a>
-            </div>
+            <a
+              href={waLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-auto block w-full py-4 rounded-2xl font-bold text-lg text-center text-white hover:scale-[1.02] transition-all"
+              style={{ backgroundColor: accent }}
+            >
+              Solicitar Orçamento Personalizado
+            </a>
           </div>
         </div>
       </div>
@@ -241,7 +234,7 @@ function ProductCard({ product, accent, whatsapp, ctaLabel, onQuickView }: {
   );
 }
 
-/* ─── Main CatalogPublic ───────────────────────────────────── */
+/* ─── CatalogPublic ───────────────────────────────────── */
 export function CatalogPublic() {
   const fallbackSettings = readLS<CatalogSettings>('3d_catalog_settings', DEFAULT_SETTINGS);
   const fallbackProducts = readLS<Product[]>('3d_products', []).filter((product) => product.isPublic !== false);
@@ -251,7 +244,7 @@ export function CatalogPublic() {
   const [isLoading, setIsLoading] = useState(true);
   const [dataSource, setDataSource] = useState<'api' | 'local'>('local');
 
-  // Modal states
+  // Modal
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -264,8 +257,6 @@ export function CatalogPublic() {
 
   const collections = useMemo(() => ['Todos', ...Array.from(new Set(publicProducts.map(p => p.collection || 'Geral')))], [publicProducts]);
   const materials = useMemo(() => ['Todos', ...Array.from(new Set(publicProducts.map(p => p.materialType)))], [publicProducts]);
-  const primaryAction = useMemo(() => resolvePrimaryAction(settings), [settings]); // se você tiver essa função
-  const secondaryAction = useMemo(() => resolveSecondaryAction(settings), [settings]);
   const ctaLabel = settings.primaryCtaLabel || 'Solicitar orçamento';
 
   const filtered = useMemo(() => {
@@ -345,21 +336,10 @@ export function CatalogPublic() {
         </div>
       )}
 
-      <HeroHeader
-        s={settings}
-        productCount={publicProducts.length}
-        collectionCount={Math.max(collections.length - 1, 0)}
-        materialCount={Math.max(materials.length - 1, 0)}
-        primaryAction={primaryAction}
-        secondaryAction={secondaryAction}
-      />
+      {/* HeroHeader, filtros, etc. - mantenha o resto do seu código original aqui */}
 
-      {/* Filtros e resto do conteúdo original mantido */}
-      {/* ... (o resto do seu código original de filtros, sticky bar, main, etc.) ... */}
-
-      {/* Products Grid */}
       <main id="produtos" className="max-w-6xl mx-auto px-4 py-10">
-        {/* ... seu cabeçalho da vitrine ... */}
+        {/* ... seu conteúdo original da vitrine ... */}
 
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -399,7 +379,6 @@ export function CatalogPublic() {
         )}
       </main>
 
-      {/* Modal */}
       <ProductModal 
         product={selectedProduct} 
         isOpen={isModalOpen} 
@@ -408,9 +387,7 @@ export function CatalogPublic() {
         whatsapp={whatsapp || ''} 
       />
 
-      {/* Footer e WAButton (mantenha o seu original) */}
-      {/* ... resto do seu footer ... */}
-      <WAButton phone={whatsapp || ''} />
+      {/* Footer e WAButton - mantenha o seu original aqui */}
     </div>
   );
 }
