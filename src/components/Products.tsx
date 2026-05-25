@@ -43,6 +43,7 @@ const EMPTY_FORM = {
   description: '',
   collection: '',
   imageUrl: '',
+  imageUrls: [] as string[],
   defaultWeightG: '',
   basePrice: '',
   stlUrl: '',
@@ -257,6 +258,7 @@ export function Products() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCollection, setActiveCollection] = useState<string>('Todos');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({ ...EMPTY_FORM });
 
   // Collections list
@@ -288,6 +290,7 @@ export function Products() {
       description: p.description || '',
       collection: p.collection || '',
       imageUrl: p.imageUrl || '',
+      imageUrls: (p.imageUrls ?? []).filter((url) => url !== p.imageUrl),
       defaultWeightG: p.defaultWeightG?.toString() || '',
       basePrice: p.basePrice?.toString() || '',
       stlUrl: p.stlUrl || '',
@@ -297,6 +300,68 @@ export function Products() {
       isPublic: p.isPublic !== false,
     });
     setShowForm(true);
+  };
+
+  const uploadProductImage = async (file: File) => {
+    const folder = `products/${slugifySegment(formData.collection || 'geral')}`;
+    const uploadPayload = file.name.toLowerCase().endsWith('.3mf')
+      ? await extractPreviewFrom3mf(file)
+      : {
+          dataUrl: await readFileAsDataUrl(file),
+          fileName: file.name,
+        };
+
+    return uploadCatalogAsset({
+      ...uploadPayload,
+      folder,
+    });
+  };
+
+  const handleGalleryFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+
+    setUploadingImage(true);
+    const uploaded: string[] = [];
+    let failed = 0;
+
+    try {
+      for (const file of files) {
+        try {
+          const asset = await uploadProductImage(file);
+          uploaded.push(asset.url);
+        } catch (error) {
+          console.error(error);
+          failed++;
+        }
+      }
+
+      if (uploaded.length === 0) {
+        alert(failed > 0 ? 'Nenhuma imagem da galeria foi enviada.' : 'Nenhum arquivo selecionado.');
+        return;
+      }
+
+      setFormData((prev) => {
+        const nextUrls = [...prev.imageUrls, ...uploaded.filter((url) => url !== prev.imageUrl)];
+        const nextImageUrl = prev.imageUrl || uploaded[0];
+        const restUrls = nextImageUrl === uploaded[0] && !prev.imageUrl
+          ? nextUrls.filter((url) => url !== nextImageUrl)
+          : nextUrls;
+
+        return {
+          ...prev,
+          imageUrl: nextImageUrl,
+          imageUrls: restUrls,
+        };
+      });
+
+      if (failed > 0) {
+        alert(`${uploaded.length} imagem(ns) adicionada(s). ${failed} falhou(aram).`);
+      }
+    } finally {
+      setUploadingImage(false);
+      e.target.value = '';
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -309,22 +374,12 @@ export function Products() {
     setUploadingImage(true);
 
     try {
-      const folder = `products/${slugifySegment(formData.collection || 'geral')}`;
-      const uploadPayload = file.name.toLowerCase().endsWith('.3mf')
-        ? await extractPreviewFrom3mf(file)
-        : {
-            dataUrl: await readFileAsDataUrl(file),
-            fileName: file.name,
-          };
-
-      const uploadedAsset = await uploadCatalogAsset({
-        ...uploadPayload,
-        folder,
-      });
+      const uploadedAsset = await uploadProductImage(file);
 
       setFormData((prev) => ({
         ...prev,
         imageUrl: uploadedAsset.url,
+        imageUrls: prev.imageUrls.filter((url) => url !== uploadedAsset.url),
       }));
     } catch (error) {
       console.error(error);
@@ -344,6 +399,7 @@ export function Products() {
       description: formData.description,
       collection: formData.collection.trim() || undefined,
       imageUrl: formData.imageUrl || undefined,
+      imageUrls: formData.imageUrls.length > 0 ? formData.imageUrls : undefined,
       defaultWeightG: formData.defaultWeightG ? Number(formData.defaultWeightG) : undefined,
       basePrice: formData.basePrice ? Number(formData.basePrice) : undefined,
       stlUrl: formData.stlUrl.trim() || undefined,
@@ -530,6 +586,62 @@ export function Products() {
                   onChange={e => setFormData(p => ({ ...p, imageUrl: e.target.value }))}
                   className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none"
                   placeholder="https://..." />
+              </div>
+
+              <div className="space-y-2 border-t border-slate-100 pt-4">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  Galeria ({formData.imageUrls.length} extra{formData.imageUrls.length === 1 ? '' : 's'})
+                </label>
+                <button
+                  type="button"
+                  disabled={uploadingImage}
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="w-full rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-600 transition hover:border-emerald-400 disabled:opacity-50"
+                >
+                  {uploadingImage ? 'Enviando...' : '+ Adicionar mais fotos'}
+                </button>
+                <input
+                  type="file"
+                  ref={galleryInputRef}
+                  onChange={handleGalleryFiles}
+                  className="hidden"
+                  accept="image/*,.3mf"
+                  multiple
+                />
+                {formData.imageUrls.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {formData.imageUrls.map((url, index) => (
+                      <div key={`${url}-${index}`} className="group relative aspect-square overflow-hidden rounded-xl border border-slate-200">
+                        <img src={url} alt="" className="h-full w-full object-cover" />
+                        <div className="absolute inset-0 flex flex-col gap-1 bg-black/50 p-1 opacity-0 transition group-hover:opacity-100">
+                          <button
+                            type="button"
+                            className="rounded bg-white/90 px-1 py-0.5 text-[9px] font-bold text-slate-800"
+                            onClick={() => setFormData((prev) => ({
+                              ...prev,
+                              imageUrl: url,
+                              imageUrls: prev.imageUrl
+                                ? [...prev.imageUrls.filter((u) => u !== url), prev.imageUrl].filter((u) => u !== url)
+                                : prev.imageUrls.filter((u) => u !== url),
+                            }))}
+                          >
+                            Capa
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded bg-rose-500 px-1 py-0.5 text-[9px] font-bold text-white"
+                            onClick={() => setFormData((prev) => ({
+                              ...prev,
+                              imageUrls: prev.imageUrls.filter((_, i) => i !== index),
+                            }))}
+                          >
+                            Remover
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

@@ -115,6 +115,7 @@ function normalizeCatalogSettings(settings: CatalogSettings): CatalogSettings {
   return {
     ...settings,
     logoUrl: resolveCatalogAssetUrl(settings.logoUrl),
+    coverImageUrl: resolveCatalogAssetUrl(settings.coverImageUrl),
   };
 }
 
@@ -122,6 +123,7 @@ function normalizeProduct(product: Product): Product {
   return {
     ...product,
     imageUrl: resolveCatalogAssetUrl(product.imageUrl),
+    imageUrls: product.imageUrls?.map((url) => resolveCatalogAssetUrl(url) ?? url).filter(Boolean) as string[] | undefined,
   };
 }
 

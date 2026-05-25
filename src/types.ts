@@ -49,6 +49,8 @@ export interface Product {
   collection?: string;
   sourcePath?: string;
   imageUrl?: string;
+  /** Imagens adicionais da galeria (a capa fica em imageUrl). */
+  imageUrls?: string[];
   defaultWeightG?: number;
   basePrice?: number;
   stlUrl?: string;
