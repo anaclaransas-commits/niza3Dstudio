@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '../store';
 import { uploadCatalogAsset } from '../lib/catalogApi';
+import { coerceProductImageUrls } from '../lib/catalogUtils';
 import { cn } from '../lib/utils';
 import type { Product } from '../types';
 import JSZip from 'jszip';
@@ -290,7 +291,7 @@ export function Products() {
       description: p.description || '',
       collection: p.collection || '',
       imageUrl: p.imageUrl || '',
-      imageUrls: (p.imageUrls ?? []).filter((url) => url !== p.imageUrl),
+      imageUrls: coerceProductImageUrls(p.imageUrls).filter((url) => url !== p.imageUrl),
       defaultWeightG: p.defaultWeightG?.toString() || '',
       basePrice: p.basePrice?.toString() || '',
       stlUrl: p.stlUrl || '',
@@ -342,7 +343,8 @@ export function Products() {
       }
 
       setFormData((prev) => {
-        const nextUrls = [...prev.imageUrls, ...uploaded.filter((url) => url !== prev.imageUrl)];
+        const gallery = coerceProductImageUrls(prev.imageUrls);
+        const nextUrls = [...gallery, ...uploaded.filter((url) => url !== prev.imageUrl)];
         const nextImageUrl = prev.imageUrl || uploaded[0];
         const restUrls = nextImageUrl === uploaded[0] && !prev.imageUrl
           ? nextUrls.filter((url) => url !== nextImageUrl)
@@ -379,7 +381,7 @@ export function Products() {
       setFormData((prev) => ({
         ...prev,
         imageUrl: uploadedAsset.url,
-        imageUrls: prev.imageUrls.filter((url) => url !== uploadedAsset.url),
+        imageUrls: coerceProductImageUrls(prev.imageUrls).filter((url) => url !== uploadedAsset.url),
       }));
     } catch (error) {
       console.error(error);
@@ -399,7 +401,10 @@ export function Products() {
       description: formData.description,
       collection: formData.collection.trim() || undefined,
       imageUrl: formData.imageUrl || undefined,
-      imageUrls: formData.imageUrls.length > 0 ? formData.imageUrls : undefined,
+      imageUrls: (() => {
+        const gallery = coerceProductImageUrls(formData.imageUrls);
+        return gallery.length > 0 ? gallery : undefined;
+      })(),
       defaultWeightG: formData.defaultWeightG ? Number(formData.defaultWeightG) : undefined,
       basePrice: formData.basePrice ? Number(formData.basePrice) : undefined,
       stlUrl: formData.stlUrl.trim() || undefined,
@@ -590,7 +595,7 @@ export function Products() {
 
               <div className="space-y-2 border-t border-slate-100 pt-4">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  Galeria ({formData.imageUrls.length} extra{formData.imageUrls.length === 1 ? '' : 's'})
+                  Galeria ({coerceProductImageUrls(formData.imageUrls).length} extra{coerceProductImageUrls(formData.imageUrls).length === 1 ? '' : 's'})
                 </label>
                 <button
                   type="button"
@@ -608,22 +613,25 @@ export function Products() {
                   accept="image/*,.3mf"
                   multiple
                 />
-                {formData.imageUrls.length > 0 && (
+                {coerceProductImageUrls(formData.imageUrls).length > 0 && (
                   <div className="grid grid-cols-3 gap-2">
-                    {formData.imageUrls.map((url, index) => (
+                    {coerceProductImageUrls(formData.imageUrls).map((url, index) => (
                       <div key={`${url}-${index}`} className="group relative aspect-square overflow-hidden rounded-xl border border-slate-200">
                         <img src={url} alt="" className="h-full w-full object-cover" />
                         <div className="absolute inset-0 flex flex-col gap-1 bg-black/50 p-1 opacity-0 transition group-hover:opacity-100">
                           <button
                             type="button"
                             className="rounded bg-white/90 px-1 py-0.5 text-[9px] font-bold text-slate-800"
-                            onClick={() => setFormData((prev) => ({
-                              ...prev,
-                              imageUrl: url,
-                              imageUrls: prev.imageUrl
-                                ? [...prev.imageUrls.filter((u) => u !== url), prev.imageUrl].filter((u) => u !== url)
-                                : prev.imageUrls.filter((u) => u !== url),
-                            }))}
+                            onClick={() => setFormData((prev) => {
+                              const gallery = coerceProductImageUrls(prev.imageUrls);
+                              return {
+                                ...prev,
+                                imageUrl: url,
+                                imageUrls: prev.imageUrl
+                                  ? [...gallery.filter((u) => u !== url), prev.imageUrl].filter((u) => u !== url)
+                                  : gallery.filter((u) => u !== url),
+                              };
+                            })}
                           >
                             Capa
                           </button>
@@ -632,7 +640,7 @@ export function Products() {
                             className="rounded bg-rose-500 px-1 py-0.5 text-[9px] font-bold text-white"
                             onClick={() => setFormData((prev) => ({
                               ...prev,
-                              imageUrls: prev.imageUrls.filter((_, i) => i !== index),
+                              imageUrls: coerceProductImageUrls(prev.imageUrls).filter((_, i) => i !== index),
                             }))}
                           >
                             Remover

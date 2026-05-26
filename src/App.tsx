@@ -16,24 +16,59 @@ import { Budgets } from './components/Budgets';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
-  const ADMIN_PASSWORD = '32162069';
-
   const [authenticated, setAuthenticated] = useState(false);
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
-    const auth = localStorage.getItem('admin-auth');
-    if (auth === 'true') {
-      setAuthenticated(true);
-    }
+    let mounted = true;
+    const check = async () => {
+      try {
+        const res = await fetch('/api/auth/me', { method: 'GET', credentials: 'include' });
+        if (!mounted) return;
+        setAuthenticated(res.ok);
+      } catch {
+        if (!mounted) return;
+        setAuthenticated(false);
+      } finally {
+        if (!mounted) return;
+        setCheckingSession(false);
+      }
+    };
+    void check();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const handleLogin = () => {
-    if (password === ADMIN_PASSWORD) {
-      localStorage.setItem('admin-auth', 'true');
+  const handleLogin = async () => {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      if (!res.ok) {
+        alert('Login ou senha incorretos.');
+        return;
+      }
       setAuthenticated(true);
-    } else {
-      alert('Senha incorreta');
+      setPassword('');
+    } catch (error) {
+      console.error(error);
+      alert('Falha ao fazer login.');
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } finally {
+      setAuthenticated(false);
+      setUsername('');
+      setPassword('');
     }
   };
   const [activePage, setActivePage] = useState<PageId>('dashboard');
@@ -60,6 +95,16 @@ export default function App() {
         return <Dashboard onNavigate={setActivePage} />;
     }
   };
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
+        <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 border border-slate-200 text-center">
+          <p className="text-sm font-bold text-slate-700">Carregando…</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!authenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
@@ -70,8 +115,17 @@ export default function App() {
           </h1>
 
           <p className="text-sm text-slate-500 text-center mb-6">
-            Digite a senha para acessar
+            Digite seu login e senha para acessar
           </p>
+
+          <input
+            type="text"
+            placeholder="Login"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="w-full p-3 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-500 mb-3"
+            autoComplete="username"
+          />
 
           <input
             type="password"
@@ -79,6 +133,7 @@ export default function App() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full p-3 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-500 mb-4"
+            autoComplete="current-password"
           />
 
           <button
@@ -97,6 +152,15 @@ export default function App() {
       
       <main className="flex-1 overflow-y-auto no-print">
         <div className="max-w-[1400px] mx-auto p-4 md:p-8 lg:p-10">
+          <div className="mb-5 flex justify-end">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"
+            >
+              Sair
+            </button>
+          </div>
           <AnimatePresence mode="wait">
             <motion.div
               key={activePage}

@@ -61,7 +61,11 @@ const DEFAULT_SETTINGS: CatalogSettings = {
 /* ─── Galeria de imagens ─────────────────────────────── */
 function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; accent: string }) {
   const [index, setIndex] = useState(0);
-  const safeIndex = images.length > 0 ? index % images.length : 0;
+  const safeIndex = images.length > 0 ? Math.min(index, images.length - 1) : 0;
+
+  useEffect(() => {
+    setIndex(0);
+  }, [images.length, images[0]]);
 
   if (images.length === 0) {
     return (
@@ -128,8 +132,157 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
   );
 }
 
-/* ─── Modal do produto ─────────────────────────────────── */
-function ProductModal({
+const BTN_DETAILS =
+  'flex-1 rounded-2xl border py-2.5 text-xs font-bold transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-md active:translate-y-0 active:scale-[0.97]';
+const BTN_QUOTE =
+  'flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-bold shadow-md transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-lg active:translate-y-0 active:scale-[0.97]';
+
+function ModalShell({
+  title,
+  subtitle,
+  isOpen,
+  onClose,
+  children,
+  maxWidth = 'max-w-4xl',
+}: {
+  title: string;
+  subtitle?: string;
+  isOpen: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  maxWidth?: string;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className={`max-h-[95vh] w-full ${maxWidth} overflow-hidden rounded-3xl bg-[#fbf8f1] shadow-2xl ring-1 ring-black/5`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between border-b border-[#e7e0cf] px-6 py-4">
+          <div>
+            <h2 className="text-xl font-black text-[#1f1f14] sm:text-2xl">{title}</h2>
+            {subtitle && <p className="mt-1 text-sm text-[#6b6a55]">{subtitle}</p>}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-2xl p-3 transition-colors hover:bg-black/5"
+            aria-label="Fechar"
+          >
+            <X className="h-6 w-6 text-[#1f1f14]" />
+          </button>
+        </div>
+        <div className="max-h-[calc(95vh-5rem)] overflow-y-auto">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Card/modal: detalhes do produto ───────────────────── */
+function ProductDetailsModal({
+  product,
+  isOpen,
+  onClose,
+  onRequestQuote,
+  settings,
+}: {
+  product: Product | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onRequestQuote: () => void;
+  settings: CatalogSettings;
+}) {
+  if (!product) return null;
+
+  const images = getProductImages(product);
+  const accent = settings.accentColor;
+  const primaryColor = settings.primaryColor;
+  const tags = product.tags?.split(',').map((t) => t.trim()).filter(Boolean) ?? [];
+
+  return (
+    <ModalShell
+      title={product.name}
+      subtitle={product.collection ? `Coleção: ${product.collection}` : undefined}
+      isOpen={isOpen}
+      onClose={onClose}
+    >
+      <div className="flex flex-col lg:flex-row">
+        <div className="bg-[#f2efe6] p-6 lg:w-1/2">
+          <ImageGallery images={images} alt={product.name} accent={accent} />
+        </div>
+        <div className="flex flex-col p-6 lg:w-1/2">
+          <div className="mb-4 flex flex-wrap gap-2">
+            <span
+              className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white"
+              style={{ backgroundColor: MATERIAL_BADGE[product.materialType] ?? '#64748b' }}
+            >
+              {product.materialType}
+            </span>
+          </div>
+
+          {product.description && (
+            <p className="mb-6 leading-relaxed text-[#3d3d28]">{product.description}</p>
+          )}
+
+          {tags.length > 0 && (
+            <div className="mb-6 flex flex-wrap gap-1.5">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase"
+                  style={{ backgroundColor: `${accent}33`, color: primaryColor }}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <div className="mb-6 grid grid-cols-2 gap-4 rounded-2xl bg-[#f2efe6] p-4">
+            {product.defaultWeightG != null && (
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b6a55]">Peso estimado</p>
+                <p className="font-bold text-[#1f1f14]">{product.defaultWeightG}g</p>
+              </div>
+            )}
+            {product.avgPrintTimeHours != null && (
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b6a55]">Tempo de impressão</p>
+                <p className="font-bold text-[#1f1f14]">{product.avgPrintTimeHours}h</p>
+              </div>
+            )}
+            {typeof product.basePrice === 'number' && product.basePrice > 0 && (
+              <div className="col-span-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b6a55]">Referência</p>
+                <p className="text-lg font-black text-[#1f1f14]">{formatCurrencyBRL(product.basePrice)}</p>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={onRequestQuote}
+            className={`${BTN_QUOTE} w-full py-3.5 text-sm`}
+            style={{ backgroundColor: accent, color: primaryColor }}
+          >
+            <MessageCircle className="h-5 w-5" />
+            {settings.primaryCtaLabel || 'Solicitar orçamento'}
+          </button>
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+
+/* ─── Card/modal: solicitar orçamento ─────────────────── */
+function QuoteRequestModal({
   product,
   isOpen,
   onClose,
@@ -140,134 +293,119 @@ function ProductModal({
   onClose: () => void;
   settings: CatalogSettings;
 }) {
+  const [customerName, setCustomerName] = useState('');
+  const [quantity, setQuantity] = useState('1');
   const [quoteNote, setQuoteNote] = useState('');
 
   useEffect(() => {
-    if (isOpen) setQuoteNote('');
+    if (isOpen) {
+      setCustomerName('');
+      setQuantity('1');
+      setQuoteNote('');
+    }
   }, [isOpen, product?.id]);
 
-  if (!product || !isOpen) return null;
+  if (!product) return null;
 
-  const images = getProductImages(product);
   const accent = settings.accentColor;
-  const ctaLabel = settings.primaryCtaLabel || 'Solicitar orçamento';
-  const waLink = createWhatsappUrl(settings.whatsapp, product.name, quoteNote);
-  const tags = product.tags?.split(',').map((t) => t.trim()).filter(Boolean) ?? [];
+  const primaryColor = settings.primaryColor;
+  const ctaLabel = settings.primaryCtaLabel || 'Enviar orçamento';
+
+  const buildExtraNote = () => {
+    const lines: string[] = [];
+    if (customerName.trim()) lines.push(`Nome: ${customerName.trim()}`);
+    if (quantity.trim()) lines.push(`Quantidade: ${quantity.trim()}`);
+    if (quoteNote.trim()) lines.push(`Detalhes: ${quoteNote.trim()}`);
+    return lines.join('\n');
+  };
+
+  const buildFullMessage = () => {
+    const base = `Olá! Gostaria de um orçamento para: *${product.name}*`;
+    const extra = buildExtraNote();
+    return extra ? `${base}\n\n${extra}` : base;
+  };
+
+  const waLink = createWhatsappUrl(settings.whatsapp, product.name, buildExtraNote());
+  const mailtoLink = settings.email
+    ? `mailto:${settings.email}?subject=${encodeURIComponent(`Orçamento — ${product.name}`)}&body=${encodeURIComponent(buildFullMessage())}`
+    : undefined;
+  const sendLink = waLink ?? mailtoLink;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sendLink) {
+      alert('Configure WhatsApp ou e-mail nas configurações do catálogo.');
+      return;
+    }
+    window.open(sendLink, '_blank', 'noopener,noreferrer');
+  };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="product-modal-title"
+    <ModalShell
+      title="Solicitar orçamento"
+      subtitle={product.name}
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-lg"
     >
-      <div
-        className="max-h-[95vh] w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b px-6 py-4">
-          <h2 id="product-modal-title" className="text-xl font-black text-slate-900 sm:text-2xl">
-            {product.name}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-2xl p-3 hover:bg-slate-100"
-            aria-label="Fechar"
-          >
-            <X className="h-6 w-6" />
-          </button>
+      <form onSubmit={handleSubmit} className="space-y-4 p-6">
+        <div className="rounded-2xl bg-[#f2efe6] p-4">
+          <p className="text-xs font-bold uppercase tracking-widest text-[#6b6a55]">Produto</p>
+          <p className="mt-1 font-black text-[#1f1f14]">{product.name}</p>
+          {product.collection && (
+            <p className="mt-1 text-xs text-[#6b6a55]">{product.collection}</p>
+          )}
         </div>
 
-        <div className="max-h-[calc(95vh-4rem)] overflow-y-auto">
-          <div className="flex flex-col lg:flex-row">
-            <div className="bg-slate-50 p-6 lg:w-1/2">
-              <ImageGallery images={images} alt={product.name} accent={accent} />
-            </div>
-
-            <div className="flex flex-col p-6 lg:w-1/2">
-              <div className="mb-4 flex flex-wrap gap-2">
-                <span
-                  className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white"
-                  style={{ backgroundColor: MATERIAL_BADGE[product.materialType] ?? '#64748b' }}
-                >
-                  {product.materialType}
-                </span>
-                {product.collection && (
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-bold uppercase text-slate-600">
-                    {product.collection}
-                  </span>
-                )}
-              </div>
-
-              {product.description && (
-                <p className="mb-6 leading-relaxed text-slate-600">{product.description}</p>
-              )}
-
-              {tags.length > 0 && (
-                <div className="mb-6 flex flex-wrap gap-1.5">
-                  {tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase"
-                      style={{ backgroundColor: `${accent}22`, color: accent }}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              <div className="mb-6 grid grid-cols-2 gap-4 rounded-2xl bg-slate-50 p-4">
-                {product.defaultWeightG != null && (
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Peso estimado</p>
-                    <p className="font-bold text-slate-800">{product.defaultWeightG}g</p>
-                  </div>
-                )}
-                {product.avgPrintTimeHours != null && (
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tempo de impressão</p>
-                    <p className="font-bold text-slate-800">{product.avgPrintTimeHours}h</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="mb-4 space-y-2">
-                <label className="text-xs font-bold uppercase text-slate-500">
-                  Detalhes para o orçamento (opcional)
-                </label>
-                <textarea
-                  value={quoteNote}
-                  onChange={(e) => setQuoteNote(e.target.value)}
-                  rows={3}
-                  placeholder="Ex: cor preta, 15cm de altura, quantidade 2..."
-                  className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
-                />
-              </div>
-
-              {waLink ? (
-                <a
-                  href={waLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-auto flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-center text-lg font-bold text-white transition-all hover:scale-[1.02] hover:opacity-95"
-                  style={{ backgroundColor: accent }}
-                >
-                  <MessageCircle className="h-5 w-5" />
-                  {ctaLabel}
-                </a>
-              ) : (
-                <p className="rounded-2xl bg-amber-50 px-4 py-3 text-center text-sm font-medium text-amber-800">
-                  Configure o WhatsApp nas configurações do catálogo para receber orçamentos.
-                </p>
-              )}
-            </div>
-          </div>
+        <div className="space-y-1">
+          <label className="text-xs font-bold uppercase text-[#6b6a55]">Seu nome</label>
+          <input
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            className="w-full rounded-xl border border-[#e7e0cf] bg-white px-3 py-2.5 text-sm outline-none focus:ring-2"
+            placeholder="Como podemos te chamar?"
+          />
         </div>
-      </div>
-    </div>
+
+        <div className="space-y-1">
+          <label className="text-xs font-bold uppercase text-[#6b6a55]">Quantidade</label>
+          <input
+            type="number"
+            min={1}
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+            className="w-full rounded-xl border border-[#e7e0cf] bg-white px-3 py-2.5 text-sm outline-none focus:ring-2"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs font-bold uppercase text-[#6b6a55]">Detalhes (cor, tamanho, acabamento…)</label>
+          <textarea
+            value={quoteNote}
+            onChange={(e) => setQuoteNote(e.target.value)}
+            rows={4}
+            className="w-full resize-none rounded-xl border border-[#e7e0cf] bg-white px-3 py-2.5 text-sm outline-none focus:ring-2"
+            placeholder="Ex: cor preta, 15cm, acabamento fosco..."
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={!sendLink}
+          className={`${BTN_QUOTE} w-full py-3.5 text-sm disabled:cursor-not-allowed disabled:opacity-60`}
+          style={{ backgroundColor: accent, color: primaryColor }}
+        >
+          <MessageCircle className="h-5 w-5" />
+          {ctaLabel}
+        </button>
+
+        {!sendLink && (
+          <p className="text-center text-xs text-amber-800">
+            Configure WhatsApp ou e-mail no painel do catálogo.
+          </p>
+        )}
+      </form>
+    </ModalShell>
   );
 }
 
@@ -276,28 +414,21 @@ function ProductCard({
   product,
   accent,
   primaryColor,
-  whatsapp,
-  email,
   ctaLabel,
-  onQuickView,
+  onOpenDetails,
+  onOpenQuote,
 }: {
   product: Product;
   accent: string;
   primaryColor: string;
-  whatsapp?: string;
-  email?: string;
   ctaLabel: string;
-  onQuickView: (product: Product) => void;
+  onOpenDetails: (product: Product) => void;
+  onOpenQuote: (product: Product) => void;
 }) {
   const images = getProductImages(product);
   const cover = images[0];
   const extraCount = images.length - 1;
   const badgeColor = MATERIAL_BADGE[product.materialType] ?? '#64748b';
-  const waLink = createWhatsappUrl(whatsapp, product.name);
-  const mailtoLink = email
-    ? `mailto:${email}?subject=${encodeURIComponent(`Orçamento — ${product.name}`)}`
-    : undefined;
-  const budgetLink = waLink ?? mailtoLink;
   const tags = product.tags?.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 2) ?? [];
 
   return (
@@ -305,7 +436,13 @@ function ProductCard({
       className="group flex flex-col overflow-hidden rounded-3xl shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
       style={{ border: '1px solid rgba(0,0,0,0.06)', backgroundColor: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(6px)' }}
     >
-      <div className="relative aspect-square overflow-hidden" onClick={() => onQuickView(product)} role="button" tabIndex={0}>
+      <div
+        className="relative aspect-square cursor-pointer overflow-hidden"
+        onClick={() => onOpenDetails(product)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => e.key === 'Enter' && onOpenDetails(product)}
+      >
         {cover ? (
           <img
             src={cover}
@@ -350,8 +487,8 @@ function ProductCard({
 
       <div className="flex flex-1 flex-col p-5">
         <h3
-          className="mb-2 text-base font-black leading-tight text-slate-800"
-          onClick={() => onQuickView(product)}
+          className="mb-2 cursor-pointer text-base font-black leading-tight text-slate-800"
+          onClick={() => onOpenDetails(product)}
         >
           {product.name}
         </h3>
@@ -389,41 +526,25 @@ function ProductCard({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              onQuickView(product);
+              onOpenDetails(product);
             }}
-            className="flex-1 rounded-2xl py-2.5 text-xs font-bold transition-all duration-200"
-            style={{ border: '1px solid rgba(0,0,0,0.10)', color: '#2a2a18', backgroundColor: 'rgba(255,255,255,0.7)' }}
-            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
-            onMouseUp={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+            className={BTN_DETAILS}
+            style={{ borderColor: 'rgba(0,0,0,0.10)', color: '#2a2a18', backgroundColor: 'rgba(255,255,255,0.85)' }}
           >
             Ver detalhes
           </button>
-          {budgetLink ? (
-            <a
-              href={budgetLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-bold shadow-lg transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]"
-              style={{ backgroundColor: accent, color: primaryColor }}
-            >
-              <MessageCircle className="h-3.5 w-3.5" />
-              {ctaLabel}
-            </a>
-          ) : (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                alert('Configure WhatsApp ou e-mail nas configurações do catálogo para receber orçamentos.');
-              }}
-              className="flex-1 cursor-not-allowed rounded-2xl py-2.5 text-xs font-bold text-white/70 transition-all duration-200"
-              style={{ backgroundColor: primaryColor, opacity: 0.75 }}
-            >
-              {ctaLabel}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenQuote(product);
+            }}
+            className={BTN_QUOTE}
+            style={{ backgroundColor: accent, color: primaryColor }}
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            {ctaLabel}
+          </button>
         </div>
       </div>
     </article>
@@ -440,7 +561,8 @@ export function CatalogPublic() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [quoteOpen, setQuoteOpen] = useState(false);
 
   const [search, setSearch] = useState('');
   const [activeCollection, setActiveCollection] = useState('Todos');
@@ -568,36 +690,61 @@ export function CatalogPublic() {
     }
   }, [businessName, tagline]);
 
-  const openProduct = (product: Product) => {
+  const openDetails = (product: Product) => {
     setSelectedProduct(product);
-    setIsModalOpen(true);
+    setQuoteOpen(false);
+    setDetailsOpen(true);
   };
 
-  // Deep-link: /catalogo?produto=<id>
+  const openQuote = (product: Product) => {
+    setSelectedProduct(product);
+    setDetailsOpen(false);
+    setQuoteOpen(true);
+  };
+
+  const closePanels = () => {
+    setDetailsOpen(false);
+    setQuoteOpen(false);
+    setSelectedProduct(null);
+  };
+
+  const switchToQuote = () => {
+    setDetailsOpen(false);
+    setQuoteOpen(true);
+  };
+
+  // Deep-link: /catalogo?produto=<id> ou ?produto=<id>&orcamento=1
   useEffect(() => {
     if (isLoading) return;
     const params = new URLSearchParams(window.location.search);
     const id = params.get('produto');
     if (!id) return;
     const found = publicProducts.find((p) => p.id === id);
-    if (found) {
-      setSelectedProduct(found);
-      setIsModalOpen(true);
+    if (!found) return;
+    setSelectedProduct(found);
+    if (params.get('orcamento') === '1') {
+      setDetailsOpen(false);
+      setQuoteOpen(true);
+    } else {
+      setQuoteOpen(false);
+      setDetailsOpen(true);
     }
   }, [isLoading, publicProducts]);
 
   useEffect(() => {
     const url = new URL(window.location.href);
-    if (isModalOpen && selectedProduct?.id) {
+    const panelOpen = detailsOpen || quoteOpen;
+    if (panelOpen && selectedProduct?.id) {
       url.searchParams.set('produto', selectedProduct.id);
+      if (quoteOpen) url.searchParams.set('orcamento', '1');
+      else url.searchParams.delete('orcamento');
       window.history.replaceState({}, '', url.toString());
       return;
     }
-    if (url.searchParams.has('produto')) {
-      url.searchParams.delete('produto');
-      window.history.replaceState({}, '', url.toString());
-    }
-  }, [isModalOpen, selectedProduct?.id]);
+    url.searchParams.delete('produto');
+    url.searchParams.delete('orcamento');
+    window.history.replaceState({}, '', url.toString());
+  }, [detailsOpen, quoteOpen, selectedProduct?.id]);
 
   const palette = useMemo(() => {
     // Tons quentes/bege para aproximar do mock (sem depender de Tailwind config)
@@ -923,10 +1070,9 @@ export function CatalogPublic() {
                   product={p}
                   accent={accent}
                   primaryColor={primaryColor}
-                  whatsapp={whatsapp}
-                  email={email}
                   ctaLabel={ctaLabel}
-                  onQuickView={openProduct}
+                  onOpenDetails={openDetails}
+                  onOpenQuote={openQuote}
                 />
               ))}
             </div>
@@ -954,10 +1100,9 @@ export function CatalogPublic() {
                 product={p}
                 accent={accent}
                 primaryColor={primaryColor}
-                whatsapp={whatsapp}
-                email={email}
                 ctaLabel={ctaLabel}
-                onQuickView={openProduct}
+                onOpenDetails={openDetails}
+                onOpenQuote={openQuote}
               />
             ))}
           </div>
@@ -1021,10 +1166,17 @@ export function CatalogPublic() {
         <p className="mt-3 text-[10px] uppercase tracking-widest text-white/40">Catálogo digital</p>
       </footer>
 
-      <ProductModal
+      <ProductDetailsModal
         product={selectedProduct}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={detailsOpen}
+        onClose={closePanels}
+        onRequestQuote={switchToQuote}
+        settings={settings}
+      />
+      <QuoteRequestModal
+        product={selectedProduct}
+        isOpen={quoteOpen}
+        onClose={closePanels}
         settings={settings}
       />
     </div>

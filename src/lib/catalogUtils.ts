@@ -1,10 +1,21 @@
 import type { CatalogSettings, Product } from '../types';
 
+/** Garante que imageUrls seja sempre um array de strings (evita crash ao carregar dados antigos). */
+export function coerceProductImageUrls(imageUrls: unknown): string[] {
+  if (Array.isArray(imageUrls)) {
+    return imageUrls.filter((url): url is string => typeof url === 'string' && url.trim().length > 0);
+  }
+  if (typeof imageUrls === 'string' && imageUrls.trim()) {
+    return [imageUrls.trim()];
+  }
+  return [];
+}
+
 /** Lista única de imagens do produto (capa + galeria). */
 export function getProductImages(product: Product): string[] {
   const urls = [
     product.imageUrl,
-    ...(product.imageUrls ?? []),
+    ...coerceProductImageUrls(product.imageUrls),
   ].filter((url): url is string => Boolean(url?.trim()));
 
   return [...new Set(urls)];

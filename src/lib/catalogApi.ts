@@ -1,4 +1,5 @@
 import type { CatalogSettings, Product } from '../types';
+import { coerceProductImageUrls } from './catalogUtils';
 import {
   deleteCatalogProductOnSupabase,
   getCatalogAdminDataFromSupabase,
@@ -120,10 +121,14 @@ function normalizeCatalogSettings(settings: CatalogSettings): CatalogSettings {
 }
 
 function normalizeProduct(product: Product): Product {
+  const gallery = coerceProductImageUrls(product.imageUrls)
+    .map((url) => resolveCatalogAssetUrl(url) ?? url)
+    .filter(Boolean);
+
   return {
     ...product,
     imageUrl: resolveCatalogAssetUrl(product.imageUrl),
-    imageUrls: product.imageUrls?.map((url) => resolveCatalogAssetUrl(url) ?? url).filter(Boolean) as string[] | undefined,
+    imageUrls: gallery.length > 0 ? gallery : undefined,
   };
 }
 
