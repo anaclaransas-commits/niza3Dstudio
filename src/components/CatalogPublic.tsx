@@ -277,6 +277,7 @@ function ProductCard({
   accent,
   primaryColor,
   whatsapp,
+  email,
   ctaLabel,
   onQuickView,
 }: {
@@ -284,6 +285,7 @@ function ProductCard({
   accent: string;
   primaryColor: string;
   whatsapp?: string;
+  email?: string;
   ctaLabel: string;
   onQuickView: (product: Product) => void;
 }) {
@@ -292,6 +294,10 @@ function ProductCard({
   const extraCount = images.length - 1;
   const badgeColor = MATERIAL_BADGE[product.materialType] ?? '#64748b';
   const waLink = createWhatsappUrl(whatsapp, product.name);
+  const mailtoLink = email
+    ? `mailto:${email}?subject=${encodeURIComponent(`Orçamento — ${product.name}`)}`
+    : undefined;
+  const budgetLink = waLink ?? mailtoLink;
   const tags = product.tags?.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 2) ?? [];
 
   return (
@@ -381,7 +387,10 @@ function ProductCard({
         <div className="mt-auto flex gap-2">
           <button
             type="button"
-            onClick={() => onQuickView(product)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onQuickView(product);
+            }}
             className="flex-1 rounded-2xl py-2.5 text-xs font-bold transition-all duration-200"
             style={{ border: '1px solid rgba(0,0,0,0.10)', color: '#2a2a18', backgroundColor: 'rgba(255,255,255,0.7)' }}
             onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
@@ -390,9 +399,9 @@ function ProductCard({
           >
             Ver detalhes
           </button>
-          {waLink ? (
+          {budgetLink ? (
             <a
-              href={waLink}
+              href={budgetLink}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
@@ -405,9 +414,12 @@ function ProductCard({
           ) : (
             <button
               type="button"
-              onClick={() => onQuickView(product)}
-              className="flex-1 rounded-2xl py-2.5 text-xs font-bold text-white transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]"
-              style={{ backgroundColor: primaryColor }}
+              onClick={(e) => {
+                e.stopPropagation();
+                alert('Configure WhatsApp ou e-mail nas configurações do catálogo para receber orçamentos.');
+              }}
+              className="flex-1 cursor-not-allowed rounded-2xl py-2.5 text-xs font-bold text-white/70 transition-all duration-200"
+              style={{ backgroundColor: primaryColor, opacity: 0.75 }}
             >
               {ctaLabel}
             </button>
@@ -912,6 +924,7 @@ export function CatalogPublic() {
                   accent={accent}
                   primaryColor={primaryColor}
                   whatsapp={whatsapp}
+                  email={email}
                   ctaLabel={ctaLabel}
                   onQuickView={openProduct}
                 />
@@ -942,6 +955,7 @@ export function CatalogPublic() {
                 accent={accent}
                 primaryColor={primaryColor}
                 whatsapp={whatsapp}
+                email={email}
                 ctaLabel={ctaLabel}
                 onQuickView={openProduct}
               />
