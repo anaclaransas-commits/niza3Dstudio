@@ -10,9 +10,13 @@ type SessionPayload = {
 
 function getEnv(name: string) {
   const value = process.env[name];
+
+  console.log('ENV TEST:', name, value);
+
   if (!value) {
     throw new Error(`Missing env var: ${name}`);
   }
+
   return value;
 }
 
