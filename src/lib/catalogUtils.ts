@@ -65,6 +65,14 @@ export function lightenHex(hex: string, amount = 0.92) {
   return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
 }
 
+export function formatCurrencyBRL(value: number) {
+  try {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  } catch {
+    return `R$ ${value.toFixed(2)}`;
+  }
+}
+
 export const MATERIAL_BADGE: Record<string, string> = {
   PLA: '#22c55e',
   ABS: '#f97316',

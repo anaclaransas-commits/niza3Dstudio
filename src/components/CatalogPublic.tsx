@@ -12,6 +12,7 @@ import {
 import { getCatalogPublicData } from '../lib/catalogApi';
 import {
   createWhatsappUrl,
+  formatCurrencyBRL,
   getPrimaryCtaUrl,
   getProductImages,
   getSecondaryCtaUrl,
@@ -32,8 +33,9 @@ function readLS<T>(key: string, fallback: T): T {
 const DEFAULT_SETTINGS: CatalogSettings = {
   businessName: 'Niza3D Studio',
   tagline: 'Peças impressas em 3D com acabamento premium e produção sob medida.',
-  primaryColor: '#22271b',
-  accentColor: '#8b9964',
+  // Paleta no estilo do layout de referência (oliva + bege)
+  primaryColor: '#2f2f1b',
+  accentColor: '#aab27a',
   coverImageUrl: '',
   announcementText: 'Catálogo sob encomenda • personalização de cor, escala e acabamento • atendimento direto',
   heroDescription: 'A Niza3D Studio cria peças decorativas, utilitárias e presentes personalizados com visual limpo, produção cuidadosa e contato rápido para orçamento.',
@@ -293,13 +295,16 @@ function ProductCard({
   const tags = product.tags?.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 2) ?? [];
 
   return (
-    <article className="group flex cursor-pointer flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-md transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl">
-      <div className="relative aspect-square overflow-hidden bg-slate-50" onClick={() => onQuickView(product)}>
+    <article
+      className="group flex flex-col overflow-hidden rounded-3xl shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+      style={{ border: '1px solid rgba(0,0,0,0.06)', backgroundColor: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(6px)' }}
+    >
+      <div className="relative aspect-square overflow-hidden" onClick={() => onQuickView(product)} role="button" tabIndex={0}>
         {cover ? (
           <img
             src={cover}
             alt={product.name}
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.08]"
             loading="lazy"
           />
         ) : (
@@ -312,7 +317,7 @@ function ProductCard({
         )}
 
         {extraCount > 0 && (
-          <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-sm">
+          <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-sm transition-transform duration-300 group-hover:scale-105">
             <ZoomIn className="h-3 w-3" /> +{extraCount}
           </span>
         )}
@@ -333,6 +338,8 @@ function ProductCard({
             </span>
           </div>
         )}
+
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       </div>
 
       <div className="flex flex-1 flex-col p-5">
@@ -361,16 +368,25 @@ function ProductCard({
           </div>
         )}
 
-        <div className="mb-4 flex items-center gap-3 text-xs text-slate-400">
-          {product.defaultWeightG != null && <span>{product.defaultWeightG}g</span>}
-          {product.avgPrintTimeHours != null && <span>~{product.avgPrintTimeHours}h</span>}
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 text-xs text-slate-400">
+            {product.defaultWeightG != null && <span>{product.defaultWeightG}g</span>}
+            {product.avgPrintTimeHours != null && <span>~{product.avgPrintTimeHours}h</span>}
+          </div>
+          {typeof product.basePrice === 'number' && product.basePrice > 0 && (
+            <span className="text-sm font-black text-slate-900">{formatCurrencyBRL(product.basePrice)}</span>
+          )}
         </div>
 
         <div className="mt-auto flex gap-2">
           <button
             type="button"
             onClick={() => onQuickView(product)}
-            className="flex-1 rounded-2xl border border-slate-200 py-2.5 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50"
+            className="flex-1 rounded-2xl py-2.5 text-xs font-bold transition-all duration-200"
+            style={{ border: '1px solid rgba(0,0,0,0.10)', color: '#2a2a18', backgroundColor: 'rgba(255,255,255,0.7)' }}
+            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
+            onMouseUp={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
           >
             Ver detalhes
           </button>
@@ -380,8 +396,8 @@ function ProductCard({
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-bold text-white shadow-lg transition-all hover:opacity-90 active:scale-95"
-              style={{ backgroundColor: accent }}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-bold shadow-lg transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]"
+              style={{ backgroundColor: accent, color: primaryColor }}
             >
               <MessageCircle className="h-3.5 w-3.5" />
               {ctaLabel}
@@ -390,7 +406,7 @@ function ProductCard({
             <button
               type="button"
               onClick={() => onQuickView(product)}
-              className="flex-1 rounded-2xl py-2.5 text-xs font-bold text-white"
+              className="flex-1 rounded-2xl py-2.5 text-xs font-bold text-white transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]"
               style={{ backgroundColor: primaryColor }}
             >
               {ctaLabel}
@@ -545,10 +561,77 @@ export function CatalogPublic() {
     setIsModalOpen(true);
   };
 
+  // Deep-link: /catalogo?produto=<id>
+  useEffect(() => {
+    if (isLoading) return;
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('produto');
+    if (!id) return;
+    const found = publicProducts.find((p) => p.id === id);
+    if (found) {
+      setSelectedProduct(found);
+      setIsModalOpen(true);
+    }
+  }, [isLoading, publicProducts]);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (isModalOpen && selectedProduct?.id) {
+      url.searchParams.set('produto', selectedProduct.id);
+      window.history.replaceState({}, '', url.toString());
+      return;
+    }
+    if (url.searchParams.has('produto')) {
+      url.searchParams.delete('produto');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [isModalOpen, selectedProduct?.id]);
+
+  const palette = useMemo(() => {
+    // Tons quentes/bege para aproximar do mock (sem depender de Tailwind config)
+    const pageBg = '#f2efe6';
+    const sectionBg = '#f7f3ea';
+    const cardBg = '#fbf8f1';
+    const border = '#e7e0cf';
+    const textMuted = '#6b6a55';
+    const text = '#1f1f14';
+    const pill = 'rgba(255,255,255,0.10)';
+    const heroOverlay = `linear-gradient(120deg, ${primaryColor}f2 0%, ${primaryColor}d6 42%, ${primaryColor}f0 100%)`;
+    const heroBg = coverImageUrl
+      ? `${heroOverlay}, url(${coverImageUrl}) center/cover`
+      : primaryColor;
+    const ctaPrimaryBg = 'rgba(245, 240, 220, 0.95)';
+    const ctaPrimaryText = primaryColor;
+    const ctaOutline = 'rgba(245, 240, 220, 0.25)';
+
+    return {
+      pageBg,
+      sectionBg,
+      cardBg,
+      border,
+      textMuted,
+      text,
+      pill,
+      heroBg,
+      ctaPrimaryBg,
+      ctaPrimaryText,
+      ctaOutline,
+    };
+  }, [primaryColor, coverImageUrl]);
+
   return (
-    <div className="min-h-screen bg-slate-50 font-sans" style={{ '--accent': accent, '--primary': primaryColor } as React.CSSProperties}>
+    <div
+      className="min-h-screen font-sans"
+      style={
+        {
+          '--accent': accent,
+          '--primary': primaryColor,
+          backgroundColor: palette.pageBg,
+        } as React.CSSProperties
+      }
+    >
       {announcementText && (
-        <div className="border-b border-white/10 bg-slate-950 px-4 py-3 text-center text-xs font-bold uppercase tracking-[0.18em] text-white/75">
+        <div className="border-b border-white/10 px-4 py-3 text-center text-xs font-bold uppercase tracking-[0.18em] text-white/75" style={{ backgroundColor: primaryColor }}>
           {announcementText}
         </div>
       )}
@@ -557,9 +640,7 @@ export function CatalogPublic() {
       <header
         className="px-6 py-12 text-white sm:px-8 sm:py-14"
         style={{
-          background: coverImageUrl
-            ? `linear-gradient(120deg, ${primaryColor}ee 0%, ${accent}cc 55%, ${primaryColor}f0 100%), url(${coverImageUrl}) center/cover`
-            : primaryColor,
+          background: palette.heroBg,
         }}
       >
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 md:flex-row md:items-start">
@@ -571,7 +652,13 @@ export function CatalogPublic() {
             </div>
           )}
           <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl font-black tracking-tight sm:text-4xl">{businessName}</h1>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-white/80" style={{ backgroundColor: palette.pill }}>
+              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: accent }} />
+              Impressão 3D personalizada
+            </div>
+            <h1 className="text-3xl font-black tracking-tight sm:text-5xl" style={{ color: 'rgba(255,255,255,0.92)' }}>
+              {businessName}
+            </h1>
             {tagline && <p className="mt-2 text-sm text-white/80 sm:text-base">{tagline}</p>}
             {heroDescription && (
               <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/75 md:mx-0">{heroDescription}</p>
@@ -594,7 +681,8 @@ export function CatalogPublic() {
                   href={primaryCtaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-full bg-white px-5 py-2.5 text-xs font-black text-slate-900 transition hover:bg-white/90"
+                  className="rounded-full px-5 py-2.5 text-xs font-black transition hover:opacity-95"
+                  style={{ backgroundColor: palette.ctaPrimaryBg, color: palette.ctaPrimaryText }}
                 >
                   {ctaLabel}
                 </a>
@@ -604,7 +692,8 @@ export function CatalogPublic() {
                   href={secondaryCtaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-full bg-white/20 px-5 py-2.5 text-xs font-bold text-white transition hover:bg-white/30"
+                  className="rounded-full px-5 py-2.5 text-xs font-bold text-white transition hover:bg-white/15"
+                  style={{ border: `1px solid ${palette.ctaOutline}` }}
                 >
                   {secondaryCtaLabel || 'Instagram'}
                 </a>
@@ -645,48 +734,48 @@ export function CatalogPublic() {
       </header>
 
       {/* Faixa de benefícios */}
-      <section className="border-b border-emerald-100 bg-emerald-50/60 px-4 py-6 sm:px-6">
-        <div className="mx-auto flex max-w-6xl flex-wrap gap-4 text-sm text-emerald-900">
+      <section className="px-4 py-6 sm:px-6" style={{ backgroundColor: palette.sectionBg, borderBottom: `1px solid ${palette.border}` }}>
+        <div className="mx-auto flex max-w-6xl flex-wrap gap-4" style={{ color: palette.text }}>
           <div className="flex flex-1 min-w-[220px] items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white/80 text-xs font-black text-emerald-700 shadow-sm">
+            <span className="flex h-9 w-9 items-center justify-center rounded-2xl text-xs font-black shadow-sm" style={{ backgroundColor: palette.cardBg, color: accent, border: `1px solid ${palette.border}` }}>
               3D
             </span>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-700/80">Impressão 3D sob medida</p>
-              <p className="text-xs text-emerald-900/80">Ajuste de escala, cor e acabamento para cada projeto.</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Impressão 3D sob medida</p>
+              <p className="text-xs" style={{ color: palette.textMuted }}>Ajuste de escala, cor e acabamento para cada projeto.</p>
             </div>
           </div>
           <div className="flex flex-1 min-w-[220px] items-center gap-3">
-            <div className="h-9 w-9 rounded-2xl bg-white/80" />
+            <div className="h-9 w-9 rounded-2xl" style={{ backgroundColor: palette.cardBg, border: `1px solid ${palette.border}` }} />
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-700/80">Acabamento profissional</p>
-              <p className="text-xs text-emerald-900/80">Peças pensadas para decoração, organização e presentes.</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Acabamento profissional</p>
+              <p className="text-xs" style={{ color: palette.textMuted }}>Peças pensadas para decoração, organização e presentes.</p>
             </div>
           </div>
           <div className="flex flex-1 min-w-[220px] items-center gap-3">
-            <div className="h-9 w-9 rounded-2xl bg-white/80" />
+            <div className="h-9 w-9 rounded-2xl" style={{ backgroundColor: palette.cardBg, border: `1px solid ${palette.border}` }} />
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-700/80">Atendimento próximo</p>
-              <p className="text-xs text-emerald-900/80">Orçamentos rápidos direto pelo WhatsApp.</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Atendimento especializado</p>
+              <p className="text-xs" style={{ color: palette.textMuted }}>Orçamentos rápidos direto pelo WhatsApp.</p>
             </div>
           </div>
           <div className="flex flex-1 min-w-[220px] items-center gap-3">
-            <div className="h-9 w-9 rounded-2xl bg-white/80" />
+            <div className="h-9 w-9 rounded-2xl" style={{ backgroundColor: palette.cardBg, border: `1px solid ${palette.border}` }} />
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-700/80">Envio para todo o Brasil</p>
-              <p className="text-xs text-emerald-900/80">Produção sob demanda com embalagem cuidadosa.</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Pagamento seguro</p>
+              <p className="text-xs" style={{ color: palette.textMuted }}>Produção sob demanda com embalagem cuidadosa.</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Filtros + visão geral */}
-      <section className="border-b border-slate-100 bg-white px-4 py-6 sm:px-6">
+      <section className="px-4 py-8 sm:px-6" style={{ backgroundColor: palette.pageBg, borderBottom: `1px solid ${palette.border}` }}>
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-xl font-black text-slate-900 sm:text-2xl">
+          <h2 className="text-xl font-black sm:text-2xl" style={{ color: palette.text }}>
             {catalogHeadline || 'Nossos produtos'}
           </h2>
-          {catalogSubheadline && <p className="mt-1 text-sm text-slate-500">{catalogSubheadline}</p>}
+          {catalogSubheadline && <p className="mt-1 text-sm" style={{ color: palette.textMuted }}>{catalogSubheadline}</p>}
 
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
@@ -696,14 +785,15 @@ export function CatalogPublic() {
                 placeholder="Buscar produto, tag ou coleção..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm outline-none focus:ring-2"
-                style={{ boxShadow: `0 0 0 0 transparent`, outlineColor: accent }}
+                className="w-full rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none focus:ring-2"
+                style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, boxShadow: `0 0 0 0 transparent`, outlineColor: accent }}
               />
             </div>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-700 outline-none"
+              className="rounded-xl px-4 py-2.5 text-sm font-medium outline-none"
+              style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, color: palette.text }}
               aria-label="Ordenar produtos"
             >
               <option value="name">Nome A–Z</option>
@@ -722,8 +812,8 @@ export function CatalogPublic() {
                   className="rounded-full border px-4 py-1.5 text-xs font-bold transition-all"
                   style={
                     activeCollection === col
-                      ? { backgroundColor: accent, color: '#fff', borderColor: accent }
-                      : { backgroundColor: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0' }
+                      ? { backgroundColor: primaryColor, color: '#fff', borderColor: primaryColor }
+                      : { backgroundColor: palette.sectionBg, color: palette.textMuted, borderColor: palette.border }
                   }
                 >
                   {col}
@@ -742,8 +832,8 @@ export function CatalogPublic() {
                   className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
                   style={
                     activeMaterial === mat
-                      ? { backgroundColor: primaryColor, color: '#fff', borderColor: primaryColor }
-                      : { backgroundColor: '#fff', color: '#94a3b8', borderColor: '#e2e8f0' }
+                      ? { backgroundColor: accent, color: palette.text, borderColor: accent }
+                      : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
                   }
                 >
                   {mat}
@@ -756,11 +846,11 @@ export function CatalogPublic() {
 
       {/* Categorias */}
       {categorySummaries.length > 0 && (
-        <section className="bg-slate-50 px-4 py-10 sm:px-6">
+        <section className="px-4 py-10 sm:px-6" style={{ backgroundColor: palette.pageBg }}>
           <div className="mx-auto max-w-6xl">
             <div className="mb-4 flex items-center justify-between gap-4">
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-500">Categorias</h3>
-              <span className="text-xs text-slate-400">
+              <h3 className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: palette.textMuted }}>Categorias</h3>
+              <span className="text-xs" style={{ color: palette.textMuted }}>
                 {publicProducts.length} modelo{publicProducts.length === 1 ? '' : 's'} disponível(eis)
               </span>
             </div>
@@ -773,12 +863,13 @@ export function CatalogPublic() {
                     setActiveCollection(category.name);
                     setActiveMaterial('Todos');
                   }}
-                  className={`flex flex-col items-start rounded-2xl border bg-white px-4 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
+                  className={`flex flex-col items-start rounded-2xl px-4 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
                     activeCollection === category.name ? 'border-slate-900' : 'border-slate-100'
                   }`}
+                  style={{ backgroundColor: palette.cardBg, borderColor: activeCollection === category.name ? primaryColor : palette.border }}
                 >
-                  <span className="text-xs font-bold text-slate-900">{category.name}</span>
-                  <span className="mt-1 text-[11px] text-slate-500">
+                  <span className="text-xs font-bold" style={{ color: palette.text }}>{category.name}</span>
+                  <span className="mt-1 text-[11px]" style={{ color: palette.textMuted }}>
                     {category.count} produto{category.count === 1 ? '' : 's'}
                   </span>
                 </button>
