@@ -460,6 +460,26 @@ export function CatalogPublic() {
     [publicProducts],
   );
 
+  const categorySummaries = useMemo(
+    () =>
+      Array.from(
+        publicProducts.reduce<Map<string, number>>((map, product) => {
+          const key = product.collection || 'Geral';
+          map.set(key, (map.get(key) ?? 0) + 1);
+          return map;
+        }, new Map()),
+      ).map(([name, count]) => ({ name, count })),
+    [publicProducts],
+  );
+
+  const featuredProducts = useMemo(() => {
+    const byCollection = publicProducts.filter(
+      (p) => p.collection?.toLowerCase().includes('destaque') || p.collection?.toLowerCase().includes('featured'),
+    );
+    if (byCollection.length > 0) return byCollection.slice(0, 8);
+    return publicProducts.slice(0, 8);
+  }, [publicProducts]);
+
   const filtered = useMemo(() => {
     const visible = publicProducts.filter((product) => {
       const collection = product.collection || 'Geral';
@@ -624,7 +644,43 @@ export function CatalogPublic() {
         </div>
       </header>
 
-      {/* Filtros */}
+      {/* Faixa de benefícios */}
+      <section className="border-b border-emerald-100 bg-emerald-50/60 px-4 py-6 sm:px-6">
+        <div className="mx-auto flex max-w-6xl flex-wrap gap-4 text-sm text-emerald-900">
+          <div className="flex flex-1 min-w-[220px] items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white/80 text-xs font-black text-emerald-700 shadow-sm">
+              3D
+            </span>
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-700/80">Impressão 3D sob medida</p>
+              <p className="text-xs text-emerald-900/80">Ajuste de escala, cor e acabamento para cada projeto.</p>
+            </div>
+          </div>
+          <div className="flex flex-1 min-w-[220px] items-center gap-3">
+            <div className="h-9 w-9 rounded-2xl bg-white/80" />
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-700/80">Acabamento profissional</p>
+              <p className="text-xs text-emerald-900/80">Peças pensadas para decoração, organização e presentes.</p>
+            </div>
+          </div>
+          <div className="flex flex-1 min-w-[220px] items-center gap-3">
+            <div className="h-9 w-9 rounded-2xl bg-white/80" />
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-700/80">Atendimento próximo</p>
+              <p className="text-xs text-emerald-900/80">Orçamentos rápidos direto pelo WhatsApp.</p>
+            </div>
+          </div>
+          <div className="flex flex-1 min-w-[220px] items-center gap-3">
+            <div className="h-9 w-9 rounded-2xl bg-white/80" />
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-700/80">Envio para todo o Brasil</p>
+              <p className="text-xs text-emerald-900/80">Produção sob demanda com embalagem cuidadosa.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Filtros + visão geral */}
       <section className="border-b border-slate-100 bg-white px-4 py-6 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-xl font-black text-slate-900 sm:text-2xl">
@@ -698,8 +754,81 @@ export function CatalogPublic() {
         </div>
       </section>
 
-      {/* Grid */}
+      {/* Categorias */}
+      {categorySummaries.length > 0 && (
+        <section className="bg-slate-50 px-4 py-10 sm:px-6">
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-500">Categorias</h3>
+              <span className="text-xs text-slate-400">
+                {publicProducts.length} modelo{publicProducts.length === 1 ? '' : 's'} disponível(eis)
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5">
+              {categorySummaries.map((category) => (
+                <button
+                  key={category.name}
+                  type="button"
+                  onClick={() => {
+                    setActiveCollection(category.name);
+                    setActiveMaterial('Todos');
+                  }}
+                  className={`flex flex-col items-start rounded-2xl border bg-white px-4 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
+                    activeCollection === category.name ? 'border-slate-900' : 'border-slate-100'
+                  }`}
+                >
+                  <span className="text-xs font-bold text-slate-900">{category.name}</span>
+                  <span className="mt-1 text-[11px] text-slate-500">
+                    {category.count} produto{category.count === 1 ? '' : 's'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Destaques + grid */}
       <main id="produtos" className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+        {!isLoading && featuredProducts.length > 0 && (
+          <section className="mb-10 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-500">Produtos em destaque</h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  Seleção de modelos para começar a explorar o catálogo.
+                </p>
+              </div>
+              {publicProducts.length > 8 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveCollection('Todos');
+                    setActiveMaterial('Todos');
+                    setSearch('');
+                  }}
+                  className="rounded-full border border-slate-200 px-4 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                >
+                  Ver todos os produtos
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {featuredProducts.map((p) => (
+                <ProductCard
+                  key={`featured-${p.id}`}
+                  product={p}
+                  accent={accent}
+                  primaryColor={primaryColor}
+                  whatsapp={whatsapp}
+                  ctaLabel={ctaLabel}
+                  onQuickView={openProduct}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
         {isLoading ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, index) => (
