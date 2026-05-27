@@ -1,24 +1,25 @@
-import type { IncomingMessage, ServerResponse } from 'node:http';
 import { readSession } from '../_lib/session';
 
-export default function handler(req: IncomingMessage & { method?: string; headers?: any }, res: ServerResponse) {
-  if (req.method !== 'GET') {
-    res.statusCode = 405;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ error: 'Method not allowed' }));
-    return;
-  }
-
-  const session = readSession(req as any);
-  if (!session.ok) {
-    res.statusCode = 401;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ ok: false }));
-    return;
-  }
-
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'application/json');
-  res.end(JSON.stringify({ ok: true, username: session.username }));
+function jsonResponse(body: unknown, init?: ResponseInit) {
+  return new Response(JSON.stringify(body), {
+    ...init,
+    headers: {
+      'content-type': 'application/json',
+      ...(init?.headers ?? {}),
+    },
+  });
 }
 
+export function GET(request: Request) {
+  const session = readSession({
+    headers: {
+      cookie: request.headers.get('cookie') ?? undefined,
+    },
+  });
+
+  if (!session.ok) {
+    return jsonResponse({ ok: false }, { status: 401 });
+  }
+
+  return jsonResponse({ ok: true, username: session.username }, { status: 200 });
+}
