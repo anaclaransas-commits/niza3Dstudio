@@ -51,15 +51,23 @@ export default function App() {
         body: JSON.stringify({ username, password }),
       });
       let payload: { error?: string } | null = null;
+      let fallbackText = '';
       try {
         payload = (await res.json()) as { error?: string };
       } catch {
+        try {
+          fallbackText = await res.text();
+        } catch {
+          fallbackText = '';
+        }
         payload = null;
       }
       if (!res.ok) {
         const message =
           payload?.error ||
-          (res.status === 401 ? 'Login ou senha incorretos.' : `Falha no login (${res.status}).`);
+          (res.status === 401
+            ? 'Login ou senha incorretos.'
+            : `Falha no login (${res.status})${fallbackText ? `: ${fallbackText.slice(0, 160)}` : '.'}`);
         alert(message);
         return;
       }

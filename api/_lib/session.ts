@@ -10,9 +10,6 @@ type SessionPayload = {
 
 function getEnv(name: string) {
   const value = process.env[name];
-
-  console.log('ENV TEST:', name, value);
-
   if (!value) {
     throw new Error(`Missing env var: ${name}`);
   }
@@ -100,6 +97,9 @@ export function readSession(req: { headers?: { cookie?: string | undefined } }) 
   if (!encoded || !sig) return { ok: false as const, reason: 'bad_cookie' as const };
 
   const expected = sign(encoded, secret);
+  if (sig.length !== expected.length) {
+    return { ok: false as const, reason: 'bad_sig' as const };
+  }
   const sigOk = crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
   if (!sigOk) return { ok: false as const, reason: 'bad_sig' as const };
 
@@ -122,5 +122,10 @@ export function verifyCredentials(username: string, password: string) {
   const envUser = getEnv('ADMIN_USERNAME');
   const envPass = getEnv('ADMIN_PASSWORD');
   return username === envUser && password === envPass;
+}
+
+export function getMissingAuthEnv() {
+  const required = ['ADMIN_USERNAME', 'ADMIN_PASSWORD', 'ADMIN_SESSION_SECRET'];
+  return required.filter((name) => !process.env[name]);
 }
 

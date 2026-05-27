@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { buildSessionCookie, verifyCredentials } from '../_lib/session';
+import { buildSessionCookie, getMissingAuthEnv, verifyCredentials } from '../_lib/session';
 
 async function readJson(req: IncomingMessage) {
   const chunks: Buffer[] = [];
@@ -17,6 +17,14 @@ export default async function handler(req: IncomingMessage & { method?: string }
   }
 
   try {
+    const missingEnv = getMissingAuthEnv();
+    if (missingEnv.length > 0) {
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ error: `Missing env vars: ${missingEnv.join(', ')}` }));
+      return;
+    }
+
     const body = (await readJson(req)) as { username?: unknown; password?: unknown };
     const username = typeof body.username === 'string' ? body.username.trim() : '';
     const password = typeof body.password === 'string' ? body.password : '';
