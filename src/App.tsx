@@ -51,6 +51,10 @@ function getLoginErrorMessage(response: Response, payload: AuthApiPayload | null
     return payload.error;
   }
 
+  if (payload === null) {
+    return 'A rota de login não retornou a API esperada. Na Vercel, verifique se /api/* não está sendo redirecionado para index.html e publique novamente.';
+  }
+
   return 'Falha ao fazer login.';
 }
 
