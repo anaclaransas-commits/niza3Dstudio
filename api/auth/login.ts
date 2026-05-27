@@ -40,9 +40,11 @@ export default async function handler(req: IncomingMessage & { method?: string }
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({ ok: true }));
   } catch (error) {
-    res.statusCode = 500;
+    const message = error instanceof Error ? error.message : 'Server error';
+    const isConfigError = typeof message === 'string' && message.includes('Authentication env vars not configured');
+
+    res.statusCode = isConfigError ? 503 : 500;
     res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Server error' }));
+    res.end(JSON.stringify({ error: message }));
   }
 }
-

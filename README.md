@@ -31,6 +31,18 @@ Passos:
 4. Gere build de producao com `npm run build`
 5. Valide tipos com `npm run lint`
 
+## Login do painel administrativo
+
+O painel usa as rotas `/api/auth/login`, `/api/auth/me` e `/api/auth/logout`.
+
+Para o login funcionar:
+
+- localmente: preencha `ADMIN_USERNAME`, `ADMIN_PASSWORD` e `ADMIN_SESSION_SECRET` no `.env.local`
+- na Vercel: adicione essas mesmas 3 variáveis em `Settings > Environment Variables`
+- depois de salvar na Vercel, faça um novo deploy para as functions lerem os valores
+
+Se essas variáveis não existirem, o catálogo público pode continuar abrindo, mas o painel administrativo vai recusar o login.
+
 ## Estrutura principal
 
 - `src/components`: telas principais do produto

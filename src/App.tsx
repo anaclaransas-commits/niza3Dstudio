@@ -15,6 +15,45 @@ import { Reports } from './components/Reports';
 import { Budgets } from './components/Budgets';
 import { motion, AnimatePresence } from 'motion/react';
 
+type AuthApiPayload = {
+  ok?: boolean;
+  error?: string;
+  username?: string;
+};
+
+async function readAuthPayload(response: Response): Promise<AuthApiPayload | null> {
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!contentType.includes('application/json')) {
+    return null;
+  }
+
+  try {
+    return (await response.json()) as AuthApiPayload;
+  } catch {
+    return null;
+  }
+}
+
+function getLoginErrorMessage(response: Response, payload: AuthApiPayload | null) {
+  if (response.status === 400) {
+    return 'Preencha login e senha.';
+  }
+
+  if (response.status === 401) {
+    return 'Login ou senha incorretos.';
+  }
+
+  if (response.status === 503) {
+    return 'A autenticação não está configurada no servidor. Cadastre ADMIN_USERNAME, ADMIN_PASSWORD e ADMIN_SESSION_SECRET na Vercel e publique de novo.';
+  }
+
+  if (typeof payload?.error === 'string' && payload.error.trim()) {
+    return payload.error;
+  }
+
+  return 'Falha ao fazer login.';
+}
+
 export default function App() {
   const [authenticated, setAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
@@ -26,8 +65,9 @@ export default function App() {
     const check = async () => {
       try {
         const res = await fetch('/api/auth/me', { method: 'GET', credentials: 'include' });
+        const payload = await readAuthPayload(res);
         if (!mounted) return;
-        setAuthenticated(res.ok);
+        setAuthenticated(res.ok && payload?.ok === true);
       } catch {
         if (!mounted) return;
         setAuthenticated(false);
@@ -50,10 +90,13 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-      if (!res.ok) {
-        alert('Login ou senha incorretos.');
+      const payload = await readAuthPayload(res);
+
+      if (!res.ok || payload?.ok !== true) {
+        alert(getLoginErrorMessage(res, payload));
         return;
       }
+
       setAuthenticated(true);
       setPassword('');
     } catch (error) {
