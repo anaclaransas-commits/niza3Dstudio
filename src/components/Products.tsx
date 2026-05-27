@@ -319,7 +319,7 @@ export function Products() {
   };
 
   const handleGalleryFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files: File[] = e.target.files ? Array.from(e.target.files) : [];
+    const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
 
     setUploadingImage(true);

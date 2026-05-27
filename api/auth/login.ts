@@ -1,46 +1,48 @@
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { buildSessionCookie, verifyCredentials } from '../_lib/session';
 
-function jsonResponse(body: unknown, init?: ResponseInit) {
-  return new Response(JSON.stringify(body), {
-    ...init,
-    headers: {
-      'content-type': 'application/json',
-      ...(init?.headers ?? {}),
-    },
-  });
+async function readJson(req: IncomingMessage) {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  const raw = Buffer.concat(chunks).toString('utf8') || '{}';
+  return JSON.parse(raw) as unknown;
 }
 
-export async function POST(request: Request) {
+export default async function handler(req: IncomingMessage & { method?: string }, res: ServerResponse) {
+  if (req.method !== 'POST') {
+    res.statusCode = 405;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ error: 'Method not allowed' }));
+    return;
+  }
+
   try {
-    const body = (await request.json()) as { username?: unknown; password?: unknown };
+    const body = (await readJson(req)) as { username?: unknown; password?: unknown };
     const username = typeof body.username === 'string' ? body.username.trim() : '';
     const password = typeof body.password === 'string' ? body.password : '';
 
     if (!username || !password) {
-      return jsonResponse({ error: 'Missing username/password' }, { status: 400 });
+      res.statusCode = 400;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ error: 'Missing username/password' }));
+      return;
     }
 
     if (!verifyCredentials(username, password)) {
-      return jsonResponse({ error: 'Invalid credentials' }, { status: 401 });
+      res.statusCode = 401;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ error: 'Invalid credentials' }));
+      return;
     }
 
-    return jsonResponse(
-      { ok: true },
-      {
-        status: 200,
-        headers: {
-          'set-cookie': buildSessionCookie(username),
-        },
-      },
-    );
+    res.statusCode = 200;
+    res.setHeader('Set-Cookie', buildSessionCookie(username));
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ ok: true }));
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Server error';
-    const isConfigError =
-      typeof message === 'string' && message.includes('Authentication env vars not configured');
-
-    return jsonResponse(
-      { error: message },
-      { status: isConfigError ? 503 : 500 },
-    );
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Server error' }));
   }
 }
+

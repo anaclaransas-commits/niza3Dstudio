@@ -410,16 +410,6 @@ function QuoteRequestModal({
 }
 
 /* ─── Card do produto ──────────────────────────────────── */
-type ProductCardProps = {
-  key?: React.Key;
-  product: Product;
-  accent: string;
-  primaryColor: string;
-  ctaLabel: string;
-  onOpenDetails: (product: Product) => void;
-  onOpenQuote: (product: Product) => void;
-};
-
 function ProductCard({
   product,
   accent,
@@ -427,7 +417,14 @@ function ProductCard({
   ctaLabel,
   onOpenDetails,
   onOpenQuote,
-}: ProductCardProps) {
+}: {
+  product: Product;
+  accent: string;
+  primaryColor: string;
+  ctaLabel: string;
+  onOpenDetails: (product: Product) => void;
+  onOpenQuote: (product: Product) => void;
+}) {
   const images = getProductImages(product);
   const cover = images[0];
   const extraCount = images.length - 1;

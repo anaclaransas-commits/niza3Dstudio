@@ -15,49 +15,6 @@ import { Reports } from './components/Reports';
 import { Budgets } from './components/Budgets';
 import { motion, AnimatePresence } from 'motion/react';
 
-type AuthApiPayload = {
-  ok?: boolean;
-  error?: string;
-  username?: string;
-};
-
-async function readAuthPayload(response: Response): Promise<AuthApiPayload | null> {
-  const contentType = response.headers.get('content-type') ?? '';
-  if (!contentType.includes('application/json')) {
-    return null;
-  }
-
-  try {
-    return (await response.json()) as AuthApiPayload;
-  } catch {
-    return null;
-  }
-}
-
-function getLoginErrorMessage(response: Response, payload: AuthApiPayload | null) {
-  if (response.status === 400) {
-    return 'Preencha login e senha.';
-  }
-
-  if (response.status === 401) {
-    return 'Login ou senha incorretos.';
-  }
-
-  if (response.status === 503) {
-    return 'A autenticação não está configurada no servidor. Cadastre ADMIN_USERNAME, ADMIN_PASSWORD e ADMIN_SESSION_SECRET na Vercel e publique de novo.';
-  }
-
-  if (typeof payload?.error === 'string' && payload.error.trim()) {
-    return payload.error;
-  }
-
-  if (payload === null) {
-    return 'A rota de login não retornou a API esperada. Na Vercel, verifique se /api/* não está sendo redirecionado para index.html e publique novamente.';
-  }
-
-  return 'Falha ao fazer login.';
-}
-
 export default function App() {
   const [authenticated, setAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
@@ -69,9 +26,8 @@ export default function App() {
     const check = async () => {
       try {
         const res = await fetch('/api/auth/me', { method: 'GET', credentials: 'include' });
-        const payload = await readAuthPayload(res);
         if (!mounted) return;
-        setAuthenticated(res.ok && payload?.ok === true);
+        setAuthenticated(res.ok);
       } catch {
         if (!mounted) return;
         setAuthenticated(false);
@@ -94,13 +50,19 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-      const payload = await readAuthPayload(res);
-
-      if (!res.ok || payload?.ok !== true) {
-        alert(getLoginErrorMessage(res, payload));
+      let payload: { error?: string } | null = null;
+      try {
+        payload = (await res.json()) as { error?: string };
+      } catch {
+        payload = null;
+      }
+      if (!res.ok) {
+        const message =
+          payload?.error ||
+          (res.status === 401 ? 'Login ou senha incorretos.' : `Falha no login (${res.status}).`);
+        alert(message);
         return;
       }
-
       setAuthenticated(true);
       setPassword('');
     } catch (error) {
