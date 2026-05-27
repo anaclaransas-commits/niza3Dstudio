@@ -1,15 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "nodejs20.x"
-    }
-  },
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "^/catalogo$", "dest": "/catalogo.html" },
-    { "src": "^/catalogo/(.*)$", "dest": "/catalogo.html" },
-    { "src": "^(?!/api/).*$", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/:path*" },
+    { "source": "/catalogo", "destination": "/catalogo.html" },
+    { "source": "/catalogo/:path*", "destination": "/catalogo.html" },
+    { "source": "/:path*", "destination": "/index.html" }
   ]
 }
