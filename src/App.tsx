@@ -63,6 +63,20 @@ export default function App() {
         payload = null;
       }
       if (!res.ok) {
+        if (res.status === 500) {
+          try {
+            const healthRes = await fetch('/api/auth/health', { method: 'GET', credentials: 'include' });
+            if (healthRes.ok) {
+              const health = (await healthRes.json()) as { missingEnv?: string[] };
+              if (health.missingEnv && health.missingEnv.length > 0) {
+                alert(`Faltam variáveis no Vercel: ${health.missingEnv.join(', ')}`);
+                return;
+              }
+            }
+          } catch {
+            // Mantém erro padrão abaixo.
+          }
+        }
         const message =
           payload?.error ||
           (res.status === 401
