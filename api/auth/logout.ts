@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { clearSessionCookie } from '../_lib/session';
+import { clearSessionCookie } from '../lib/session';
 
 export default function handler(req: IncomingMessage & { method?: string }, res: ServerResponse) {
   if (req.method !== 'POST') {

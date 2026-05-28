@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { readSession } from '../_lib/session';
+import { readSession } from '../lib/session';
 
 export default function handler(req: IncomingMessage & { method?: string; headers?: any }, res: ServerResponse) {
   if (req.method !== 'GET') {

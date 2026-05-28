@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { buildSessionCookie, getMissingAuthEnv, verifyCredentials } from '../_lib/session';
+import { buildSessionCookie, getMissingAuthEnv, verifyCredentials } from '../lib/session';
 
 async function readJson(req: IncomingMessage) {
   const chunks: Buffer[] = [];
