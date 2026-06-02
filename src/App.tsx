@@ -3,23 +3,29 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { Sidebar, type PageId } from './components/Sidebar';
-import { Dashboard } from './components/Dashboard';
-import { Calculator } from './components/Calculator';
+import { motion, AnimatePresence } from 'motion/react';
+
+// Lazy loading para componentes pesados
+const Dashboard = lazy(() => import('./components/Dashboard').then(m => ({ default: m.Dashboard })));
+const Calculator = lazy(() => import('./components/Calculator').then(m => ({ default: m.Calculator })));
+const Catalog = lazy(() => import('./components/Catalog').then(m => ({ default: m.Catalog })));
+
+// Componentes leves carregados normalmente
 import { Registration } from './components/Registration';
 import { Clients } from './components/Clients';
 import { Products } from './components/Products';
-import { Catalog } from './components/Catalog';
 import { Reports } from './components/Reports';
 import { Budgets } from './components/Budgets';
-import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
   const [authenticated, setAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [checkingSession, setCheckingSession] = useState(true);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
   useEffect(() => {
     let mounted = true;
@@ -43,6 +49,8 @@ export default function App() {
   }, []);
 
   const handleLogin = async () => {
+    setIsLoggingIn(true);
+    setLoginError('');
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -69,7 +77,7 @@ export default function App() {
             if (healthRes.ok) {
               const health = (await healthRes.json()) as { missingEnv?: string[] };
               if (health.missingEnv && health.missingEnv.length > 0) {
-                alert(`Faltam variáveis no Vercel: ${health.missingEnv.join(', ')}`);
+                setLoginError(`Faltam variáveis no Vercel: ${health.missingEnv.join(', ')}`);
                 return;
               }
             }
@@ -82,14 +90,16 @@ export default function App() {
           (res.status === 401
             ? 'Login ou senha incorretos.'
             : `Falha no login (${res.status})${fallbackText ? `: ${fallbackText.slice(0, 160)}` : '.'}`);
-        alert(message);
+        setLoginError(message);
         return;
       }
       setAuthenticated(true);
       setPassword('');
     } catch (error) {
       console.error(error);
-      alert('Falha ao fazer login.');
+      setLoginError('Falha ao fazer login.');
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -126,11 +136,23 @@ export default function App() {
         return <Dashboard onNavigate={setActivePage} />;
     }
   };
+
+  const LoadingFallback = () => (
+    <div className="flex items-center justify-center h-64">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-3 border-slate-200 border-t-emerald-600 rounded-full animate-spin" />
+        <p className="text-sm font-medium text-slate-500">Carregando…</p>
+      </div>
+    </div>
+  );
   if (checkingSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 p-4">
         <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 border border-slate-200 text-center">
-          <p className="text-sm font-bold text-slate-700">Carregando…</p>
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-3 border-slate-200 border-t-emerald-600 rounded-full animate-spin" />
+            <p className="text-sm font-bold text-slate-700">Carregando…</p>
+          </div>
         </div>
       </div>
     );
@@ -138,47 +160,81 @@ export default function App() {
 
   if (!authenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 p-4">
         <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 border border-slate-200">
-          
-          <h1 className="text-2xl font-black text-slate-800 mb-2 text-center">
-            Painel Administrativo
-          </h1>
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-600 rounded-2xl mb-4 shadow-lg shadow-emerald-200">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-black text-slate-800 mb-2">
+              Painel Administrativo
+            </h1>
+            <p className="text-sm text-slate-500">
+              Digite seu login e senha para acessar
+            </p>
+          </div>
 
-          <p className="text-sm text-slate-500 text-center mb-6">
-            Digite seu login e senha para acessar
-          </p>
+          {loginError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+              <p className="text-sm text-red-600 font-medium">{loginError}</p>
+            </div>
+          )}
 
-          <input
-            type="text"
-            placeholder="Login"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full p-3 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-500 mb-3"
-            autoComplete="username"
-          />
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                Login
+              </label>
+              <input
+                type="text"
+                placeholder="Seu usuário"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full p-3 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                autoComplete="username"
+                disabled={isLoggingIn}
+              />
+            </div>
 
-          <input
-            type="password"
-            placeholder="Senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-3 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-500 mb-4"
-            autoComplete="current-password"
-          />
+            <div>
+              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                Senha
+              </label>
+              <input
+                type="password"
+                placeholder="Sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-3 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                autoComplete="current-password"
+                disabled={isLoggingIn}
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+              />
+            </div>
 
-          <button
-            onClick={handleLogin}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-all"
-          >
-            Entrar
-          </button>
+            <button
+              onClick={handleLogin}
+              disabled={isLoggingIn || !username || !password}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-emerald-200 flex items-center justify-center gap-2"
+            >
+              {isLoggingIn ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Entrando…</span>
+                </>
+              ) : (
+                'Entrar'
+              )}
+            </button>
+          </div>
         </div>
       </div>
     );
   }
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden font-sans">
       <Sidebar activePage={activePage} onPageChange={setActivePage} />
       
       <main className="flex-1 overflow-y-auto no-print">
@@ -187,8 +243,11 @@ export default function App() {
             <button
               type="button"
               onClick={handleLogout}
-              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"
+              className="rounded-full border border-slate-200 bg-white/80 backdrop-blur-sm px-4 py-2 text-xs font-bold text-slate-700 hover:bg-white hover:shadow-md transition-all flex items-center gap-2"
             >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
               Sair
             </button>
           </div>
@@ -200,7 +259,9 @@ export default function App() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
             >
-              {renderPage()}
+              <Suspense fallback={<LoadingFallback />}>
+                {renderPage()}
+              </Suspense>
             </motion.div>
           </AnimatePresence>
         </div>

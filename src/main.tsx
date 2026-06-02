@@ -2,6 +2,7 @@ import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import './styles/design-tokens.css';
 import { StoreProvider } from './store';
 
 const rootElement = document.getElementById('root');

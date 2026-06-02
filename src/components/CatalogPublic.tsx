@@ -61,11 +61,18 @@ const DEFAULT_SETTINGS: CatalogSettings = {
 /* ─── Galeria de imagens ─────────────────────────────── */
 function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; accent: string }) {
   const [index, setIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const safeIndex = images.length > 0 ? Math.min(index, images.length - 1) : 0;
 
   useEffect(() => {
     setIndex(0);
   }, [images.length, images[0]]);
+
+  const handleImageLoad = () => setIsLoading(false);
+  const handleImageChange = (newIndex: number) => {
+    setIsLoading(true);
+    setIndex(newIndex);
+  };
 
   if (images.length === 0) {
     return (
@@ -78,15 +85,23 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
     );
   }
 
-  const go = (delta: number) => setIndex((i) => (i + delta + images.length) % images.length);
+  const go = (delta: number) => handleImageChange((index + delta + images.length) % images.length);
 
   return (
     <div className="space-y-3">
       <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-slate-100">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
+            <div className="w-8 h-8 border-2 border-slate-300 border-t-emerald-600 rounded-full animate-spin" />
+          </div>
+        )}
         <img
           src={images[safeIndex]}
           alt={`${alt} — foto ${safeIndex + 1}`}
-          className="max-h-full max-w-full object-contain"
+          className="max-h-full max-w-full object-contain transition-opacity duration-300"
+          style={{ opacity: isLoading ? 0 : 1 }}
+          onLoad={handleImageLoad}
+          loading="lazy"
         />
         {images.length > 1 && (
           <>
@@ -410,6 +425,16 @@ function QuoteRequestModal({
 }
 
 /* ─── Card do produto ──────────────────────────────────── */
+interface ProductCardProps {
+  product: Product;
+  accent: string;
+  primaryColor: string;
+  ctaLabel: string;
+  onOpenDetails: (product: Product) => void;
+  onOpenQuote: (product: Product) => void;
+  key?: string;
+}
+
 function ProductCard({
   product,
   accent,
@@ -417,19 +442,14 @@ function ProductCard({
   ctaLabel,
   onOpenDetails,
   onOpenQuote,
-}: {
-  product: Product;
-  accent: string;
-  primaryColor: string;
-  ctaLabel: string;
-  onOpenDetails: (product: Product) => void;
-  onOpenQuote: (product: Product) => void;
-}) {
+}: ProductCardProps) {
   const images = getProductImages(product);
   const cover = images[0];
   const extraCount = images.length - 1;
   const badgeColor = MATERIAL_BADGE[product.materialType] ?? '#64748b';
   const tags = product.tags?.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 2) ?? [];
+
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
     <article
@@ -444,12 +464,21 @@ function ProductCard({
         onKeyDown={(e) => e.key === 'Enter' && onOpenDetails(product)}
       >
         {cover ? (
-          <img
-            src={cover}
-            alt={product.name}
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.08]"
-            loading="lazy"
-          />
+          <>
+            {!imageLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
+                <div className="w-8 h-8 border-2 border-slate-300 border-t-emerald-600 rounded-full animate-spin" />
+              </div>
+            )}
+            <img
+              src={cover}
+              alt={product.name}
+              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.08]"
+              loading="lazy"
+              onLoad={() => setImageLoaded(true)}
+              style={{ opacity: imageLoaded ? 1 : 0 }}
+            />
+          </>
         ) : (
           <div
             className="flex h-full w-full items-center justify-center"
