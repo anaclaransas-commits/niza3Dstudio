@@ -1,7 +1,6 @@
-import type { IncomingMessage, ServerResponse } from 'node:http';
-import { getMissingAuthEnv } from '../lib/session';
+import { getMissingAuthEnv } from '../lib/session.js';
 
-export default function handler(req: IncomingMessage & { method?: string }, res: ServerResponse) {
+export default function handler(req, res) {
   if (req.method !== 'GET') {
     res.statusCode = 405;
     res.setHeader('Content-Type', 'application/json');
@@ -21,4 +20,3 @@ export default function handler(req: IncomingMessage & { method?: string }, res:
     }),
   );
 }
-

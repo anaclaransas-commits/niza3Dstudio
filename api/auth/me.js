@@ -1,7 +1,6 @@
-import type { IncomingMessage, ServerResponse } from 'node:http';
-import { readSession } from '../lib/session';
+import { readSession } from '../lib/session.js';
 
-export default function handler(req: IncomingMessage & { method?: string; headers?: any }, res: ServerResponse) {
+export default function handler(req, res) {
   if (req.method !== 'GET') {
     res.statusCode = 405;
     res.setHeader('Content-Type', 'application/json');
@@ -9,7 +8,7 @@ export default function handler(req: IncomingMessage & { method?: string; header
     return;
   }
 
-  const session = readSession(req as any);
+  const session = readSession(req);
   if (!session.ok) {
     res.statusCode = 401;
     res.setHeader('Content-Type', 'application/json');
@@ -21,4 +20,3 @@ export default function handler(req: IncomingMessage & { method?: string; header
   res.setHeader('Content-Type', 'application/json');
   res.end(JSON.stringify({ ok: true, username: session.username }));
 }
-

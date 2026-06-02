@@ -1,7 +1,6 @@
-import type { IncomingMessage, ServerResponse } from 'node:http';
-import { clearSessionCookie } from '../lib/session';
+import { clearSessionCookie } from '../lib/session.js';
 
-export default function handler(req: IncomingMessage & { method?: string }, res: ServerResponse) {
+export default function handler(req, res) {
   if (req.method !== 'POST') {
     res.statusCode = 405;
     res.setHeader('Content-Type', 'application/json');
@@ -14,4 +13,3 @@ export default function handler(req: IncomingMessage & { method?: string }, res:
   res.setHeader('Content-Type', 'application/json');
   res.end(JSON.stringify({ ok: true }));
 }
-
