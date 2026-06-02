@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { getMissingAuthEnv } from '../_lib/session';
+import { getMissingAuthEnv } from '../lib/session';
 
 export default function handler(req: IncomingMessage & { method?: string }, res: ServerResponse) {
   if (req.method !== 'GET') {
