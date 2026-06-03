@@ -103,6 +103,20 @@
   --letter-spacing-widest: 0.1em;
 }
 
+/* Dark Mode */
+.dark {
+  --color-slate-50: #0f172a;
+  --color-slate-100: #1e293b;
+  --color-slate-200: #334155;
+  --color-slate-300: #475569;
+  --color-slate-400: #64748b;
+  --color-slate-500: #94a3b8;
+  --color-slate-600: #cbd5e1;
+  --color-slate-700: #e2e8f0;
+  --color-slate-800: #f1f5f9;
+  --color-slate-900: #f8fafc;
+}
+
 /* Animações Personalizadas */
 @keyframes fadeIn {
   from {

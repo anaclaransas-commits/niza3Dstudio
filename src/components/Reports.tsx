@@ -7,6 +7,8 @@ import React, { useMemo, useState } from 'react';
 import {
   Calendar,
   DollarSign,
+  Download,
+  FileText,
   Plus,
   Receipt,
   Trash2,
@@ -18,6 +20,8 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -38,6 +42,7 @@ import {
 import { downloadCsvFile, formatCurrency } from '../lib/utils';
 import { useStore } from '../store';
 import type { AnalyticsRange, FinanceEntryType } from '../types';
+import jsPDF from 'jspdf';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#a855f7'];
 
@@ -162,6 +167,43 @@ export function Reports() {
     downloadCsvFile(`financeiro-3dprint-${selectedRange}-${new Date().toISOString().slice(0, 10)}.csv`, rows);
   };
 
+  const handleExportPdf = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    doc.setFontSize(20);
+    doc.text('Relatório Financeiro', pageWidth / 2, 20, { align: 'center' });
+    
+    doc.setFontSize(12);
+    doc.text(`Período: ${RANGE_OPTIONS.find(r => r.value === selectedRange)?.label}`, pageWidth / 2, 30, { align: 'center' });
+    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, 38, { align: 'center' });
+    
+    doc.setFontSize(14);
+    doc.text('Resumo Consolidado', 20, 55);
+    
+    doc.setFontSize(11);
+    let y = 65;
+    doc.text(`Receita Total: ${formatCurrency(rangeSummary.totalRevenue)}`, 20, y); y += 8;
+    doc.text(`Gastos Totais: ${formatCurrency(rangeSummary.totalExpense)}`, 20, y); y += 8;
+    doc.text(`Lucro Líquido: ${formatCurrency(rangeSummary.profit)}`, 20, y); y += 8;
+    doc.text(`Margem de Lucro: ${rangeSummary.profitMargin.toFixed(1)}%`, 20, y); y += 15;
+    
+    doc.setFontSize(14);
+    doc.text('Vendas Recentes', 20, y); y += 10;
+    
+    doc.setFontSize(9);
+    salesForExport.slice(0, 10).forEach((sale) => {
+      if (y > 270) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(`${new Date(sale.date).toLocaleDateString('pt-BR')} - ${sale.clientName} - ${sale.productName} - ${formatCurrency(sale.price)}`, 20, y);
+      y += 7;
+    });
+    
+    doc.save(`relatorio-financeiro-${selectedRange}-${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -183,9 +225,14 @@ export function Reports() {
             ))}
           </div>
         </div>
-        <button onClick={handleExportCsv} className="inline-flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
-          <Calendar className="mr-2 h-4 w-4" /> Exportar CSV do período
-        </button>
+        <div className="flex gap-3">
+          <button onClick={handleExportCsv} className="inline-flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+            <Download className="mr-2 h-4 w-4" /> Exportar CSV
+          </button>
+          <button onClick={handleExportPdf} className="inline-flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+            <FileText className="mr-2 h-4 w-4" /> Exportar PDF
+          </button>
+        </div>
       </section>
 
       <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
@@ -265,6 +312,31 @@ export function Reports() {
             </div>
           )}
         </article>
+      </section>
+
+      <section className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
+        <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Tendência de lucro</p>
+            <h3 className="mt-2 text-2xl font-black text-slate-900">Evolução do lucro ao longo do tempo</h3>
+          </div>
+          <div className="flex flex-wrap gap-3 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />Lucro</span>
+            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-blue-500" />Média móvel</span>
+          </div>
+        </div>
+        <div className="h-[340px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={monthlySeries}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b', fontWeight: 700 }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 700 }} />
+              <Tooltip formatter={(value: number) => formatCurrency(value)} contentStyle={{ borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgb(15 23 42 / 0.08)' }} />
+              <Line type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={3} dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }} activeDot={{ r: 6 }} />
+              <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} dot={false} strokeDasharray="5 5" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_1fr]">

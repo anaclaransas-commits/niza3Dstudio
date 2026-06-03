@@ -505,6 +505,10 @@ export function Products() {
             className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all font-semibold text-sm">
             <Plus className="w-4 h-4 mr-2" /> Novo Produto
           </button>
+          <button onClick={() => window.open('/catalogo.html', '_blank')}
+            className="flex items-center px-4 py-2 bg-slate-900 text-white rounded-xl shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all font-semibold text-sm">
+            <Eye className="w-4 h-4 mr-2" /> Preview Catálogo
+          </button>
         </div>
       </div>
 
@@ -550,7 +554,17 @@ export function Products() {
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
                 <ImageIcon className="w-3 h-3" /> Imagem
               </label>
-              <div onClick={() => fileInputRef.current?.click()}
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) {
+                    const input = { target: { files: e.dataTransfer.files, value: '' } } as React.ChangeEvent<HTMLInputElement>;
+                    handleFileChange(input);
+                  }
+                }}
                 className={cn('relative aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 transition-all overflow-hidden group',
                   formData.imageUrl ? 'border-solid border-emerald-400' : '')}>
                 {formData.imageUrl ? (
@@ -601,6 +615,12 @@ export function Products() {
                   type="button"
                   disabled={uploadingImage}
                   onClick={() => galleryInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const input = { target: { files: e.dataTransfer.files, value: '' } } as React.ChangeEvent<HTMLInputElement>;
+                    handleGalleryFiles(input);
+                  }}
                   className="w-full rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-600 transition hover:border-emerald-400 disabled:opacity-50"
                 >
                   {uploadingImage ? 'Enviando...' : '+ Adicionar mais fotos'}

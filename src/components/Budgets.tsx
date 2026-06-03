@@ -15,6 +15,7 @@ import {
 import { useStore } from '../store';
 import { cn, formatCurrency, getBudgetQuantity, isApprovedBudget } from '../lib/utils';
 import { type BudgetStatus } from '../types';
+import { createQuoteNotificationEmail, sendEmailNotification } from '../lib/emailService';
 
 const statusFilters: Array<'Todos' | BudgetStatus> = ['Todos', 'Pendente', 'Aprovado', 'Concluido', 'Recusado'];
 const budgetStatuses: BudgetStatus[] = ['Pendente', 'Aprovado', 'Concluido', 'Recusado'];
@@ -79,6 +80,23 @@ export function Budgets() {
 
   const handleStatusChange = (budgetId: string, status: BudgetStatus) => {
     updateBudgetStatus(budgetId, status);
+    
+    // Enviar notificação por email se configurado e orçamento aprovado
+    if (status === 'Aprovado' && catalogSettings.emailNotifications?.enabled) {
+      const budget = budgets.find(b => b.id === budgetId);
+      if (budget && catalogSettings.emailNotifications.recipientEmail) {
+        const emailNotification = createQuoteNotificationEmail(
+          getClientName(budget.clientId),
+          getProductName(budget.productId),
+          budget.price,
+          catalogSettings.businessName
+        );
+        sendEmailNotification({
+          ...emailNotification,
+          to: catalogSettings.emailNotifications.recipientEmail
+        });
+      }
+    }
   };
 
   if (selectedBudget) {

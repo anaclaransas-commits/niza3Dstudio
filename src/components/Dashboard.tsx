@@ -76,42 +76,48 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       value: formatCurrency(rangeSummary.revenue),
       helper: `${rangeSummary.pendingCount} orçamento(s) pendente(s) no período`,
       icon: TrendingUp,
-      color: 'bg-emerald-50 text-emerald-600',
+      gradient: 'from-emerald-400 to-cyan-400',
+      bgColor: 'bg-gradient-to-br from-emerald-50 to-cyan-50',
     },
     {
       label: 'Lucro do período',
       value: formatCurrency(rangeSummary.profit),
       helper: `Receita ${formatCurrency(rangeSummary.revenue)}`,
       icon: PiggyBank,
-      color: 'bg-blue-50 text-blue-600',
+      gradient: 'from-blue-400 to-indigo-400',
+      bgColor: 'bg-gradient-to-br from-blue-50 to-indigo-50',
     },
     {
       label: 'Gastos do período',
       value: formatCurrency(rangeSummary.expenses),
       helper: 'Produção + despesas extras',
       icon: TrendingDown,
-      color: 'bg-rose-50 text-rose-600',
+      gradient: 'from-rose-400 to-pink-400',
+      bgColor: 'bg-gradient-to-br from-rose-50 to-pink-50',
     },
     {
       label: 'Ticket médio do período',
       value: formatCurrency(rangeSummary.averageTicket),
       helper: `${rangeSummary.salesCount} venda(s) fechada(s)`,
       icon: Wallet,
-      color: 'bg-amber-50 text-amber-600',
+      gradient: 'from-amber-400 to-orange-400',
+      bgColor: 'bg-gradient-to-br from-amber-50 to-orange-50',
     },
     {
       label: 'Clientes ativos no período',
       value: String(rangeSummary.activeClients),
       helper: `${clients.length} cliente(s) no cadastro`,
       icon: Users,
-      color: 'bg-indigo-50 text-indigo-600',
+      gradient: 'from-violet-400 to-purple-400',
+      bgColor: 'bg-gradient-to-br from-violet-50 to-purple-50',
     },
     {
       label: 'Despesas fixas mensais',
       value: formatCurrency(rangeSummary.recurringExpensesMonthly),
       helper: `${rangeSummary.extraEntriesCount} lançamento(s) extras no período`,
       icon: Receipt,
-      color: 'bg-slate-100 text-slate-700',
+      gradient: 'from-slate-400 to-gray-400',
+      bgColor: 'bg-gradient-to-br from-slate-50 to-gray-50',
     },
   ];
 
@@ -149,10 +155,10 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <section className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
+      <section className="rounded-[36px] border border-slate-200/60 bg-gradient-to-br from-white to-slate-50 p-8 shadow-xl shadow-slate-200/50">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl space-y-3">
-            <p className="text-xs font-black uppercase tracking-[0.3em] text-blue-600">Gestão da empresa</p>
+            <p className="text-xs font-black uppercase tracking-[0.3em] bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">Gestão da empresa</p>
             <h2 className="text-3xl font-black tracking-tight text-slate-900 md:text-4xl">
               Dashboard financeiro, operacional e comercial da sua produção 3D.
             </h2>
@@ -164,7 +170,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                 <button
                   key={option.value}
                   onClick={() => setSelectedRange(option.value)}
-                  className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.2em] transition-colors ${selectedRange === option.value ? 'bg-slate-900 text-white' : 'border border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}
+                  className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.2em] transition-all duration-300 ${selectedRange === option.value ? 'bg-gradient-to-r from-emerald-600 to-cyan-600 text-white shadow-lg shadow-emerald-500/30' : 'border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300'}`}
                 >
                   {option.label}
                 </button>
@@ -177,15 +183,15 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               <button
                 key={action.page}
                 onClick={() => onNavigate(action.page)}
-                className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-md"
+                className="group rounded-3xl border border-slate-200/60 bg-gradient-to-br from-white to-slate-50 p-4 text-left transition-all duration-300 hover:-translate-y-1 hover:border-emerald-300/60 hover:bg-gradient-to-br hover:from-emerald-50 hover:to-cyan-50 hover:shadow-lg hover:shadow-emerald-500/20"
               >
                 <div className="mb-3 flex items-center justify-between">
-                  <div className="rounded-2xl bg-white p-3 text-slate-700 shadow-sm">
+                  <div className="rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 p-3 text-slate-700 shadow-sm group-hover:from-emerald-100 group-hover:to-cyan-100 group-hover:text-emerald-700 transition-all duration-300">
                     <action.icon className="h-5 w-5" />
                   </div>
-                  <ArrowRight className="h-4 w-4 text-slate-300" />
+                  <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all duration-300" />
                 </div>
-                <p className="text-sm font-black text-slate-800">{action.label}</p>
+                <p className="text-sm font-black text-slate-800 group-hover:text-emerald-700 transition-colors">{action.label}</p>
                 <p className="mt-1 text-xs leading-5 text-slate-500">{action.description}</p>
               </button>
             ))}
@@ -195,31 +201,34 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
       <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
         {statCards.map((stat) => (
-          <article key={stat.label} className="rounded-[32px] border border-slate-100 bg-white p-6 shadow-sm">
+          <article key={stat.label} className="group rounded-[32px] border border-slate-200/60 bg-gradient-to-br from-white to-slate-50 p-6 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 hover:-translate-y-1">
             <div className="mb-5 flex items-center justify-between">
-              <div className={`rounded-2xl p-3 ${stat.color}`}>
+              <div className={`rounded-2xl bg-gradient-to-br ${stat.gradient} p-3 text-white shadow-lg shadow-slate-900/20`}>
                 <stat.icon className="h-5 w-5" />
               </div>
-              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-300">Agora</span>
+              <div className={`text-xs font-black uppercase tracking-wider bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>
+                {stat.label}
+              </div>
             </div>
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">{stat.label}</p>
-            <h3 className="mt-2 text-3xl font-black text-slate-900">{stat.value}</h3>
-            <p className="mt-2 text-sm text-slate-500">{stat.helper}</p>
+            <div className="mb-2">
+              <p className="text-3xl font-black text-slate-900 group-hover:text-slate-800 transition-colors">{stat.value}</p>
+            </div>
+            <p className="text-xs text-slate-500">{stat.helper}</p>
           </article>
         ))}
       </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.8fr_1fr]">
-        <article className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
+        <article className="rounded-[36px] border border-slate-200/60 bg-gradient-to-br from-white to-slate-50 p-8 shadow-xl shadow-slate-200/50">
           <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Fluxo mensal</p>
+              <p className="text-xs font-black uppercase tracking-[0.25em] bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">Fluxo mensal</p>
               <h3 className="mt-2 text-2xl font-black text-slate-900">Receita, gastos e lucro dos últimos {chartMonths} meses</h3>
             </div>
             <div className="flex flex-wrap gap-3 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
-              <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-blue-500" />Receita</span>
-              <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-rose-400" />Gastos</span>
-              <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />Lucro</span>
+              <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500" />Receita</span>
+              <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-gradient-to-r from-rose-500 to-pink-500" />Gastos</span>
+              <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" />Lucro</span>
             </div>
           </div>
 
@@ -242,50 +251,50 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         </article>
 
         <div className="space-y-6">
-          <article className="rounded-[36px] border border-slate-100 bg-slate-900 p-8 text-white shadow-2xl shadow-slate-200">
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Operação acumulada</p>
+          <article className="rounded-[36px] border border-slate-200/60 bg-gradient-to-br from-slate-900 to-slate-800 p-8 shadow-xl shadow-slate-900/50">
+            <p className="text-xs font-black uppercase tracking-[0.25em] bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Operação acumulada</p>
             <div className="mt-8 space-y-5">
-              <div className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
+              <div className="flex items-center justify-between rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
                 <span className="flex items-center gap-2 text-sm text-slate-300"><Package className="h-4 w-4" />Peças vendidas</span>
                 <strong className="text-lg font-black text-white">{metrics.totalPiecesSold}</strong>
               </div>
-              <div className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
+              <div className="flex items-center justify-between rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
                 <span className="flex items-center gap-2 text-sm text-slate-300"><Clock3 className="h-4 w-4" />Horas produzidas</span>
                 <strong className="text-lg font-black text-white">{metrics.totalPrintHours.toFixed(1)}h</strong>
               </div>
-              <div className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
+              <div className="flex items-center justify-between rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
                 <span className="flex items-center gap-2 text-sm text-slate-300"><Wrench className="h-4 w-4" />Filamentos cadastrados</span>
                 <strong className="text-lg font-black text-white">{filaments.length}</strong>
               </div>
-              <div className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
+              <div className="flex items-center justify-between rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
                 <span className="flex items-center gap-2 text-sm text-slate-300"><Receipt className="h-4 w-4" />Movimentações extras</span>
                 <strong className="text-lg font-black text-white">{financeEntries.length}</strong>
               </div>
-              <div className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
+              <div className="flex items-center justify-between rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
                 <span className="flex items-center gap-2 text-sm text-slate-300"><Package className="h-4 w-4" />Produtos no catálogo</span>
                 <strong className="text-lg font-black text-white">{publicProductsCount}</strong>
               </div>
             </div>
           </article>
 
-          <article className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Leitura rápida</p>
+          <article className="rounded-[36px] border border-slate-200/60 bg-gradient-to-br from-white to-slate-50 p-8 shadow-xl shadow-slate-200/50">
+            <p className="text-xs font-black uppercase tracking-[0.25em] bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">Leitura rápida</p>
             <div className="mt-6 grid grid-cols-2 gap-4">
-              <div className="rounded-3xl bg-slate-50 p-4">
+              <div className="group rounded-3xl bg-gradient-to-br from-slate-50 to-slate-100 p-4 hover:shadow-lg hover:shadow-slate-200/50 transition-all duration-300">
                 <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Receita total</p>
-                <p className="mt-2 text-xl font-black text-slate-900">{formatCurrency(metrics.totalRevenue)}</p>
+                <p className="mt-2 text-xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors">{formatCurrency(metrics.totalRevenue)}</p>
               </div>
-              <div className="rounded-3xl bg-slate-50 p-4">
-                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Lucro total</p>
+              <div className="group rounded-3xl bg-gradient-to-br from-emerald-50 to-cyan-50 p-4 hover:shadow-lg hover:shadow-emerald-200/50 transition-all duration-300">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-600">Lucro total</p>
                 <p className="mt-2 text-xl font-black text-emerald-600">{formatCurrency(metrics.totalProfit)}</p>
               </div>
-              <div className="rounded-3xl bg-slate-50 p-4">
+              <div className="group rounded-3xl bg-gradient-to-br from-slate-50 to-slate-100 p-4 hover:shadow-lg hover:shadow-slate-200/50 transition-all duration-300">
                 <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Orçamentos</p>
-                <p className="mt-2 text-xl font-black text-slate-900">{budgets.length}</p>
+                <p className="mt-2 text-xl font-black text-slate-900 group-hover:text-blue-600 transition-colors">{budgets.length}</p>
               </div>
-              <div className="rounded-3xl bg-slate-50 p-4">
+              <div className="group rounded-3xl bg-gradient-to-br from-slate-50 to-slate-100 p-4 hover:shadow-lg hover:shadow-slate-200/50 transition-all duration-300">
                 <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Cadastros</p>
-                <p className="mt-2 text-xl font-black text-slate-900">{clients.length + products.length}</p>
+                <p className="mt-2 text-xl font-black text-slate-900 group-hover:text-purple-600 transition-colors">{clients.length + products.length}</p>
               </div>
             </div>
           </article>
@@ -293,15 +302,15 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.5fr_1fr]">
-        <article className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
+        <article className="rounded-[36px] border border-slate-200/60 bg-gradient-to-br from-white to-slate-50 p-8 shadow-xl shadow-slate-200/50">
           <div className="mb-6 flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Histórico de vendas</p>
+              <p className="text-xs font-black uppercase tracking-[0.25em] bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">Histórico de vendas</p>
               <h3 className="mt-2 text-2xl font-black text-slate-900">Últimas vendas aprovadas no período selecionado</h3>
             </div>
             <button
               onClick={() => onNavigate('budgets')}
-              className="rounded-full bg-slate-900 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-white transition-colors hover:bg-slate-800"
+              className="rounded-full bg-gradient-to-r from-emerald-600 to-cyan-600 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-white transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/30"
             >
               Abrir pedidos
             </button>
@@ -341,38 +350,38 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           )}
         </article>
 
-        <article className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Atalhos estratégicos</p>
+        <article className="rounded-[36px] border border-slate-200/60 bg-gradient-to-br from-white to-slate-50 p-8 shadow-xl shadow-slate-200/50">
+          <p className="text-xs font-black uppercase tracking-[0.25em] bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">Atalhos estratégicos</p>
           <div className="mt-6 space-y-4">
             <button
               onClick={() => onNavigate('registration')}
-              className="flex w-full items-center justify-between rounded-3xl border border-slate-200 px-5 py-4 text-left transition-colors hover:bg-slate-50"
+              className="group flex w-full items-center justify-between rounded-3xl border border-slate-200/60 bg-gradient-to-br from-white to-slate-50 px-5 py-4 text-left transition-all duration-300 hover:border-emerald-300/60 hover:bg-gradient-to-br hover:from-emerald-50 hover:to-cyan-50 hover:shadow-lg hover:shadow-emerald-500/20"
             >
               <div>
-                <p className="text-sm font-black text-slate-800">Cadastros e estoque</p>
+                <p className="text-sm font-black text-slate-800 group-hover:text-emerald-700 transition-colors">Cadastros e estoque</p>
                 <p className="mt-1 text-xs text-slate-500">Impressoras, filamentos, insumos e canais de venda.</p>
               </div>
-              <ArrowRight className="h-4 w-4 text-slate-300" />
+              <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all duration-300" />
             </button>
             <button
               onClick={() => onNavigate('products')}
-              className="flex w-full items-center justify-between rounded-3xl border border-slate-200 px-5 py-4 text-left transition-colors hover:bg-slate-50"
+              className="group flex w-full items-center justify-between rounded-3xl border border-slate-200/60 bg-gradient-to-br from-white to-slate-50 px-5 py-4 text-left transition-all duration-300 hover:border-purple-300/60 hover:bg-gradient-to-br hover:from-purple-50 hover:to-violet-50 hover:shadow-lg hover:shadow-purple-500/20"
             >
               <div>
-                <p className="text-sm font-black text-slate-800">Produtos e catálogo</p>
+                <p className="text-sm font-black text-slate-800 group-hover:text-purple-700 transition-colors">Produtos e catálogo</p>
                 <p className="mt-1 text-xs text-slate-500">Editar produtos, imagens, visibilidade e coleção pública.</p>
               </div>
-              <ArrowRight className="h-4 w-4 text-slate-300" />
+              <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-purple-500 group-hover:translate-x-1 transition-all duration-300" />
             </button>
             <button
               onClick={() => onNavigate('catalog')}
-              className="flex w-full items-center justify-between rounded-3xl border border-slate-200 px-5 py-4 text-left transition-colors hover:bg-slate-50"
+              className="group flex w-full items-center justify-between rounded-3xl border border-slate-200/60 bg-gradient-to-br from-white to-slate-50 px-5 py-4 text-left transition-all duration-300 hover:border-indigo-300/60 hover:bg-gradient-to-br hover:from-indigo-50 hover:to-blue-50 hover:shadow-lg hover:shadow-indigo-500/20"
             >
               <div>
-                <p className="text-sm font-black text-slate-800">Página do catálogo</p>
+                <p className="text-sm font-black text-slate-800 group-hover:text-indigo-700 transition-colors">Página do catálogo</p>
                 <p className="mt-1 text-xs text-slate-500">Ver o link público e validar o que o cliente enxerga.</p>
               </div>
-              <ArrowRight className="h-4 w-4 text-slate-300" />
+              <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all duration-300" />
             </button>
           </div>
         </article>

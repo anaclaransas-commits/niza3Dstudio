@@ -86,6 +86,18 @@ export interface CatalogSettings {
   instagram?: string;
   email?: string;
   footerNote?: string;
+  emailNotifications?: {
+    enabled: boolean;
+    recipientEmail?: string;
+    notifyOnNewQuote?: boolean;
+    notifyOnOrder?: boolean;
+  };
+  ecommerceIntegration?: {
+    enabled: boolean;
+    platform?: 'shopify' | 'mercadolivre';
+    apiKey?: string;
+    storeUrl?: string;
+  };
 }
 
 export interface CalculationResult {

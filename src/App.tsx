@@ -11,13 +11,11 @@ import { motion, AnimatePresence } from 'motion/react';
 const Dashboard = lazy(() => import('./components/Dashboard').then(m => ({ default: m.Dashboard })));
 const Calculator = lazy(() => import('./components/Calculator').then(m => ({ default: m.Calculator })));
 const Catalog = lazy(() => import('./components/Catalog').then(m => ({ default: m.Catalog })));
-
-// Componentes leves carregados normalmente
-import { Registration } from './components/Registration';
-import { Clients } from './components/Clients';
-import { Products } from './components/Products';
-import { Reports } from './components/Reports';
-import { Budgets } from './components/Budgets';
+const Registration = lazy(() => import('./components/Registration').then(m => ({ default: m.Registration })));
+const Clients = lazy(() => import('./components/Clients').then(m => ({ default: m.Clients })));
+const Products = lazy(() => import('./components/Products').then(m => ({ default: m.Products })));
+const Reports = lazy(() => import('./components/Reports').then(m => ({ default: m.Reports })));
+const Budgets = lazy(() => import('./components/Budgets').then(m => ({ default: m.Budgets })));
 
 export default function App() {
   const [authenticated, setAuthenticated] = useState(false);

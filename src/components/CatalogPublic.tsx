@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
+  Heart,
   Instagram,
   Mail,
   MessageCircle,
@@ -89,17 +90,17 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
 
   return (
     <div className="space-y-3">
-      <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-slate-100">
+      <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 shadow-inner">
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
-            <div className="w-8 h-8 border-2 border-slate-300 border-t-emerald-600 rounded-full animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
+            <div className="w-8 h-8 border-2 border-slate-300 border-t-emerald-500 rounded-full animate-spin" />
           </div>
         )}
         <img
           src={images[safeIndex]}
           alt={`${alt} — foto ${safeIndex + 1}`}
-          className="max-h-full max-w-full object-contain transition-opacity duration-300"
-          style={{ opacity: isLoading ? 0 : 1 }}
+          className="max-h-full max-w-full object-contain transition-all duration-500"
+          style={{ opacity: isLoading ? 0 : 1, transform: isLoading ? 'scale(0.95)' : 'scale(1)' }}
           onLoad={handleImageLoad}
           loading="lazy"
         />
@@ -108,7 +109,7 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
             <button
               type="button"
               onClick={() => go(-1)}
-              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white hover:bg-black/70"
+              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-black/70 to-black/50 p-2 text-white backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:from-emerald-600/80 hover:to-cyan-600/80 shadow-lg"
               aria-label="Imagem anterior"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -116,12 +117,12 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
             <button
               type="button"
               onClick={() => go(1)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white hover:bg-black/70"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-black/70 to-black/50 p-2 text-white backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:from-emerald-600/80 hover:to-cyan-600/80 shadow-lg"
               aria-label="Próxima imagem"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
-            <span className="absolute bottom-3 right-3 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-bold text-white">
+            <span className="absolute bottom-3 right-3 rounded-full bg-gradient-to-r from-black/70 to-black/50 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-sm shadow-lg">
               {safeIndex + 1} / {images.length}
             </span>
           </>
@@ -134,8 +135,8 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
               key={`${url}-${i}`}
               type="button"
               onClick={() => setIndex(i)}
-              className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all ${
-                i === safeIndex ? 'border-slate-800 shadow-md' : 'border-transparent opacity-70 hover:opacity-100'
+              className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300 ${
+                i === safeIndex ? 'border-emerald-500 shadow-lg shadow-emerald-500/30 scale-105' : 'border-slate-200 hover:border-slate-300 hover:scale-105'
               }`}
             >
               <img src={url} alt="" className="h-full w-full object-cover" />
@@ -271,12 +272,6 @@ function ProductDetailsModal({
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b6a55]">Tempo de impressão</p>
                 <p className="font-bold text-[#1f1f14]">{product.avgPrintTimeHours}h</p>
-              </div>
-            )}
-            {typeof product.basePrice === 'number' && product.basePrice > 0 && (
-              <div className="col-span-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b6a55]">Referência</p>
-                <p className="text-lg font-black text-[#1f1f14]">{formatCurrencyBRL(product.basePrice)}</p>
               </div>
             )}
           </div>
@@ -446,6 +441,20 @@ function ProductCard({
   const images = getProductImages(product);
   const cover = images[0];
   const extraCount = images.length - 1;
+  const [isFavorite, setIsFavorite] = useState(() => {
+    const favorites = readLS<string[]>('catalog-favorites', []);
+    return favorites.includes(product.id);
+  });
+
+  const toggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const favorites = readLS<string[]>('catalog-favorites', []);
+    const newFavorites = isFavorite
+      ? favorites.filter((id) => id !== product.id)
+      : [...favorites, product.id];
+    localStorage.setItem('catalog-favorites', JSON.stringify(newFavorites));
+    setIsFavorite(!isFavorite);
+  };
   const badgeColor = MATERIAL_BADGE[product.materialType] ?? '#64748b';
   const tags = product.tags?.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 2) ?? [];
 
@@ -453,8 +462,8 @@ function ProductCard({
 
   return (
     <article
-      className="group flex flex-col overflow-hidden rounded-3xl shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-      style={{ border: '1px solid rgba(0,0,0,0.06)', backgroundColor: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(6px)' }}
+      className="group flex flex-col overflow-hidden rounded-3xl shadow-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-slate-300/30"
+      style={{ border: '1px solid rgba(0,0,0,0.08)', backgroundColor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(12px)' }}
     >
       <div
         className="relative aspect-square cursor-pointer overflow-hidden"
@@ -489,15 +498,29 @@ function ProductCard({
         )}
 
         {extraCount > 0 && (
-          <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-sm transition-transform duration-300 group-hover:scale-105">
+          <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-gradient-to-r from-black/70 to-black/50 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-md transition-all duration-300 group-hover:scale-110 group-hover:from-emerald-600/80 group-hover:to-cyan-600/80">
             <ZoomIn className="h-3 w-3" /> +{extraCount}
           </span>
         )}
 
+        <button
+          type="button"
+          onClick={toggleFavorite}
+          className="absolute right-3 bottom-3 rounded-full bg-white/90 p-2 shadow-lg backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-white"
+          title={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+        >
+          <Heart
+            className={`h-4 w-4 transition-colors ${isFavorite ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}`}
+          />
+        </button>
+
         <div className="absolute left-3 top-3">
           <span
-            className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg"
-            style={{ backgroundColor: badgeColor }}
+            className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg backdrop-blur-sm"
+            style={{ 
+              background: `linear-gradient(135deg, ${badgeColor}, ${badgeColor}dd)`,
+              boxShadow: `0 4px 12px ${badgeColor}40`
+            }}
           >
             {product.materialType}
           </span>
@@ -505,18 +528,18 @@ function ProductCard({
 
         {product.collection && (
           <div className="absolute bottom-3 left-3">
-            <span className="rounded-full bg-black/50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
+            <span className="rounded-full bg-gradient-to-r from-black/60 to-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md shadow-lg">
               {product.collection}
             </span>
           </div>
         )}
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/50 via-black/20 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
       </div>
 
-      <div className="flex flex-1 flex-col p-5">
+      <div className="flex flex-1 flex-col p-5 bg-gradient-to-b from-white/50 to-white/80 backdrop-blur-sm">
         <h3
-          className="mb-2 cursor-pointer text-base font-black leading-tight text-slate-800"
+          className="mb-2 cursor-pointer text-base font-black leading-tight text-slate-800 transition-colors group-hover:text-emerald-700"
           onClick={() => onOpenDetails(product)}
         >
           {product.name}
@@ -545,9 +568,6 @@ function ProductCard({
             {product.defaultWeightG != null && <span>{product.defaultWeightG}g</span>}
             {product.avgPrintTimeHours != null && <span>~{product.avgPrintTimeHours}h</span>}
           </div>
-          {typeof product.basePrice === 'number' && product.basePrice > 0 && (
-            <span className="text-sm font-black text-slate-900">{formatCurrencyBRL(product.basePrice)}</span>
-          )}
         </div>
 
         <div className="mt-auto flex gap-2">
@@ -597,6 +617,9 @@ export function CatalogPublic() {
   const [activeCollection, setActiveCollection] = useState('Todos');
   const [activeMaterial, setActiveMaterial] = useState('Todos');
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'material' | 'collection'>('name');
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const [weightRange, setWeightRange] = useState<[number, number]>([0, 500]);
 
   const {
     primaryColor,
@@ -660,16 +683,20 @@ export function CatalogPublic() {
   }, [publicProducts]);
 
   const filtered = useMemo(() => {
+    const favorites = readLS<string[]>('catalog-favorites', []);
     const visible = publicProducts.filter((product) => {
       const collection = product.collection || 'Geral';
       const matchesCollection = activeCollection === 'Todos' || collection === activeCollection;
       const matchesMaterial = activeMaterial === 'Todos' || product.materialType === activeMaterial;
+      const matchesFavorites = !showFavoritesOnly || favorites.includes(product.id);
+      const matchesPrice = !product.basePrice || (product.basePrice >= priceRange[0] && product.basePrice <= priceRange[1]);
+      const matchesWeight = !product.defaultWeightG || (product.defaultWeightG >= weightRange[0] && product.defaultWeightG <= weightRange[1]);
       const haystack = [product.name, product.description, product.tags, product.collection, product.materialType]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
       const matchesSearch = !search || haystack.includes(search.toLowerCase());
-      return matchesCollection && matchesMaterial && matchesSearch;
+      return matchesCollection && matchesMaterial && matchesSearch && matchesFavorites && matchesPrice && matchesWeight;
     });
 
     const sorted = [...visible];
@@ -684,7 +711,7 @@ export function CatalogPublic() {
       }
     });
     return sorted;
-  }, [publicProducts, activeCollection, activeMaterial, search, sortBy]);
+  }, [publicProducts, activeCollection, activeMaterial, search, sortBy, showFavoritesOnly, priceRange, weightRange]);
 
   useEffect(() => {
     let isMounted = true;
@@ -977,6 +1004,17 @@ export function CatalogPublic() {
                 style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, boxShadow: `0 0 0 0 transparent`, outlineColor: accent }}
               />
             </div>
+            <button
+              type="button"
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
+                showFavoritesOnly ? 'bg-rose-50 text-rose-600' : ''
+              }`}
+              style={{ backgroundColor: showFavoritesOnly ? undefined : palette.sectionBg, border: `1px solid ${palette.border}`, color: showFavoritesOnly ? undefined : palette.text }}
+            >
+              <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'fill-rose-500' : ''}`} />
+              Favoritos
+            </button>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
@@ -1029,6 +1067,57 @@ export function CatalogPublic() {
               ))}
             </div>
           )}
+
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: palette.textMuted }}>
+                Faixa de preço (R$)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={priceRange[0]}
+                  onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
+                  className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+                  style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}` }}
+                  placeholder="Min"
+                />
+                <span style={{ color: palette.textMuted }}>-</span>
+                <input
+                  type="number"
+                  value={priceRange[1]}
+                  onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+                  className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+                  style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}` }}
+                  placeholder="Max"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: palette.textMuted }}>
+                Faixa de peso (g)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={weightRange[0]}
+                  onChange={(e) => setWeightRange([Number(e.target.value), weightRange[1]])}
+                  className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+                  style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}` }}
+                  placeholder="Min"
+                />
+                <span style={{ color: palette.textMuted }}>-</span>
+                <input
+                  type="number"
+                  value={weightRange[1]}
+                  onChange={(e) => setWeightRange([weightRange[0], Number(e.target.value)])}
+                  className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+                  style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}` }}
+                  placeholder="Max"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

@@ -142,6 +142,7 @@ function normalizeProduct(input: Partial<Product> = {}): Product {
     collection: sanitizeOptionalText(input.collection),
     sourcePath: sanitizeOptionalText(input.sourcePath),
     imageUrl: sanitizeOptionalText(input.imageUrl),
+    imageUrls: input.imageUrls,
     defaultWeightG: sanitizeNumber(input.defaultWeightG),
     basePrice: sanitizeNumber(input.basePrice),
     stlUrl: sanitizeOptionalText(input.stlUrl),
