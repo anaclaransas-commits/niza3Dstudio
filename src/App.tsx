@@ -158,31 +158,31 @@ export default function App() {
 
   if (!authenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 p-4">
-        <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 border border-slate-200">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #f5f3e8 0%, #e8e6d9 100%)' }}>
+        <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 border" style={{ borderColor: '#d4d0b8' }}>
           <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-600 rounded-2xl mb-4 shadow-lg shadow-emerald-200">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg" style={{ background: 'linear-gradient(135deg, #7c7660 0%, #c4b488 100%)' }}>
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-black text-slate-800 mb-2">
+            <h1 className="text-2xl font-black mb-2" style={{ color: '#2a271d' }}>
               Painel Administrativo
             </h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm" style={{ color: '#7c7660' }}>
               Digite seu login e senha para acessar
             </p>
           </div>
 
           {loginError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
-              <p className="text-sm text-red-600 font-medium">{loginError}</p>
+            <div className="mb-4 p-3 rounded-xl" style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca', borderWidth: '1px' }}>
+              <p className="text-sm font-medium" style={{ color: '#ef4444' }}>{loginError}</p>
             </div>
           )}
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#5f5a48' }}>
                 Login
               </label>
               <input
@@ -190,14 +190,15 @@ export default function App() {
                 placeholder="Seu usuário"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full p-3 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                className="w-full p-3 rounded-xl border outline-none focus:ring-2 transition-all"
+                style={{ borderColor: '#d4cec2', focusRingColor: '#7c7660' }}
                 autoComplete="username"
                 disabled={isLoggingIn}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#5f5a48' }}>
                 Senha
               </label>
               <input
@@ -205,7 +206,8 @@ export default function App() {
                 placeholder="Sua senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                className="w-full p-3 rounded-xl border outline-none focus:ring-2 transition-all"
+                style={{ borderColor: '#d4cec2', focusRingColor: '#7c7660' }}
                 autoComplete="current-password"
                 disabled={isLoggingIn}
                 onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
@@ -215,7 +217,13 @@ export default function App() {
             <button
               onClick={handleLogin}
               disabled={isLoggingIn || !username || !password}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-emerald-200 flex items-center justify-center gap-2"
+              className="w-full font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
+              style={{ 
+                background: 'linear-gradient(135deg, #7c7660 0%, #c4b488 100%)',
+                color: '#ffffff',
+                opacity: (isLoggingIn || !username || !password) ? 0.6 : 1,
+                cursor: (isLoggingIn || !username || !password) ? 'not-allowed' : 'pointer'
+              }}
             >
               {isLoggingIn ? (
                 <>
@@ -232,7 +240,7 @@ export default function App() {
     );
   }
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden font-sans">
+    <div className="flex h-screen overflow-hidden font-sans" style={{ background: 'linear-gradient(135deg, #f5f3e8 0%, #e8e6d9 100%)' }}>
       <Sidebar activePage={activePage} onPageChange={setActivePage} />
       
       <main className="flex-1 overflow-y-auto no-print">
@@ -241,7 +249,12 @@ export default function App() {
             <button
               type="button"
               onClick={handleLogout}
-              className="rounded-full border border-slate-200 bg-white/80 backdrop-blur-sm px-4 py-2 text-xs font-bold text-slate-700 hover:bg-white hover:shadow-md transition-all flex items-center gap-2"
+              className="rounded-full border backdrop-blur-sm px-4 py-2 text-xs font-bold transition-all flex items-center gap-2"
+              style={{ 
+                borderColor: '#d4d0b8',
+                backgroundColor: '#ffffffcc',
+                color: '#2a271d'
+              }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

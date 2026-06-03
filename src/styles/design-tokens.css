@@ -1,32 +1,44 @@
 /**
  * Design Tokens - Sistema de Design Consistente
- * Cores, espaçamentos, tipografia e animações padronizadas
+ * Cores baseadas na logo Niza3D: verde oliva e bege
  */
 
 :root {
-  /* Cores Primárias */
-  --color-emerald-50: #ecfdf5;
-  --color-emerald-100: #d1fae5;
-  --color-emerald-200: #a7f3d0;
-  --color-emerald-300: #6ee7b7;
-  --color-emerald-400: #34d399;
-  --color-emerald-500: #10b981;
-  --color-emerald-600: #059669;
-  --color-emerald-700: #047857;
-  --color-emerald-800: #065f46;
-  --color-emerald-900: #064e3b;
+  /* Cores Primárias - Verde Oliva */
+  --color-olive-50: #f5f3e8;
+  --color-olive-100: #e8e6d9;
+  --color-olive-200: #d4d0b8;
+  --color-olive-300: #b8b39a;
+  --color-olive-400: #9a947c;
+  --color-olive-500: #7c7660;
+  --color-olive-600: #5f5a48;
+  --color-olive-700: #4a4536;
+  --color-olive-800: #3a3629;
+  --color-olive-900: #2a271d;
 
-  /* Cores Neutras */
-  --color-slate-50: #f8fafc;
-  --color-slate-100: #f1f5f9;
-  --color-slate-200: #e2e8f0;
-  --color-slate-300: #cbd5e1;
-  --color-slate-400: #94a3b8;
-  --color-slate-500: #64748b;
-  --color-slate-600: #475569;
-  --color-slate-700: #334155;
-  --color-slate-800: #1e293b;
-  --color-slate-900: #0f172a;
+  /* Cores de Acento - Bege/Dourado */
+  --color-beige-50: #faf8f0;
+  --color-beige-100: #f5f0e0;
+  --color-beige-200: #ebe4d0;
+  --color-beige-300: #dfd4b8;
+  --color-beige-400: #d0c4a0;
+  --color-beige-500: #c4b488;
+  --color-beige-600: #b5a470;
+  --color-beige-700: #a69458;
+  --color-beige-800: #978448;
+  --color-beige-900: #88743a;
+
+  /* Cores Neutras - Tons de bege/cinza */
+  --color-slate-50: #faf9f6;
+  --color-slate-100: #f0ede8;
+  --color-slate-200: #e5e0d8;
+  --color-slate-300: #d4cec2;
+  --color-slate-400: #b8b0a0;
+  --color-slate-500: #9a9280;
+  --color-slate-600: #7c7460;
+  --color-slate-700: #5f5848;
+  --color-slate-800: #4a4438;
+  --color-slate-900: #3a362c;
 
   /* Cores de Feedback */
   --color-error-50: #fef2f2;

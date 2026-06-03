@@ -34,9 +34,9 @@ function readLS<T>(key: string, fallback: T): T {
 const DEFAULT_SETTINGS: CatalogSettings = {
   businessName: 'Niza3D Studio',
   tagline: 'Peças impressas em 3D com acabamento premium e produção sob medida.',
-  // Paleta no estilo do layout de referência (oliva + bege)
-  primaryColor: '#2f2f1b',
-  accentColor: '#aab27a',
+  // Paleta baseada na logo (verde oliva + bege)
+  primaryColor: '#2a271d',
+  accentColor: '#c4b488',
   coverImageUrl: '',
   announcementText: 'Catálogo sob encomenda • personalização de cor, escala e acabamento • atendimento direto',
   heroDescription: 'A Niza3D Studio cria peças decorativas, utilitárias e presentes personalizados com visual limpo, produção cuidadosa e contato rápido para orçamento.',
@@ -81,7 +81,7 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
         className="flex aspect-square w-full items-center justify-center rounded-2xl"
         style={{ backgroundColor: lightenHex(accent) }}
       >
-        <span className="text-sm font-bold text-slate-400">Sem imagem</span>
+        <span className="text-sm font-bold" style={{ color: '#9a947c' }}>Sem imagem</span>
       </div>
     );
   }
@@ -90,10 +90,10 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
 
   return (
     <div className="space-y-3">
-      <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 shadow-inner">
+      <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl shadow-inner" style={{ background: 'linear-gradient(135deg, #f5f3e8 0%, #e8e6d9 100%)' }}>
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
-            <div className="w-8 h-8 border-2 border-slate-300 border-t-emerald-500 rounded-full animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f5f3e8 0%, #e8e6d9 100%)' }}>
+            <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: '#d4cec2', borderTopColor: '#7c7660' }} />
           </div>
         )}
         <img
@@ -109,7 +109,8 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
             <button
               type="button"
               onClick={() => go(-1)}
-              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-black/70 to-black/50 p-2 text-white backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:from-emerald-600/80 hover:to-cyan-600/80 shadow-lg"
+              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full p-2 text-white backdrop-blur-sm transition-all duration-300 hover:scale-110 shadow-lg"
+              style={{ background: 'linear-gradient(90deg, rgba(42, 39, 29, 0.7) 0%, rgba(42, 39, 29, 0.5) 100%)' }}
               aria-label="Imagem anterior"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -117,12 +118,13 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
             <button
               type="button"
               onClick={() => go(1)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-black/70 to-black/50 p-2 text-white backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:from-emerald-600/80 hover:to-cyan-600/80 shadow-lg"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-2 text-white backdrop-blur-sm transition-all duration-300 hover:scale-110 shadow-lg"
+              style={{ background: 'linear-gradient(90deg, rgba(42, 39, 29, 0.7) 0%, rgba(42, 39, 29, 0.5) 100%)' }}
               aria-label="Próxima imagem"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
-            <span className="absolute bottom-3 right-3 rounded-full bg-gradient-to-r from-black/70 to-black/50 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-sm shadow-lg">
+            <span className="absolute bottom-3 right-3 rounded-full px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-sm shadow-lg" style={{ background: 'linear-gradient(90deg, rgba(42, 39, 29, 0.7) 0%, rgba(42, 39, 29, 0.5) 100%)' }}>
               {safeIndex + 1} / {images.length}
             </span>
           </>
@@ -135,9 +137,15 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
               key={`${url}-${i}`}
               type="button"
               onClick={() => setIndex(i)}
-              className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300 ${
-                i === safeIndex ? 'border-emerald-500 shadow-lg shadow-emerald-500/30 scale-105' : 'border-slate-200 hover:border-slate-300 hover:scale-105'
-              }`}
+              className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300"
+              style={i === safeIndex ? {
+                borderColor: '#7c7660',
+                boxShadow: '0 10px 15px -3px rgba(124, 118, 96, 0.3)',
+                transform: 'scale(1.05)'
+              } : {
+                borderColor: '#d4cec2',
+                transform: 'scale(1)'
+              }}
             >
               <img src={url} alt="" className="h-full w-full object-cover" />
             </button>
