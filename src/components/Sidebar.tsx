@@ -57,9 +57,9 @@ export function Sidebar({ activePage, onPageChange }: SidebarProps) {
       </button>
 
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-40 w-72 text-beige-100 transition-all duration-500 ease-in-out lg:translate-x-0 lg:static lg:inset-0 shadow-2xl",
+        "fixed inset-y-0 left-0 z-40 w-72 transition-all duration-500 ease-in-out lg:translate-x-0 lg:static lg:inset-0 shadow-2xl",
         isOpen ? "translate-x-0" : "-translate-x-full"
-      )} style={{ background: 'linear-gradient(135deg, #2a271d 0%, #3a3629 50%, #2a271d 100%)' }}>
+      )} style={{ background: 'linear-gradient(135deg, #2a271d 0%, #3a3629 50%, #2a271d 100%)', color: '#f5f3e8' }}>
         <div className="flex flex-col h-full">
           <div className="p-6 border-b" style={{ borderColor: '#4a453680' }}>
             <div className="flex items-center justify-between">

@@ -329,10 +329,12 @@ export function Products() {
     try {
       for (const file of files) {
         try {
-          const asset = await uploadProductImage(file);
+          console.log('Processando arquivo:', file.name, file.type, file.size);
+          const asset = await uploadProductImage(file as File);
+          console.log('Upload realizado com sucesso:', asset.url);
           uploaded.push(asset.url);
         } catch (error) {
-          console.error(error);
+          console.error('Erro ao fazer upload do arquivo:', file.name, error);
           failed++;
         }
       }
@@ -342,6 +344,7 @@ export function Products() {
         return;
       }
 
+      console.log('Imagens carregadas:', uploaded);
       setFormData((prev) => {
         const gallery = coerceProductImageUrls(prev.imageUrls);
         const nextUrls = [...gallery, ...uploaded.filter((url) => url !== prev.imageUrl)];
@@ -350,6 +353,7 @@ export function Products() {
           ? nextUrls.filter((url) => url !== nextImageUrl)
           : nextUrls;
 
+        console.log('Novo estado imageUrls:', restUrls);
         return {
           ...prev,
           imageUrl: nextImageUrl,
@@ -360,9 +364,14 @@ export function Products() {
       if (failed > 0) {
         alert(`${uploaded.length} imagem(ns) adicionada(s). ${failed} falhou(aram).`);
       }
+    } catch (error) {
+      console.error('Erro geral no handleGalleryFiles:', error);
+      alert('Erro ao processar imagens. Tente novamente.');
     } finally {
       setUploadingImage(false);
-      e.target.value = '';
+      if (e.target) {
+        e.target.value = '';
+      }
     }
   };
 
@@ -565,8 +574,12 @@ export function Products() {
                     handleFileChange(input);
                   }
                 }}
-                className={cn('relative aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 transition-all overflow-hidden group',
-                  formData.imageUrl ? 'border-solid border-emerald-400' : '')}>
+                className={cn('relative aspect-square rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer hover:border-7c7660 transition-all overflow-hidden group',
+                  formData.imageUrl ? 'border-solid' : '')}
+                style={{ 
+                  borderColor: formData.imageUrl ? '#7c7660' : '#d4cec2',
+                  backgroundColor: formData.imageUrl ? 'transparent' : '#f5f3e8'
+                }}>
                 {formData.imageUrl ? (
                   <>
                     <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
@@ -581,11 +594,11 @@ export function Products() {
                   </>
                 ) : (
                   <div className="text-center p-4">
-                    <Upload className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                    <p className="text-xs text-slate-500 font-medium">
+                    <Upload className="w-8 h-8 mx-auto mb-2" style={{ color: '#9a947c' }} />
+                    <p className="text-xs font-medium" style={{ color: '#7c7660' }}>
                       {uploadingImage ? 'Enviando imagem...' : 'Clique para upload'}
                     </p>
-                    <p className="text-[10px] text-slate-400 mt-1">3MF, PNG, JPG, WEBP, GIF, AVIF e imagens comuns</p>
+                    <p className="text-[10px] mt-1" style={{ color: '#9a947c' }}>3MF, PNG, JPG, WEBP, GIF, AVIF e imagens comuns</p>
                   </div>
                 )}
               </div>
@@ -594,21 +607,27 @@ export function Products() {
                 <button
                   type="button"
                   onClick={() => setFormData((prev) => ({ ...prev, imageUrl: '' }))}
-                  className="w-full rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 transition-colors hover:bg-rose-100"
+                  className="w-full rounded-xl px-4 py-2 text-sm font-bold transition-colors"
+                  style={{ 
+                    borderColor: '#b5a470',
+                    backgroundColor: '#f5f3e8',
+                    color: '#a69458'
+                  }}
                 >
                   Remover imagem atual
                 </button>
               )}
               <div className="space-y-1">
-                <p className="text-[10px] text-slate-400 uppercase font-bold">Ou cole uma URL de imagem</p>
+                <p className="text-[10px] uppercase font-bold" style={{ color: '#7c7660' }}>Ou cole uma URL de imagem</p>
                 <input type="text" value={formData.imageUrl}
                   onChange={e => setFormData(p => ({ ...p, imageUrl: e.target.value }))}
-                  className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none"
+                  className="w-full p-2 rounded-lg text-xs outline-none"
+                  style={{ backgroundColor: '#f5f3e8', borderColor: '#d4cec2', borderWidth: '1px', color: '#2a271d' }}
                   placeholder="https://..." />
               </div>
 
-              <div className="space-y-2 border-t border-slate-100 pt-4">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              <div className="space-y-2 border-t pt-4" style={{ borderColor: '#d4cec2' }}>
+                <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#7c7660' }}>
                   Galeria ({coerceProductImageUrls(formData.imageUrls).length} extra{coerceProductImageUrls(formData.imageUrls).length === 1 ? '' : 's'})
                 </label>
                 <button
@@ -621,7 +640,12 @@ export function Products() {
                     const input = { target: { files: e.dataTransfer.files, value: '' } } as React.ChangeEvent<HTMLInputElement>;
                     handleGalleryFiles(input);
                   }}
-                  className="w-full rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-600 transition hover:border-emerald-400 disabled:opacity-50"
+                  className="w-full rounded-xl border border-dashed px-4 py-2 text-xs font-bold transition disabled:opacity-50"
+                  style={{ 
+                    borderColor: '#d4cec2',
+                    backgroundColor: '#f5f3e8',
+                    color: '#2a271d'
+                  }}
                 >
                   {uploadingImage ? 'Enviando...' : '+ Adicionar mais fotos'}
                 </button>
@@ -636,12 +660,13 @@ export function Products() {
                 {coerceProductImageUrls(formData.imageUrls).length > 0 && (
                   <div className="grid grid-cols-3 gap-2">
                     {coerceProductImageUrls(formData.imageUrls).map((url, index) => (
-                      <div key={`${url}-${index}`} className="group relative aspect-square overflow-hidden rounded-xl border border-slate-200">
+                      <div key={`${url}-${index}`} className="group relative aspect-square overflow-hidden rounded-xl border" style={{ borderColor: '#d4cec2' }}>
                         <img src={url} alt="" className="h-full w-full object-cover" />
                         <div className="absolute inset-0 flex flex-col gap-1 bg-black/50 p-1 opacity-0 transition group-hover:opacity-100">
                           <button
                             type="button"
-                            className="rounded bg-white/90 px-1 py-0.5 text-[9px] font-bold text-slate-800"
+                            className="rounded px-1 py-0.5 text-[9px] font-bold"
+                            style={{ backgroundColor: '#f5f3e8cc', color: '#2a271d' }}
                             onClick={() => setFormData((prev) => {
                               const gallery = coerceProductImageUrls(prev.imageUrls);
                               return {
@@ -657,7 +682,8 @@ export function Products() {
                           </button>
                           <button
                             type="button"
-                            className="rounded bg-rose-500 px-1 py-0.5 text-[9px] font-bold text-white"
+                            className="rounded px-1 py-0.5 text-[9px] font-bold"
+                            style={{ backgroundColor: '#ef4444', color: '#ffffff' }}
                             onClick={() => setFormData((prev) => ({
                               ...prev,
                               imageUrls: coerceProductImageUrls(prev.imageUrls).filter((_, i) => i !== index),
