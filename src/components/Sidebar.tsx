@@ -35,14 +35,14 @@ export function Sidebar({ activePage, onPageChange }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
 
   const menuItems = [
-    { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', fromColor: 'var(--color-petrol-600)', toColor: 'var(--color-petrol-500)' },
-    { id: 'calculator', icon: Calculator, label: 'Calculadora', fromColor: 'var(--color-petrol-500)', toColor: 'var(--color-petrol-400)' },
-    { id: 'budgets', icon: FileText, label: 'Orçamentos', fromColor: 'var(--color-petrol-600)', toColor: 'var(--color-petrol-400)' },
-    { id: 'registration', icon: PlusCircle, label: 'Cadastros', fromColor: 'var(--color-petrol-400)', toColor: 'var(--color-petrol-300)' },
-    { id: 'products', icon: Package, label: 'Produtos', fromColor: 'var(--color-petrol-700)', toColor: 'var(--color-petrol-600)' },
-    { id: 'catalog', icon: BookOpen, label: 'Catálogo Cliente', fromColor: 'var(--color-petrol-500)', toColor: 'var(--color-petrol-400)' },
-    { id: 'clients', icon: Users, label: 'Clientes', fromColor: 'var(--color-petrol-600)', toColor: 'var(--color-petrol-300)' },
-    { id: 'reports', icon: BarChart3, label: 'Financeiro', fromColor: 'var(--color-petrol-500)', toColor: 'var(--color-petrol-600)' },
+    { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', fromColor: 'var(--color-primary)', toColor: 'var(--color-primary-hover)' },
+    { id: 'calculator', icon: Calculator, label: 'Calculadora', fromColor: 'var(--color-primary)', toColor: 'var(--color-primary-hover)' },
+    { id: 'budgets', icon: FileText, label: 'Orçamentos', fromColor: 'var(--color-primary)', toColor: 'var(--color-primary-hover)' },
+    { id: 'registration', icon: PlusCircle, label: 'Cadastros', fromColor: 'var(--color-primary)', toColor: 'var(--color-primary-hover)' },
+    { id: 'products', icon: Package, label: 'Produtos', fromColor: 'var(--color-primary)', toColor: 'var(--color-primary-hover)' },
+    { id: 'catalog', icon: BookOpen, label: 'Catálogo Cliente', fromColor: 'var(--color-primary)', toColor: 'var(--color-primary-hover)' },
+    { id: 'clients', icon: Users, label: 'Clientes', fromColor: 'var(--color-primary)', toColor: 'var(--color-primary-hover)' },
+    { id: 'reports', icon: BarChart3, label: 'Financeiro', fromColor: 'var(--color-primary)', toColor: 'var(--color-primary-hover)' },
   ] as const;
 
   return (
@@ -59,7 +59,7 @@ export function Sidebar({ activePage, onPageChange }: SidebarProps) {
       <aside className={cn(
         "fixed inset-y-0 left-0 z-40 w-72 transition-all duration-500 ease-in-out lg:translate-x-0 lg:static lg:inset-0 shadow-2xl",
         isOpen ? "translate-x-0" : "-translate-x-full"
-      )} style={{ background: 'var(--color-background)', color: 'var(--color-text-primary)' }}>
+      )} style={{ background: 'var(--color-sidebar)', color: 'var(--color-text-primary)' }}>
         <div className="flex flex-col h-full">
           <div className="p-6 border-b" style={{ borderColor: 'var(--color-border)' }}>
             <div className="flex items-center justify-between">
@@ -80,7 +80,7 @@ export function Sidebar({ activePage, onPageChange }: SidebarProps) {
                 style={{ backgroundColor: 'var(--color-surface-elevated)' }}
                 title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
               >
-                {theme === 'dark' ? <Sun className="w-5 h-5" style={{ color: 'var(--color-petrol-300)' }} /> : <Moon className="w-5 h-5" style={{ color: 'var(--color-petrol-600)' }} />}
+                {theme === 'dark' ? <Sun className="w-5 h-5" style={{ color: 'var(--color-primary)' }} /> : <Moon className="w-5 h-5" style={{ color: 'var(--color-primary)' }} />}
               </button>
             </div>
           </div>
@@ -138,7 +138,7 @@ export function Sidebar({ activePage, onPageChange }: SidebarProps) {
 
           <div className="p-4 border-t" style={{ borderColor: 'var(--color-border)', background: 'linear-gradient(90deg, var(--color-surface-elevated)50 0%, var(--color-surface-elevated)50 100%)' }}>
             <div className="flex items-center space-x-3 p-3 rounded-xl border backdrop-blur-sm" style={{ backgroundColor: 'var(--color-surface-elevated)', borderColor: 'var(--color-border)' }}>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold shadow-lg" style={{ background: 'linear-gradient(135deg, var(--color-petrol-400) 0%, var(--color-petrol-600) 100%)', color: '#ffffff' }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold shadow-lg" style={{ background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%)', color: '#ffffff' }}>
                 BC
               </div>
               <div className="overflow-hidden">
