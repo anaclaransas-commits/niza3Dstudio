@@ -4,9 +4,10 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { AlertTriangle, Box, CheckCircle2, Copy, ExternalLink, Instagram, Mail, MessageCircle, Palette, RefreshCw, Save, X } from 'lucide-react';
+import { AlertTriangle, Box, CheckCircle2, Copy, ExternalLink, Instagram, Mail, MessageCircle, Palette, RefreshCw, Save, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useStore } from '../store';
 import { getCatalogAdminData, getCatalogBackendDebugInfo, getCatalogPublicData, uploadCatalogAsset } from '../lib/catalogApi';
+import { getProductImages } from '../lib/catalogUtils';
 import type { CatalogSettings } from '../types';
 
 /* ── Settings panel ───────────────────────────────── */
@@ -307,6 +308,100 @@ type CatalogDiagnostics = {
   remoteProducts?: number;
   remotePublicProducts?: number;
 };
+
+/* ── Product Card Component ───────────────────────── */
+function ProductCard({ product, accentColor, primaryColor, primaryCtaLabel, whatsapp }: {
+  product: any;
+  accentColor: string;
+  primaryColor: string;
+  primaryCtaLabel: string;
+  whatsapp: string;
+}) {
+  const images = getProductImages(product);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  return (
+    <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 border border-slate-100">
+      <div className="aspect-square bg-slate-100 overflow-hidden relative">
+        {images.length > 0 ? (
+          <>
+            <img
+              src={images[currentImageIndex]}
+              alt={product.name}
+              className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+            />
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center shadow-lg transition-all"
+                >
+                  <ChevronLeft className="w-4 h-4 text-slate-700" />
+                </button>
+                <button
+                  onClick={() => setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center shadow-lg transition-all"
+                >
+                  <ChevronRight className="w-4 h-4 text-slate-700" />
+                </button>
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                  {images.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentImageIndex(idx)}
+                      className={`w-2 h-2 rounded-full transition-all ${idx === currentImageIndex ? 'bg-white' : 'bg-white/50'}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Box className="w-12 h-12 text-slate-200" />
+          </div>
+        )}
+        <div className="absolute top-3 left-3">
+          <span className="text-[10px] font-black px-2.5 py-1 rounded-full text-white uppercase tracking-widest"
+            style={{ backgroundColor: accentColor }}>
+            {product.materialType}
+          </span>
+        </div>
+      </div>
+      <div className="p-5">
+        <h3 className="font-black text-slate-800 text-base mb-1">{product.name}</h3>
+        {product.description && (
+          <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-3">{product.description}</p>
+        )}
+        {product.tags && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {product.tags.split(',').slice(0, 3).map(tag => (
+              <span key={tag} className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase"
+                style={{ backgroundColor: accentColor + '18', color: accentColor }}>
+                {tag.trim()}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+          <span className="text-xs font-bold px-3 py-1.5 rounded-xl text-white"
+            style={{ backgroundColor: primaryColor }}>
+            {primaryCtaLabel || 'Peça seu orçamento'}
+          </span>
+          {whatsapp && (
+            <a href={`https://wa.me/${whatsapp}?text=Olá! Tenho interesse no produto: ${encodeURIComponent(product.name)}`}
+              target="_blank" rel="noopener noreferrer"
+              className="p-2 rounded-xl hover:opacity-80 transition-opacity"
+              style={{ backgroundColor: '#25d366' + '20', color: '#25d366' }}
+              title="Pedir pelo WhatsApp">
+              <MessageCircle className="w-4 h-4" />
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /* ── Main Catalog page ────────────────────────────── */
 export function Catalog() {
@@ -650,24 +745,59 @@ export function Catalog() {
         {/* Products grid */}
         <div className="bg-slate-50 px-8 py-8">
           <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map(product => (
-              <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 border border-slate-100">
-                <div className="aspect-square bg-slate-100 overflow-hidden relative">
-                  {product.imageUrl ? (
-                    <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Box className="w-12 h-12 text-slate-200" />
+            {filtered.map(product => {
+              const images = getProductImages(product);
+              const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+              return (
+                <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 border border-slate-100">
+                  <div className="aspect-square bg-slate-100 overflow-hidden relative">
+                    {images.length > 0 ? (
+                      <>
+                        <img
+                          src={images[currentImageIndex]}
+                          alt={product.name}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                        />
+                        {images.length > 1 && (
+                          <>
+                            <button
+                              onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
+                              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center shadow-lg transition-all"
+                            >
+                              <ChevronLeft className="w-4 h-4 text-slate-700" />
+                            </button>
+                            <button
+                              onClick={() => setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center shadow-lg transition-all"
+                            >
+                              <ChevronRight className="w-4 h-4 text-slate-700" />
+                            </button>
+                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                              {images.map((_, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => setCurrentImageIndex(idx)}
+                                  className={`w-2 h-2 rounded-full transition-all ${idx === currentImageIndex ? 'bg-white' : 'bg-white/50'}`}
+                                />
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Box className="w-12 h-12 text-slate-200" />
+                      </div>
+                    )}
+                    <div className="absolute top-3 left-3">
+                      <span className="text-[10px] font-black px-2.5 py-1 rounded-full text-white uppercase tracking-widest"
+                        style={{ backgroundColor: accentColor }}>
+                        {product.materialType}
+                      </span>
                     </div>
-                  )}
-                  <div className="absolute top-3 left-3">
-                    <span className="text-[10px] font-black px-2.5 py-1 rounded-full text-white uppercase tracking-widest"
-                      style={{ backgroundColor: accentColor }}>
-                      {product.materialType}
-                    </span>
                   </div>
-                </div>
-                <div className="p-5">
+                  <div className="p-5">
                   <h3 className="font-black text-slate-800 text-base mb-1">{product.name}</h3>
                   {product.description && (
                     <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-3">{product.description}</p>

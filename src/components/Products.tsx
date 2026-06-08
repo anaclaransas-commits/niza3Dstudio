@@ -347,17 +347,14 @@ export function Products() {
       console.log('Imagens carregadas:', uploaded);
       setFormData((prev) => {
         const gallery = coerceProductImageUrls(prev.imageUrls);
-        const nextUrls = [...gallery, ...uploaded.filter((url) => url !== prev.imageUrl)];
-        const nextImageUrl = prev.imageUrl || uploaded[0];
-        const restUrls = nextImageUrl === uploaded[0] && !prev.imageUrl
-          ? nextUrls.filter((url) => url !== nextImageUrl)
-          : nextUrls;
+        // Adiciona novas URLs à galeria, evitando duplicatas
+        const uniqueUploaded = uploaded.filter((url) => !gallery.includes(url) && url !== prev.imageUrl);
+        const nextUrls = [...gallery, ...uniqueUploaded];
 
-        console.log('Novo estado imageUrls:', restUrls);
+        console.log('Novo estado imageUrls:', nextUrls);
         return {
           ...prev,
-          imageUrl: nextImageUrl,
-          imageUrls: restUrls,
+          imageUrls: nextUrls,
         };
       });
 
