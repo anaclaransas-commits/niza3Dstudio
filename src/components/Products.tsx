@@ -576,9 +576,9 @@ export function Products() {
                 }}
                 className={cn('relative aspect-square rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer hover:border-7c7660 transition-all overflow-hidden group',
                   formData.imageUrl ? 'border-solid' : '')}
-                style={{ 
-                  borderColor: formData.imageUrl ? '#7c7660' : '#d4cec2',
-                  backgroundColor: formData.imageUrl ? 'transparent' : '#f5f3e8'
+                style={{
+                  borderColor: formData.imageUrl ? '#003247' : '#e7e5e4',
+                  backgroundColor: formData.imageUrl ? 'transparent' : '#faf9f5'
                 }}>
                 {formData.imageUrl ? (
                   <>
@@ -608,26 +608,26 @@ export function Products() {
                   type="button"
                   onClick={() => setFormData((prev) => ({ ...prev, imageUrl: '' }))}
                   className="w-full rounded-xl px-4 py-2 text-sm font-bold transition-colors"
-                  style={{ 
-                    borderColor: '#b5a470',
-                    backgroundColor: '#f5f3e8',
-                    color: '#a69458'
+                  style={{
+                    borderColor: '#003247',
+                    backgroundColor: '#faf9f5',
+                    color: '#003247'
                   }}
                 >
                   Remover imagem atual
                 </button>
               )}
               <div className="space-y-1">
-                <p className="text-[10px] uppercase font-bold" style={{ color: '#7c7660' }}>Ou cole uma URL de imagem</p>
+                <p className="text-[10px] uppercase font-bold" style={{ color: '#57534e' }}>Ou cole uma URL de imagem</p>
                 <input type="text" value={formData.imageUrl}
                   onChange={e => setFormData(p => ({ ...p, imageUrl: e.target.value }))}
                   className="w-full p-2 rounded-lg text-xs outline-none"
-                  style={{ backgroundColor: '#f5f3e8', borderColor: '#d4cec2', borderWidth: '1px', color: '#2a271d' }}
+                  style={{ backgroundColor: '#faf9f5', borderColor: '#e7e5e4', borderWidth: '1px', color: '#1c1917' }}
                   placeholder="https://..." />
               </div>
 
-              <div className="space-y-2 border-t pt-4" style={{ borderColor: '#d4cec2' }}>
-                <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#7c7660' }}>
+              <div className="space-y-2 border-t pt-4" style={{ borderColor: '#e7e5e4' }}>
+                <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#57534e' }}>
                   Galeria ({coerceProductImageUrls(formData.imageUrls).length} extra{coerceProductImageUrls(formData.imageUrls).length === 1 ? '' : 's'})
                 </label>
                 <button
@@ -641,10 +641,10 @@ export function Products() {
                     handleGalleryFiles(input);
                   }}
                   className="w-full rounded-xl border border-dashed px-4 py-2 text-xs font-bold transition disabled:opacity-50"
-                  style={{ 
-                    borderColor: '#d4cec2',
-                    backgroundColor: '#f5f3e8',
-                    color: '#2a271d'
+                  style={{
+                    borderColor: '#e7e5e4',
+                    backgroundColor: '#faf9f5',
+                    color: '#1c1917'
                   }}
                 >
                   {uploadingImage ? 'Enviando...' : '+ Adicionar mais fotos'}
@@ -660,13 +660,13 @@ export function Products() {
                 {coerceProductImageUrls(formData.imageUrls).length > 0 && (
                   <div className="grid grid-cols-3 gap-2">
                     {coerceProductImageUrls(formData.imageUrls).map((url, index) => (
-                      <div key={`${url}-${index}`} className="group relative aspect-square overflow-hidden rounded-xl border" style={{ borderColor: '#d4cec2' }}>
+                      <div key={`${url}-${index}`} className="group relative aspect-square overflow-hidden rounded-xl border" style={{ borderColor: '#e7e5e4' }}>
                         <img src={url} alt="" className="h-full w-full object-cover" />
                         <div className="absolute inset-0 flex flex-col gap-1 bg-black/50 p-1 opacity-0 transition group-hover:opacity-100">
                           <button
                             type="button"
                             className="rounded px-1 py-0.5 text-[9px] font-bold"
-                            style={{ backgroundColor: '#f5f3e8cc', color: '#2a271d' }}
+                            style={{ backgroundColor: '#faf9f5cc', color: '#1c1917' }}
                             onClick={() => setFormData((prev) => {
                               const gallery = coerceProductImageUrls(prev.imageUrls);
                               return {

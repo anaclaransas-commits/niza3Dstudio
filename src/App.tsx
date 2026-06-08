@@ -138,18 +138,18 @@ export default function App() {
   const LoadingFallback = () => (
     <div className="flex items-center justify-center h-64">
       <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 border-3 border-slate-200 border-t-emerald-600 rounded-full animate-spin" />
-        <p className="text-sm font-medium text-slate-500">Carregando…</p>
+        <div className="w-8 h-8 border-3 rounded-full animate-spin" style={{ borderColor: 'var(--color-border-light)', borderTopColor: 'var(--color-primary)' }} />
+        <p className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>Carregando…</p>
       </div>
     </div>
   );
   if (checkingSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 p-4">
-        <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 border border-slate-200 text-center">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--color-background)' }}>
+        <div className="w-full max-w-sm rounded-3xl shadow-2xl p-8 border text-center" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
           <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-3 border-slate-200 border-t-emerald-600 rounded-full animate-spin" />
-            <p className="text-sm font-bold text-slate-700">Carregando…</p>
+            <div className="w-12 h-12 border-3 rounded-full animate-spin" style={{ borderColor: 'var(--color-border-light)', borderTopColor: 'var(--color-primary)' }} />
+            <p className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>Carregando…</p>
           </div>
         </div>
       </div>
@@ -158,31 +158,31 @@ export default function App() {
 
   if (!authenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #f5f3e8 0%, #e8e6d9 100%)' }}>
-        <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 border" style={{ borderColor: '#d4d0b8' }}>
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--color-background)' }}>
+        <div className="w-full max-w-sm rounded-3xl shadow-2xl p-8 border" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
           <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg" style={{ background: 'linear-gradient(135deg, #7c7660 0%, #c4b488 100%)' }}>
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg" style={{ background: 'linear-gradient(135deg, var(--color-petrol-600) 0%, var(--color-petrol-400) 100%)' }}>
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-black mb-2" style={{ color: '#2a271d' }}>
+            <h1 className="text-2xl font-black mb-2" style={{ color: 'var(--color-text-primary)' }}>
               Painel Administrativo
             </h1>
-            <p className="text-sm" style={{ color: '#7c7660' }}>
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
               Digite seu login e senha para acessar
             </p>
           </div>
 
           {loginError && (
-            <div className="mb-4 p-3 rounded-xl" style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca', borderWidth: '1px' }}>
-              <p className="text-sm font-medium" style={{ color: '#ef4444' }}>{loginError}</p>
+            <div className="mb-4 p-3 rounded-xl" style={{ backgroundColor: 'var(--color-error-50)', borderColor: 'var(--color-error-200)', borderWidth: '1px' }}>
+              <p className="text-sm font-medium" style={{ color: 'var(--color-error-600)' }}>{loginError}</p>
             </div>
           )}
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#5f5a48' }}>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-secondary)' }}>
                 Login
               </label>
               <input
@@ -191,14 +191,14 @@ export default function App() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full p-3 rounded-xl border outline-none focus:ring-2 transition-all"
-                style={{ borderColor: '#d4cec2', focusRingColor: '#7c7660' }}
+                style={{ borderColor: 'var(--color-border)', '--tw-ring-color': 'var(--color-focus-ring)' }}
                 autoComplete="username"
                 disabled={isLoggingIn}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#5f5a48' }}>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-secondary)' }}>
                 Senha
               </label>
               <input
@@ -207,7 +207,7 @@ export default function App() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-3 rounded-xl border outline-none focus:ring-2 transition-all"
-                style={{ borderColor: '#d4cec2', focusRingColor: '#7c7660' }}
+                style={{ borderColor: 'var(--color-border)', '--tw-ring-color': 'var(--color-focus-ring)' }}
                 autoComplete="current-password"
                 disabled={isLoggingIn}
                 onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
@@ -218,8 +218,8 @@ export default function App() {
               onClick={handleLogin}
               disabled={isLoggingIn || !username || !password}
               className="w-full font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
-              style={{ 
-                background: 'linear-gradient(135deg, #7c7660 0%, #c4b488 100%)',
+              style={{
+                background: 'linear-gradient(135deg, var(--color-petrol-600) 0%, var(--color-petrol-400) 100%)',
                 color: '#ffffff',
                 opacity: (isLoggingIn || !username || !password) ? 0.6 : 1,
                 cursor: (isLoggingIn || !username || !password) ? 'not-allowed' : 'pointer'

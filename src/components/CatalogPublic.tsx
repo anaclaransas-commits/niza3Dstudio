@@ -34,9 +34,9 @@ function readLS<T>(key: string, fallback: T): T {
 const DEFAULT_SETTINGS: CatalogSettings = {
   businessName: 'Niza3D Studio',
   tagline: 'Peças impressas em 3D com acabamento premium e produção sob medida.',
-  // Paleta baseada na logo (verde oliva + bege)
-  primaryColor: '#2a271d',
-  accentColor: '#c4b488',
+  // Paleta baseada em azul petróleo (tema escuro) e bege pastel (tema claro)
+  primaryColor: '#003247',
+  accentColor: '#c9be99',
   coverImageUrl: '',
   announcementText: 'Catálogo sob encomenda • personalização de cor, escala e acabamento • atendimento direto',
   heroDescription: 'A Niza3D Studio cria peças decorativas, utilitárias e presentes personalizados com visual limpo, produção cuidadosa e contato rápido para orçamento.',
@@ -81,7 +81,7 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
         className="flex aspect-square w-full items-center justify-center rounded-2xl"
         style={{ backgroundColor: lightenHex(accent) }}
       >
-        <span className="text-sm font-bold" style={{ color: '#9a947c' }}>Sem imagem</span>
+        <span className="text-sm font-bold" style={{ color: '#78716c' }}>Sem imagem</span>
       </div>
     );
   }
@@ -90,10 +90,10 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
 
   return (
     <div className="space-y-3">
-      <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl shadow-inner" style={{ background: 'linear-gradient(135deg, #f5f3e8 0%, #e8e6d9 100%)' }}>
+      <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl shadow-inner" style={{ background: 'linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%)' }}>
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f5f3e8 0%, #e8e6d9 100%)' }}>
-            <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: '#d4cec2', borderTopColor: '#7c7660' }} />
+          <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%)' }}>
+            <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: '#e7e5e4', borderTopColor: '#003247' }} />
           </div>
         )}
         <img
@@ -139,11 +139,11 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
               onClick={() => setIndex(i)}
               className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300"
               style={i === safeIndex ? {
-                borderColor: '#7c7660',
-                boxShadow: '0 10px 15px -3px rgba(124, 118, 96, 0.3)',
+                borderColor: '#003247',
+                boxShadow: '0 10px 15px -3px rgba(0, 50, 71, 0.3)',
                 transform: 'scale(1.05)'
               } : {
-                borderColor: '#d4cec2',
+                borderColor: '#e7e5e4',
                 transform: 'scale(1)'
               }}
             >
@@ -186,13 +186,14 @@ function ModalShell({
       aria-modal="true"
     >
       <div
-        className={`max-h-[95vh] w-full ${maxWidth} overflow-hidden rounded-3xl bg-[#fbf8f1] shadow-2xl ring-1 ring-black/5`}
+        className={`max-h-[95vh] w-full ${maxWidth} overflow-hidden rounded-3xl shadow-2xl ring-1 ring-black/5`}
+        style={{ backgroundColor: 'var(--color-surface)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between border-b border-[#e7e0cf] px-6 py-4">
+        <div className="flex items-start justify-between border-b px-6 py-4" style={{ borderColor: 'var(--color-border)' }}>
           <div>
-            <h2 className="text-xl font-black text-[#1f1f14] sm:text-2xl">{title}</h2>
-            {subtitle && <p className="mt-1 text-sm text-[#6b6a55]">{subtitle}</p>}
+            <h2 className="text-xl font-black sm:text-2xl" style={{ color: 'var(--color-text-primary)' }}>{title}</h2>
+            {subtitle && <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{subtitle}</p>}
           </div>
           <button
             type="button"
@@ -200,7 +201,7 @@ function ModalShell({
             className="rounded-2xl p-3 transition-colors hover:bg-black/5"
             aria-label="Fechar"
           >
-            <X className="h-6 w-6 text-[#1f1f14]" />
+            <X className="h-6 w-6" style={{ color: 'var(--color-text-primary)' }} />
           </button>
         </div>
         <div className="max-h-[calc(95vh-5rem)] overflow-y-auto">{children}</div>
@@ -238,21 +239,21 @@ function ProductDetailsModal({
       onClose={onClose}
     >
       <div className="flex flex-col lg:flex-row">
-        <div className="bg-[#f2efe6] p-6 lg:w-1/2">
+        <div className="p-6 lg:w-1/2" style={{ backgroundColor: 'var(--color-surface-elevated)' }}>
           <ImageGallery images={images} alt={product.name} accent={accent} />
         </div>
         <div className="flex flex-col p-6 lg:w-1/2">
           <div className="mb-4 flex flex-wrap gap-2">
             <span
               className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white"
-              style={{ backgroundColor: MATERIAL_BADGE[product.materialType] ?? '#64748b' }}
+              style={{ backgroundColor: MATERIAL_BADGE[product.materialType] ?? '#003247' }}
             >
               {product.materialType}
             </span>
           </div>
 
           {product.description && (
-            <p className="mb-6 leading-relaxed text-[#3d3d28]">{product.description}</p>
+            <p className="mb-6 leading-relaxed" style={{ color: 'var(--color-text-primary)' }}>{product.description}</p>
           )}
 
           {tags.length > 0 && (
@@ -269,17 +270,17 @@ function ProductDetailsModal({
             </div>
           )}
 
-          <div className="mb-6 grid grid-cols-2 gap-4 rounded-2xl bg-[#f2efe6] p-4">
+          <div className="mb-6 grid grid-cols-2 gap-4 rounded-2xl p-4" style={{ backgroundColor: 'var(--color-surface-elevated)' }}>
             {product.defaultWeightG != null && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b6a55]">Peso estimado</p>
-                <p className="font-bold text-[#1f1f14]">{product.defaultWeightG}g</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>Peso estimado</p>
+                <p className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{product.defaultWeightG}g</p>
               </div>
             )}
             {product.avgPrintTimeHours != null && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#6b6a55]">Tempo de impressão</p>
-                <p className="font-bold text-[#1f1f14]">{product.avgPrintTimeHours}h</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>Tempo de impressão</p>
+                <p className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{product.avgPrintTimeHours}h</p>
               </div>
             )}
           </div>
@@ -463,7 +464,7 @@ function ProductCard({
     localStorage.setItem('catalog-favorites', JSON.stringify(newFavorites));
     setIsFavorite(!isFavorite);
   };
-  const badgeColor = MATERIAL_BADGE[product.materialType] ?? '#64748b';
+  const badgeColor = MATERIAL_BADGE[product.materialType] ?? '#003247';
   const tags = product.tags?.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 2) ?? [];
 
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -586,7 +587,7 @@ function ProductCard({
               onOpenDetails(product);
             }}
             className={BTN_DETAILS}
-            style={{ borderColor: 'rgba(0,0,0,0.10)', color: '#2a2a18', backgroundColor: 'rgba(255,255,255,0.85)' }}
+            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)', backgroundColor: 'var(--color-surface)' }}
           >
             Ver detalhes
           </button>
@@ -811,13 +812,13 @@ export function CatalogPublic() {
   }, [detailsOpen, quoteOpen, selectedProduct?.id]);
 
   const palette = useMemo(() => {
-    // Tons quentes/bege para aproximar do mock (sem depender de Tailwind config)
-    const pageBg = '#f2efe6';
-    const sectionBg = '#f7f3ea';
-    const cardBg = '#fbf8f1';
-    const border = '#e7e0cf';
-    const textMuted = '#6b6a55';
-    const text = '#1f1f14';
+    // Nova paleta baseada em azul petróleo e bege pastel
+    const pageBg = '#faf9f5';
+    const sectionBg = '#f5f2eb';
+    const cardBg = '#ffffff';
+    const border = '#e7e5e4';
+    const textMuted = '#78716c';
+    const text = '#1c1917';
     const pill = 'rgba(255,255,255,0.10)';
     const heroOverlay = `linear-gradient(120deg, ${primaryColor}f2 0%, ${primaryColor}d6 42%, ${primaryColor}f0 100%)`;
     const heroBg = coverImageUrl
@@ -1046,7 +1047,7 @@ export function CatalogPublic() {
                   className="rounded-full border px-4 py-1.5 text-xs font-bold transition-all"
                   style={
                     activeCollection === col
-                      ? { backgroundColor: primaryColor, color: '#fff', borderColor: primaryColor }
+                      ? { backgroundColor: primaryColor, color: '#ffffff', borderColor: primaryColor }
                       : { backgroundColor: palette.sectionBg, color: palette.textMuted, borderColor: palette.border }
                   }
                 >

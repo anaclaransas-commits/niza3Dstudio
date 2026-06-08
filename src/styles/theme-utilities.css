@@ -1,0 +1,132 @@
+/**
+ * Theme Utilities - Mapeamento de classes Tailwind para variáveis CSS
+ * Este arquivo permite que componentes existentes usem as novas variáveis de cores
+ */
+
+/* Background colors */
+.bg-slate-50 { background-color: var(--color-background); }
+.bg-slate-100 { background-color: var(--color-surface-elevated); }
+.bg-white { background-color: var(--color-surface); }
+
+/* Text colors */
+.text-slate-900 { color: var(--color-text-primary); }
+.text-slate-800 { color: var(--color-text-primary); }
+.text-slate-700 { color: var(--color-text-secondary); }
+.text-slate-600 { color: var(--color-text-secondary); }
+.text-slate-500 { color: var(--color-text-tertiary); }
+.text-slate-400 { color: var(--color-text-tertiary); }
+.text-slate-300 { color: var(--color-text-tertiary); }
+
+/* Border colors */
+.border-slate-200 { border-color: var(--color-border); }
+.border-slate-100 { border-color: var(--color-border-light); }
+
+/* Gradients - Tema Claro */
+.from-emerald-600 { --tw-gradient-from: var(--color-petrol-700); }
+.to-cyan-600 { --tw-gradient-to: var(--color-petrol-500); }
+.from-emerald-400 { --tw-gradient-from: var(--color-petrol-500); }
+.to-cyan-400 { --tw-gradient-to: var(--color-petrol-400); }
+.from-emerald-50 { --tw-gradient-from: var(--color-petrol-50); }
+.to-cyan-50 { --tw-gradient-to: var(--color-petrol-100); }
+
+.from-blue-400 { --tw-gradient-from: var(--color-petrol-500); }
+.to-indigo-400 { --tw-gradient-to: var(--color-petrol-400); }
+.from-blue-50 { --tw-gradient-from: var(--color-petrol-50); }
+.to-indigo-50 { --tw-gradient-to: var(--color-petrol-100); }
+
+.from-rose-400 { --tw-gradient-from: var(--color-error-500); }
+.to-pink-400 { --tw-gradient-to: var(--color-error-600); }
+.from-rose-50 { --tw-gradient-from: var(--color-error-50); }
+.to-pink-50 { --tw-gradient-to: var(--color-error-100); }
+
+.from-amber-400 { --tw-gradient-from: var(--color-warning-500); }
+.to-orange-400 { --tw-gradient-to: var(--color-warning-600); }
+.from-amber-50 { --tw-gradient-from: var(--color-warning-50); }
+.to-orange-50 { --tw-gradient-to: var(--color-warning-100); }
+
+.from-violet-400 { --tw-gradient-from: var(--color-info-500); }
+.to-purple-400 { --tw-gradient-to: var(--color-info-600); }
+.from-violet-50 { --tw-gradient-from: var(--color-info-50); }
+.to-purple-50 { --tw-gradient-to: var(--color-info-100); }
+
+.from-slate-400 { --tw-gradient-from: var(--color-neutral-400); }
+.to-gray-400 { --tw-gradient-to: var(--color-neutral-500); }
+.from-slate-50 { --tw-gradient-from: var(--color-neutral-50); }
+.to-gray-50 { --tw-gradient-to: var(--color-neutral-100); }
+
+/* Text gradient colors */
+.text-emerald-600 { color: var(--color-petrol-700); }
+.text-emerald-700 { color: var(--color-petrol-800); }
+.text-cyan-600 { color: var(--color-petrol-500); }
+.text-emerald-500 { color: var(--color-petrol-600); }
+.text-emerald-400 { color: var(--color-petrol-500); }
+.text-teal-500 { color: var(--color-success-600); }
+.text-blue-600 { color: var(--color-petrol-600); }
+.text-indigo-600 { color: var(--color-petrol-700); }
+.text-purple-600 { color: var(--color-info-600); }
+.text-rose-600 { color: var(--color-error-600); }
+.text-amber-600 { color: var(--color-warning-600); }
+.text-orange-600 { color: var(--color-warning-600); }
+
+/* Shadow colors */
+.shadow-emerald-500\/30 { --tw-shadow-color: rgba(0, 105, 176, 0.3); }
+.shadow-emerald-500\/20 { --tw-shadow-color: rgba(0, 105, 176, 0.2); }
+.shadow-emerald-200\/50 { --tw-shadow-color: rgba(0, 105, 176, 0.5); }
+.shadow-purple-500\/20 { --tw-shadow-color: rgba(37, 99, 235, 0.2); }
+.shadow-indigo-500\/20 { --tw-shadow-color: rgba(0, 75, 124, 0.2); }
+.shadow-slate-200\/50 { --tw-shadow-color: rgba(168, 162, 158, 0.5); }
+.shadow-slate-900\/50 { --tw-shadow-color: rgba(28, 25, 23, 0.5); }
+
+/* Border hover colors */
+.hover\:border-emerald-300\/60:hover { border-color: rgba(0, 105, 176, 0.6); }
+.hover\:border-purple-300\/60:hover { border-color: rgba(37, 99, 235, 0.6); }
+.hover\:border-indigo-300\/60:hover { border-color: rgba(0, 75, 124, 0.6); }
+
+/* Background hover colors */
+.hover\:from-emerald-50:hover { --tw-gradient-from: var(--color-petrol-50); }
+.hover\:to-cyan-50:hover { --tw-gradient-to: var(--color-petrol-100); }
+.hover\:from-purple-50:hover { --tw-gradient-from: var(--color-info-50); }
+.hover\:to-violet-50:hover { --tw-gradient-to: var(--color-info-100); }
+.hover\:from-indigo-50:hover { --tw-gradient-from: var(--color-petrol-50); }
+.hover\:to-blue-50:hover { --tw-gradient-to: var(--color-petrol-100); }
+
+/* Icon background hover colors */
+.group-hover\:from-emerald-100:hover { --tw-gradient-from: var(--color-petrol-100); }
+.group-hover\:to-cyan-100:hover { --tw-gradient-to: var(--color-petrol-200); }
+.group-hover\:text-emerald-700:hover { color: var(--color-petrol-800); }
+.group-hover\:text-emerald-500:hover { color: var(--color-petrol-600); }
+.group-hover\:text-emerald-600:hover { color: var(--color-petrol-700); }
+.group-hover\:text-blue-600:hover { color: var(--color-petrol-600); }
+.group-hover\:text-purple-600:hover { color: var(--color-info-600); }
+.group-hover\:text-indigo-600:hover { color: var(--color-petrol-700); }
+.group-hover\:text-purple-500:hover { color: var(--color-info-500); }
+.group-hover\:text-indigo-500:hover { color: var(--color-petrol-500); }
+
+/* Chart colors */
+.bg-blue-500 { background-color: var(--color-petrol-500); }
+.bg-cyan-500 { background-color: var(--color-petrol-400); }
+.bg-rose-500 { background-color: var(--color-error-500); }
+.bg-pink-500 { background-color: var(--color-error-600); }
+.bg-emerald-500 { background-color: var(--color-success-500); }
+.bg-teal-500 { background-color: var(--color-success-600); }
+
+/* Dark mode overrides */
+.dark .bg-slate-900 { background-color: var(--color-background); }
+.dark .bg-slate-800 { background-color: var(--color-surface); }
+.dark .bg-white { background-color: var(--color-surface); }
+.dark .bg-slate-50 { background-color: var(--color-surface-elevated); }
+.dark .bg-slate-100 { background-color: var(--color-surface-elevated); }
+
+.dark .text-slate-900 { color: var(--color-text-primary); }
+.dark .text-slate-800 { color: var(--color-text-primary); }
+.dark .text-slate-700 { color: var(--color-text-primary); }
+.dark .text-slate-600 { color: var(--color-text-secondary); }
+.dark .text-slate-500 { color: var(--color-text-tertiary); }
+.dark .text-slate-400 { color: var(--color-text-tertiary); }
+.dark .text-slate-300 { color: var(--color-text-secondary); }
+
+.dark .border-slate-200 { border-color: var(--color-border); }
+.dark .border-slate-100 { border-color: var(--color-border-light); }
+
+.dark .shadow-slate-200\/50 { --tw-shadow-color: rgba(26, 74, 95, 0.5); }
+.dark .shadow-slate-900\/50 { --tw-shadow-color: rgba(0, 50, 71, 0.5); }
