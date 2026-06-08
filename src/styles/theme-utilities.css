@@ -6,7 +6,10 @@
 /* Background colors */
 .bg-slate-50 { background-color: var(--color-background); }
 .bg-slate-100 { background-color: var(--color-surface-elevated); }
+.bg-slate-200 { background-color: var(--color-surface-elevated); }
 .bg-white { background-color: var(--color-surface); }
+.bg-slate-900 { background-color: var(--color-background); }
+.bg-slate-800 { background-color: var(--color-surface); }
 
 /* Text colors */
 .text-slate-900 { color: var(--color-text-primary); }
@@ -116,6 +119,7 @@
 .dark .bg-white { background-color: var(--color-surface); }
 .dark .bg-slate-50 { background-color: var(--color-surface-elevated); }
 .dark .bg-slate-100 { background-color: var(--color-surface-elevated); }
+.dark .bg-slate-200 { background-color: var(--color-surface-elevated); }
 
 .dark .text-slate-900 { color: var(--color-text-primary); }
 .dark .text-slate-800 { color: var(--color-text-primary); }
@@ -130,3 +134,9 @@
 
 .dark .shadow-slate-200\/50 { --tw-shadow-color: rgba(30, 93, 120, 0.5); }
 .dark .shadow-slate-900\/50 { --tw-shadow-color: rgba(0, 50, 71, 0.5); }
+
+/* Additional gradient overrides for dark mode */
+.dark .from-white { --tw-gradient-from: var(--color-surface); }
+.dark .to-slate-50 { --tw-gradient-to: var(--color-surface-elevated); }
+.dark .from-slate-100 { --tw-gradient-from: var(--color-surface-elevated); }
+.dark .to-slate-200 { --tw-gradient-to: var(--color-surface); }

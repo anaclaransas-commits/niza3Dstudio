@@ -161,7 +161,7 @@ export default function App() {
       <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--color-background)' }}>
         <div className="w-full max-w-sm rounded-3xl shadow-2xl p-8 border" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
           <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg" style={{ background: 'linear-gradient(135deg, var(--color-petrol-600) 0%, var(--color-petrol-400) 100%)' }}>
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg" style={{ background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%)' }}>
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
@@ -219,7 +219,7 @@ export default function App() {
               disabled={isLoggingIn || !username || !password}
               className="w-full font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
               style={{
-                background: 'linear-gradient(135deg, var(--color-petrol-600) 0%, var(--color-petrol-400) 100%)',
+                background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%)',
                 color: '#ffffff',
                 opacity: (isLoggingIn || !username || !password) ? 0.6 : 1,
                 cursor: (isLoggingIn || !username || !password) ? 'not-allowed' : 'pointer'
@@ -240,9 +240,9 @@ export default function App() {
     );
   }
   return (
-    <div className="flex h-screen overflow-hidden font-sans" style={{ background: 'linear-gradient(135deg, #f5f3e8 0%, #e8e6d9 100%)' }}>
+    <div className="flex h-screen overflow-hidden font-sans" style={{ background: 'var(--color-background)' }}>
       <Sidebar activePage={activePage} onPageChange={setActivePage} />
-      
+
       <main className="flex-1 overflow-y-auto no-print">
         <div className="max-w-[1400px] mx-auto p-4 md:p-8 lg:p-10">
           <div className="mb-5 flex justify-end">
@@ -250,10 +250,10 @@ export default function App() {
               type="button"
               onClick={handleLogout}
               className="rounded-full border backdrop-blur-sm px-4 py-2 text-xs font-bold transition-all flex items-center gap-2"
-              style={{ 
-                borderColor: '#d4d0b8',
-                backgroundColor: '#ffffffcc',
-                color: '#2a271d'
+              style={{
+                borderColor: 'var(--color-border)',
+                backgroundColor: 'var(--color-surface)',
+                color: 'var(--color-text-primary)'
               }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
