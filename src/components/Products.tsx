@@ -262,6 +262,7 @@ export function Products() {
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({ ...EMPTY_FORM });
 
+
   // Collections list
   const collections = ['Todos', ...Array.from(new Set(products.map(p => p.collection || 'Sem Coleção')))];
 
@@ -589,9 +590,9 @@ export function Products() {
                       src={formData.imageUrl} 
                       alt="Preview" 
                       className="w-full h-full object-cover"
-                      onError={(e) => {
+                      onError={() => {
                         console.error('Erro ao carregar imagem principal:', formData.imageUrl);
-                        e.currentTarget.style.display = 'none';
+                        // setFailedImages(prev => new Set([...prev, url]));
                       }}
                       onLoad={() => console.log('Imagem principal carregada com sucesso:', formData.imageUrl)}
                     />
@@ -672,14 +673,14 @@ export function Products() {
                 {coerceProductImageUrls(formData.imageUrls).length > 0 && (
                   <div className="grid grid-cols-3 gap-2">
                     {coerceProductImageUrls(formData.imageUrls).map((url, index) => (
-                      <div key={`${url}-${index}`} className="group relative aspect-square overflow-hidden rounded-xl border" style={{ borderColor: '#e7e5e4' }}>
+                      <div key={`gallery-${index}-${url.slice(-10)}`} className="group relative aspect-square overflow-hidden rounded-xl border" style={{ borderColor: '#e7e5e4' }}>
                         <img 
                           src={url} 
                           alt="" 
                           className="h-full w-full object-cover" 
-                          onError={(e) => {
+                          onError={() => {
                             console.error('Erro ao carregar imagem:', url);
-                            e.currentTarget.style.display = 'none';
+                            // setFailedImages(prev => new Set([...prev, url]));
                           }}
                           onLoad={() => console.log('Imagem carregada com sucesso:', url)}
                         />
