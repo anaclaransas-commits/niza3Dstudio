@@ -589,13 +589,7 @@ export function Products() {
                     <img 
                       src={formData.imageUrl} 
                       alt="Preview" 
-                      className="w-full h-full object-cover"
-                      
-                        
-                        
-                      }}
-
-                    />
+                      className="w-full h-full object-cover" />
                     {uploadingImage && (
                       <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 text-white text-xs font-bold">
                         Enviando imagem...
@@ -677,13 +671,7 @@ export function Products() {
                         <img 
                           src={url} 
                           alt="" 
-                          className="h-full w-full object-cover" 
-
-
-
-
-
-                        />
+                          className="h-full w-full object-cover" />
                         <div className="absolute inset-0 flex flex-col gap-1 bg-black/50 p-1 opacity-0 transition group-hover:opacity-100">
                           <button
                             type="button"
