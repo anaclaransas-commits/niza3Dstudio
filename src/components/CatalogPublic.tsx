@@ -102,6 +102,10 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
           className="max-h-full max-w-full object-contain transition-all duration-500"
           style={{ opacity: isLoading ? 0 : 1, transform: isLoading ? 'scale(0.95)' : 'scale(1)' }}
           onLoad={handleImageLoad}
+          onError={(e) => {
+            console.error('Erro ao carregar imagem na galeria:', images[safeIndex]);
+            handleImageLoad();
+          }}
           loading="lazy"
         />
         {images.length > 1 && (
@@ -147,7 +151,15 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
                 transform: 'scale(1)'
               }}
             >
-              <img src={url} alt="" className="h-full w-full object-cover" />
+              <img 
+                src={url} 
+                alt="" 
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  console.error('Erro ao carregar thumbnail:', url);
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
             </button>
           ))}
         </div>
@@ -494,6 +506,10 @@ function ProductCard({
               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.08]"
               loading="lazy"
               onLoad={() => setImageLoaded(true)}
+              onError={(e) => {
+                console.error('Erro ao carregar imagem de capa do produto:', cover);
+                setImageLoaded(true);
+              }}
               style={{ opacity: imageLoaded ? 1 : 0 }}
             />
           </>

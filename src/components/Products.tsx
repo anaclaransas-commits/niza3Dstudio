@@ -332,7 +332,13 @@ export function Products() {
           console.log('Processando arquivo:', file.name, file.type, file.size);
           const asset = await uploadProductImage(file as File);
           console.log('Upload realizado com sucesso:', asset.url);
-          uploaded.push(asset.url);
+          // Valida se a URL é válida antes de adicionar
+          if (asset.url && typeof asset.url === 'string' && asset.url.trim().length > 0) {
+            uploaded.push(asset.url);
+          } else {
+            console.error('URL inválida retornada pelo upload:', asset.url);
+            failed++;
+          }
         } catch (error) {
           console.error('Erro ao fazer upload do arquivo:', file.name, error);
           failed++;
@@ -579,7 +585,16 @@ export function Products() {
                 }}>
                 {formData.imageUrl ? (
                   <>
-                    <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                    <img 
+                      src={formData.imageUrl} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error('Erro ao carregar imagem principal:', formData.imageUrl);
+                        e.currentTarget.style.display = 'none';
+                      }}
+                      onLoad={() => console.log('Imagem principal carregada com sucesso:', formData.imageUrl)}
+                    />
                     {uploadingImage && (
                       <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 text-white text-xs font-bold">
                         Enviando imagem...
@@ -658,7 +673,16 @@ export function Products() {
                   <div className="grid grid-cols-3 gap-2">
                     {coerceProductImageUrls(formData.imageUrls).map((url, index) => (
                       <div key={`${url}-${index}`} className="group relative aspect-square overflow-hidden rounded-xl border" style={{ borderColor: '#e7e5e4' }}>
-                        <img src={url} alt="" className="h-full w-full object-cover" />
+                        <img 
+                          src={url} 
+                          alt="" 
+                          className="h-full w-full object-cover" 
+                          onError={(e) => {
+                            console.error('Erro ao carregar imagem:', url);
+                            e.currentTarget.style.display = 'none';
+                          }}
+                          onLoad={() => console.log('Imagem carregada com sucesso:', url)}
+                        />
                         <div className="absolute inset-0 flex flex-col gap-1 bg-black/50 p-1 opacity-0 transition group-hover:opacity-100">
                           <button
                             type="button"
