@@ -590,11 +590,11 @@ export function Products() {
                       src={formData.imageUrl} 
                       alt="Preview" 
                       className="w-full h-full object-cover"
-                      onError={() => {
-                        console.error('Erro ao carregar imagem principal:', formData.imageUrl);
-                        // setFailedImages(prev => new Set([...prev, url]));
+                      
+                        
+                        
                       }}
-                      onLoad={() => console.log('Imagem principal carregada com sucesso:', formData.imageUrl)}
+
                     />
                     {uploadingImage && (
                       <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 text-white text-xs font-bold">
@@ -668,21 +668,21 @@ export function Products() {
                   onChange={handleGalleryFiles}
                   className="hidden"
                   accept="image/*,.3mf"
-                  multiple
+
                 />
                 {coerceProductImageUrls(formData.imageUrls).length > 0 && (
                   <div className="grid grid-cols-3 gap-2">
-                    {coerceProductImageUrls(formData.imageUrls).map((url, index) => (
-                      <div key={`gallery-${index}-${url.slice(-10)}`} className="group relative aspect-square overflow-hidden rounded-xl border" style={{ borderColor: '#e7e5e4' }}>
+                    {coerceProductImageUrls(formData.imageUrls).map((url) => (
+                      <div key={url} className="group relative aspect-square overflow-hidden rounded-xl border" style={{ borderColor: '#e7e5e4' }}>
                         <img 
                           src={url} 
                           alt="" 
                           className="h-full w-full object-cover" 
-                          onError={() => {
-                            console.error('Erro ao carregar imagem:', url);
-                            // setFailedImages(prev => new Set([...prev, url]));
-                          }}
-                          onLoad={() => console.log('Imagem carregada com sucesso:', url)}
+
+
+
+
+
                         />
                         <div className="absolute inset-0 flex flex-col gap-1 bg-black/50 p-1 opacity-0 transition group-hover:opacity-100">
                           <button
@@ -708,7 +708,7 @@ export function Products() {
                             style={{ backgroundColor: '#ef4444', color: '#ffffff' }}
                             onClick={() => setFormData((prev) => ({
                               ...prev,
-                              imageUrls: coerceProductImageUrls(prev.imageUrls).filter((_, i) => i !== index),
+                              imageUrls: coerceProductImageUrls(prev.imageUrls).filter((u) => u !== url),
                             }))}
                           >
                             Remover
