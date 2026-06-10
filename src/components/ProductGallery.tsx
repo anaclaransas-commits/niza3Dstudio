@@ -110,7 +110,7 @@ export function ProductGallery({ imageUrls, onChange, disabled }: ProductGallery
           </div>
           <div>
             <p className="text-sm font-bold" style={{ color: '#1c1917' }}>
-              {isUploading ? 'Enviando...' : 'Adicionar primeira foto'}
+              {isUploading ? 'Enviando...' : 'Adicionar foto extra'}
             </p>
             <p className="text-xs mt-1" style={{ color: '#78716c' }}>
               Clique para selecionar uma imagem

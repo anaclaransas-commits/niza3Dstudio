@@ -115,9 +115,10 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
           style={{
             opacity: isLoading ? 0 : 1,
             transform: isLoading 
-              ? (direction > 0 ? 'translateX(-20px)' : 'translateX(20px)') 
-              : 'translateX(0)',
-            transition: 'opacity 0.4s ease-out, transform 0.4s ease-out'
+              ? (direction > 0 ? 'translateX(-30px) scale(0.95)' : 'translateX(30px) scale(0.95)') 
+              : 'translateX(0) scale(1)',
+            transition: 'opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+            filter: isLoading ? 'blur(4px)' : 'blur(0px)',
           }}
           onLoad={handleImageLoad}
           onError={(e) => {
@@ -331,13 +332,61 @@ function ProductDetailsModal({
             )}
           </div>
 
+          {/* Professional contact information */}
+          <div className="mb-6 space-y-3 rounded-2xl p-4" style={{ backgroundColor: 'var(--color-surface-elevated)' }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--color-text-secondary)' }}>
+              Contato Profissional
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: `${accent}33` }}>
+                <MessageCircle className="w-4 h-4" style={{ color: primaryColor }} />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold" style={{ color: 'var(--color-text-primary)' }}>WhatsApp</p>
+                <p className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>
+                  {settings.whatsapp || 'Configure seu WhatsApp'}
+                </p>
+              </div>
+            </div>
+            {settings.email && (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: `${accent}33` }}>
+                  <Mail className="w-4 h-4" style={{ color: primaryColor }} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-bold" style={{ color: 'var(--color-text-primary)' }}>E-mail</p>
+                  <p className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>{settings.email}</p>
+                </div>
+              </div>
+            )}
+            {settings.secondaryCtaUrl && (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: `${accent}33` }}>
+                  <Instagram className="w-4 h-4" style={{ color: primaryColor }} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                    {settings.secondaryCtaLabel || 'Instagram'}
+                  </p>
+                  <p className="text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>
+                    Siga nosso perfil
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
           <button
             type="button"
             onClick={onRequestQuote}
-            className={`${BTN_QUOTE} w-full py-3.5 text-sm`}
-            style={{ backgroundColor: accent, color: primaryColor }}
+            className={`${BTN_QUOTE} w-full py-2.5 text-xs font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5`}
+            style={{
+              backgroundColor: accent,
+              color: primaryColor,
+              background: `linear-gradient(135deg, ${accent} 0%, ${accent}cc 100%)`,
+            }}
           >
-            <MessageCircle className="h-5 w-5" />
+            <MessageCircle className="h-4 w-4" />
             {settings.primaryCtaLabel || 'Solicitar orçamento'}
           </button>
         </div>
@@ -457,10 +506,14 @@ function QuoteRequestModal({
         <button
           type="submit"
           disabled={!sendLink}
-          className={`${BTN_QUOTE} w-full py-3.5 text-sm disabled:cursor-not-allowed disabled:opacity-60`}
-          style={{ backgroundColor: accent, color: primaryColor }}
+          className={`${BTN_QUOTE} w-full py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5`}
+          style={{
+            backgroundColor: accent,
+            color: primaryColor,
+            background: `linear-gradient(135deg, ${accent} 0%, ${accent}cc 100%)`,
+          }}
         >
-          <MessageCircle className="h-5 w-5" />
+          <MessageCircle className="h-4 w-4" />
           {ctaLabel}
         </button>
 
@@ -629,28 +682,22 @@ function ProductCard({
           </div>
         </div>
 
-        <div className="mt-auto flex gap-2">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenDetails(product);
-            }}
-            className={BTN_DETAILS}
-            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-primary)', backgroundColor: 'var(--color-surface)' }}
-          >
-            Ver detalhes
-          </button>
+        <div className="mt-auto">
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               onOpenQuote(product);
             }}
-            className={BTN_QUOTE}
-            style={{ backgroundColor: accent, color: primaryColor }}
+            className={`${BTN_QUOTE} w-full py-3 text-sm font-semibold shadow-lg hover:shadow-xl`}
+            style={{
+              backgroundColor: accent,
+              color: primaryColor,
+              background: `linear-gradient(135deg, ${accent} 0%, ${accent}dd 100%)`,
+              transition: 'all 0.3s ease'
+            }}
           >
-            <MessageCircle className="h-3.5 w-3.5" />
+            <MessageCircle className="h-4 w-4" />
             {ctaLabel}
           </button>
         </div>
