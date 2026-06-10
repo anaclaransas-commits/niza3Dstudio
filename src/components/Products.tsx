@@ -27,6 +27,7 @@ import { coerceProductImageUrls } from '../lib/catalogUtils';
 import { cn } from '../lib/utils';
 import type { Product } from '../types';
 import JSZip from 'jszip';
+import { ProductGallery } from './ProductGallery';
 
 const MATERIAL_COLORS: Record<string, string> = {
   PLA:    'bg-emerald-100 text-emerald-700',
@@ -633,80 +634,18 @@ export function Products() {
                   placeholder="https://..." />
               </div>
 
-              <div className="space-y-2 border-t pt-4" style={{ borderColor: '#e7e5e4' }}>
-                <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#57534e' }}>
-                  Galeria ({coerceProductImageUrls(formData.imageUrls).length} extra{coerceProductImageUrls(formData.imageUrls).length === 1 ? '' : 's'})
+              {/* New elegant gallery system */}
+              <div className="border-t pt-4" style={{ borderColor: '#e7e5e4' }}>
+                <label className="text-[10px] font-bold uppercase tracking-widest mb-3 block" style={{ color: '#57534e' }}>
+                  Galeria de Fotos
                 </label>
-                <button
-                  type="button"
+                <ProductGallery
+                  imageUrls={formData.imageUrls}
+                  onChange={(urls) => setFormData(prev => ({ ...prev, imageUrls: urls }))}
                   disabled={uploadingImage}
-                  onClick={() => galleryInputRef.current?.click()}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const input = { target: { files: e.dataTransfer.files, value: '' } } as React.ChangeEvent<HTMLInputElement>;
-                    handleGalleryFiles(input);
-                  }}
-                  className="w-full rounded-xl border border-dashed px-4 py-2 text-xs font-bold transition disabled:opacity-50"
-                  style={{
-                    borderColor: '#e7e5e4',
-                    backgroundColor: '#faf9f5',
-                    color: '#1c1917'
-                  }}
-                >
-                  {uploadingImage ? 'Enviando...' : '+ Adicionar mais fotos'}
-                </button>
-                <input
-                  type="file"
-                  ref={galleryInputRef}
-                  onChange={handleGalleryFiles}
-                  className="hidden"
-                  accept="image/*,.3mf"
-
                 />
-                {coerceProductImageUrls(formData.imageUrls).length > 0 && (
-                  <div className="grid grid-cols-3 gap-2">
-                    {coerceProductImageUrls(formData.imageUrls).map((url) => (
-                      <div key={url} className="group relative aspect-square overflow-hidden rounded-xl border" style={{ borderColor: '#e7e5e4' }}>
-                        <img 
-                          src={url} 
-                          alt="" 
-                          className="h-full w-full object-cover" />
-                        <div className="absolute inset-0 flex flex-col gap-1 bg-black/50 p-1 opacity-0 transition group-hover:opacity-100">
-                          <button
-                            type="button"
-                            className="rounded px-1 py-0.5 text-[9px] font-bold"
-                            style={{ backgroundColor: '#faf9f5cc', color: '#1c1917' }}
-                            onClick={() => setFormData((prev) => {
-                              const gallery = coerceProductImageUrls(prev.imageUrls);
-                              return {
-                                ...prev,
-                                imageUrl: url,
-                                imageUrls: prev.imageUrl
-                                  ? [...gallery.filter((u) => u !== url), prev.imageUrl].filter((u) => u !== url)
-                                  : gallery.filter((u) => u !== url),
-                              };
-                            })}
-                          >
-                            Capa
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded px-1 py-0.5 text-[9px] font-bold"
-                            style={{ backgroundColor: '#ef4444', color: '#ffffff' }}
-                            onClick={() => setFormData((prev) => ({
-                              ...prev,
-                              imageUrls: coerceProductImageUrls(prev.imageUrls).filter((u) => u !== url),
-                            }))}
-                          >
-                            Remover
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
+
             </div>
 
             {/* Fields */}

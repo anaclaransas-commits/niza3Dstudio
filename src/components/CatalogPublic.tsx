@@ -62,17 +62,22 @@ const DEFAULT_SETTINGS: CatalogSettings = {
 /* ─── Galeria de imagens ─────────────────────────────── */
 function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; accent: string }) {
   const [index, setIndex] = useState(0);
+  const [direction, setDirection] = useState(0); // -1 for prev, 1 for next
   const [isLoading, setIsLoading] = useState(false);
   const safeIndex = images.length > 0 ? Math.min(index, images.length - 1) : 0;
 
   useEffect(() => {
     setIndex(0);
+    setDirection(0);
   }, [images.length, images[0]]);
 
   const handleImageLoad = () => setIsLoading(false);
-  const handleImageChange = (newIndex: number) => {
+  const handleImageChange = (newIndex: number, dir: number) => {
+    setDirection(dir);
     setIsLoading(true);
-    setIndex(newIndex);
+    setTimeout(() => {
+      setIndex(newIndex);
+    }, 150); // Small delay for smooth transition
   };
 
   if (images.length === 0) {
@@ -86,21 +91,34 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
     );
   }
 
-  const go = (delta: number) => handleImageChange((index + delta + images.length) % images.length);
+  const go = (delta: number) => {
+    const newIndex = (index + delta + images.length) % images.length;
+    handleImageChange(newIndex, delta);
+  };
 
   return (
     <div className="space-y-3">
-      <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl shadow-inner" style={{ background: 'linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%)' }}>
+      <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl shadow-lg" style={{ background: 'linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%)' }}>
+        {/* Loading overlay with elegant animation */}
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%)' }}>
-            <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: '#e7e5e4', borderTopColor: '#003247' }} />
+          <div className="absolute inset-0 flex items-center justify-center z-10" style={{ background: 'linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%)' }}>
+            <div className="w-10 h-10 border-3 rounded-full animate-spin" style={{ borderColor: '#e7e5e4', borderTopColor: '#003247', borderWidth: '3px' }} />
           </div>
         )}
+        
+        {/* Image with smooth transitions */}
         <img
+          key={images[safeIndex]} // Force re-mount for animation
           src={images[safeIndex]}
           alt={`${alt} — foto ${safeIndex + 1}`}
-          className="max-h-full max-w-full object-contain transition-all duration-500"
-          style={{ opacity: isLoading ? 0 : 1, transform: isLoading ? 'scale(0.95)' : 'scale(1)' }}
+          className="max-h-full max-w-full object-contain"
+          style={{
+            opacity: isLoading ? 0 : 1,
+            transform: isLoading 
+              ? (direction > 0 ? 'translateX(-20px)' : 'translateX(20px)') 
+              : 'translateX(0)',
+            transition: 'opacity 0.4s ease-out, transform 0.4s ease-out'
+          }}
           onLoad={handleImageLoad}
           onError={(e) => {
             console.error('Erro ao carregar imagem na galeria:', images[safeIndex]);
@@ -108,57 +126,73 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
           }}
           loading="lazy"
         />
+        
+        {/* Elegant navigation buttons */}
         {images.length > 1 && (
           <>
             <button
               type="button"
               onClick={() => go(-1)}
-              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full p-2 text-white backdrop-blur-sm transition-all duration-300 hover:scale-110 shadow-lg"
-              style={{ background: 'linear-gradient(90deg, rgba(42, 39, 29, 0.7) 0%, rgba(42, 39, 29, 0.5) 100%)' }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center text-white backdrop-blur-md transition-all duration-300 hover:scale-110 active:scale-95 shadow-xl"
+              style={{ 
+                background: 'linear-gradient(135deg, rgba(0, 50, 71, 0.85) 0%, rgba(0, 50, 71, 0.65) 100%)',
+                boxShadow: '0 8px 32px rgba(0, 50, 71, 0.3)'
+              }}
               aria-label="Imagem anterior"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-6 w-6" />
             </button>
             <button
               type="button"
               onClick={() => go(1)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-2 text-white backdrop-blur-sm transition-all duration-300 hover:scale-110 shadow-lg"
-              style={{ background: 'linear-gradient(90deg, rgba(42, 39, 29, 0.7) 0%, rgba(42, 39, 29, 0.5) 100%)' }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center text-white backdrop-blur-md transition-all duration-300 hover:scale-110 active:scale-95 shadow-xl"
+              style={{ 
+                background: 'linear-gradient(135deg, rgba(0, 50, 71, 0.85) 0%, rgba(0, 50, 71, 0.65) 100%)',
+                boxShadow: '0 8px 32px rgba(0, 50, 71, 0.3)'
+              }}
               aria-label="Próxima imagem"
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-6 w-6" />
             </button>
-            <span className="absolute bottom-3 right-3 rounded-full px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-sm shadow-lg" style={{ background: 'linear-gradient(90deg, rgba(42, 39, 29, 0.7) 0%, rgba(42, 39, 29, 0.5) 100%)' }}>
+            
+            {/* Elegant counter badge */}
+            <div className="absolute bottom-4 right-4 px-4 py-2 rounded-full text-xs font-bold text-white backdrop-blur-md shadow-lg" style={{ 
+              background: 'linear-gradient(135deg, rgba(0, 50, 71, 0.85) 0%, rgba(0, 50, 71, 0.65) 100%)',
+              boxShadow: '0 4px 16px rgba(0, 50, 71, 0.3)'
+            }}>
               {safeIndex + 1} / {images.length}
-            </span>
+            </div>
           </>
         )}
       </div>
+      
+      {/* Elegant thumbnails with smooth hover effects */}
       {images.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
           {images.map((url, i) => (
             <button
-              key={`${url}-${i}`}
+              key={url}
               type="button"
-              onClick={() => setIndex(i)}
-              className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300"
+              onClick={() => {
+                const dir = i > safeIndex ? 1 : -1;
+                handleImageChange(i, dir);
+              }}
+              className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300 hover:scale-105 active:scale-95 shadow-md"
               style={i === safeIndex ? {
                 borderColor: '#003247',
-                boxShadow: '0 10px 15px -3px rgba(0, 50, 71, 0.3)',
-                transform: 'scale(1.05)'
+                boxShadow: '0 0 0 3px rgba(0, 50, 71, 0.1), 0 12px 24px -8px rgba(0, 50, 71, 0.4)',
+                transform: 'scale(1.08)'
               } : {
                 borderColor: '#e7e5e4',
-                transform: 'scale(1)'
+                transform: 'scale(1)',
+                opacity: 0.8
               }}
+              aria-label={`Ver foto ${i + 1}`}
             >
               <img 
                 src={url} 
-                alt="" 
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  console.error('Erro ao carregar thumbnail:', url);
-                  e.currentTarget.style.display = 'none';
-                }}
+                alt={`Thumbnail ${i + 1}`} 
+                className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
               />
             </button>
           ))}
