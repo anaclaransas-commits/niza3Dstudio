@@ -18,6 +18,7 @@ import {
   Wallet,
   Wrench,
 } from 'lucide-react';
+import { QuickSale } from './QuickSale';
 import {
   Bar,
   BarChart,
@@ -70,22 +71,46 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   );
   const publicProductsCount = products.filter((product) => product.isPublic !== false).length;
 
+  // Calculate today's sales
+  const todaySales = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return budgets.filter(budget => {
+      const budgetDate = new Date(budget.date);
+      budgetDate.setHours(0, 0, 0, 0);
+      return budgetDate.getTime() === today.getTime() && budget.status === 'Aprovado';
+    });
+  }, [budgets]);
+
+  const todayRevenue = todaySales.reduce((total, budget) => total + budget.price, 0);
+  const todayProfit = todaySales.reduce((total, budget) => total + budget.profit, 0);
+
   const statCards = [
+    {
+      label: 'Vendas de Hoje',
+      value: formatCurrency(todayRevenue),
+      helper: `${todaySales.length} venda(s) hoje • Lucro: ${formatCurrency(todayProfit)}`,
+      icon: Wallet,
+      gradient: 'from-emerald-400 to-cyan-400',
+      bgColor: 'bg-gradient-to-br from-emerald-50 to-cyan-50',
+      highlight: true,
+    },
     {
       label: 'Receita do período',
       value: formatCurrency(rangeSummary.revenue),
       helper: `${rangeSummary.pendingCount} orçamento(s) pendente(s) no período`,
       icon: TrendingUp,
-      gradient: 'from-emerald-400 to-cyan-400',
-      bgColor: 'bg-gradient-to-br from-emerald-50 to-cyan-50',
+      gradient: 'from-blue-400 to-indigo-400',
+      bgColor: 'bg-gradient-to-br from-blue-50 to-indigo-50',
     },
     {
       label: 'Lucro do período',
       value: formatCurrency(rangeSummary.profit),
       helper: `Receita ${formatCurrency(rangeSummary.revenue)}`,
       icon: PiggyBank,
-      gradient: 'from-blue-400 to-indigo-400',
-      bgColor: 'bg-gradient-to-br from-blue-50 to-indigo-50',
+      gradient: 'from-violet-400 to-purple-400',
+      bgColor: 'bg-gradient-to-br from-violet-50 to-purple-50',
     },
     {
       label: 'Gastos do período',
@@ -108,14 +133,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       value: String(rangeSummary.activeClients),
       helper: `${clients.length} cliente(s) no cadastro`,
       icon: Users,
-      gradient: 'from-violet-400 to-purple-400',
-      bgColor: 'bg-gradient-to-br from-violet-50 to-purple-50',
-    },
-    {
-      label: 'Despesas fixas mensais',
-      value: formatCurrency(rangeSummary.recurringExpensesMonthly),
-      helper: `${rangeSummary.extraEntriesCount} lançamento(s) extras no período`,
-      icon: Receipt,
       gradient: 'from-slate-400 to-gray-400',
       bgColor: 'bg-gradient-to-br from-slate-50 to-gray-50',
     },
@@ -199,9 +216,22 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         </div>
       </section>
 
+      {/* Quick Sale Section */}
+      <section className="rounded-[36px] border border-slate-200/60 bg-gradient-to-br from-white to-slate-50 p-8 shadow-xl shadow-slate-200/50">
+        <div className="mb-6">
+          <p className="text-xs font-black uppercase tracking-[0.25em] bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">Vendas</p>
+          <h3 className="mt-2 text-2xl font-black text-slate-900">Registre vendas rapidamente</h3>
+          <p className="text-sm text-slate-500 mt-1">Adicione vendas em segundos sem passar pela calculadora completa</p>
+        </div>
+        <QuickSale />
+      </section>
+
       <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
         {statCards.map((stat) => (
-          <article key={stat.label} className="group rounded-[32px] border border-slate-200/60 bg-gradient-to-br from-white to-slate-50 p-6 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 hover:-translate-y-1">
+          <article 
+            key={stat.label} 
+            className={`group rounded-[32px] border border-slate-200/60 bg-gradient-to-br from-white to-slate-50 p-6 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 hover:-translate-y-1 ${stat.highlight ? 'ring-2 ring-emerald-400/50' : ''}`}
+          >
             <div className="mb-5 flex items-center justify-between">
               <div className={`rounded-2xl bg-gradient-to-br ${stat.gradient} p-3 text-white shadow-lg shadow-slate-900/20`}>
                 <stat.icon className="h-5 w-5" />
