@@ -40,6 +40,12 @@ export function KeyboardShortcuts({ shortcuts }: KeyboardShortcutsProps) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isOpen) return; // Don't trigger shortcuts when modal is open
 
+      // Don't trigger shortcuts when typing in input, textarea, or contenteditable
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
       const shortcut = shortcuts.find(s => {
         if (s.key.includes('+')) {
           const parts = s.key.split('+');
