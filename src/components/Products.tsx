@@ -698,18 +698,21 @@ export function Products() {
                 <label className="text-xs font-bold text-slate-500 uppercase">Peso estimado (g) *</label>
                 <input required type="number" value={formData.defaultWeightG}
                   onChange={e => setFormData(p => ({ ...p, defaultWeightG: e.target.value }))}
+                  onKeyDown={e => { if (e.key === 'Enter') e.preventDefault(); }}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm" placeholder="50" />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Tempo médio (horas)</label>
                 <input type="number" value={formData.avgPrintTimeHours}
                   onChange={e => setFormData(p => ({ ...p, avgPrintTimeHours: e.target.value }))}
+                  onKeyDown={e => { if (e.key === 'Enter') e.preventDefault(); }}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm" placeholder="4" />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Preço sugerido (R$)</label>
                 <input type="number" value={formData.basePrice}
                   onChange={e => setFormData(p => ({ ...p, basePrice: e.target.value }))}
+                  onKeyDown={e => { if (e.key === 'Enter') e.preventDefault(); }}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm" placeholder="75" />
               </div>
               <div className="space-y-1">
