@@ -129,15 +129,6 @@ export default function App() {
 
   const keyboardShortcuts = [
     { key: 'Ctrl+K', description: 'Busca global', action: () => {} },
-    { key: '1', description: 'Dashboard', action: () => setActivePage('dashboard') },
-    { key: '2', description: 'Calculadora', action: () => setActivePage('calculator') },
-    { key: '3', description: 'Orçamentos', action: () => setActivePage('budgets') },
-    { key: '4', description: 'Cadastros', action: () => setActivePage('registration') },
-    { key: '5', description: 'Produtos', action: () => setActivePage('products') },
-    { key: '6', description: 'Catálogo', action: () => setActivePage('catalog') },
-    { key: '7', description: 'Clientes', action: () => setActivePage('clients') },
-    { key: '8', description: 'Descontos', action: () => setActivePage('discounts') },
-    { key: '9', description: 'Financeiro', action: () => setActivePage('reports') },
     { key: '?', description: 'Mostrar atalhos', action: () => {} },
   ];
 
