@@ -81,6 +81,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   );
   const publicProductsCount = products.filter((product) => product.isPublic !== false).length;
 
+  // Calculate pending budgets
+  const pendingBudgets = budgets.filter(budget => budget.status === 'Pendente');
+
   // Calculate today's sales
   const todaySales = useMemo(() => {
     const today = new Date();

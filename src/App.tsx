@@ -27,6 +27,7 @@ export default function App() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [appError, setAppError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -35,7 +36,8 @@ export default function App() {
         const res = await fetch('/api/auth/me', { method: 'GET', credentials: 'include' });
         if (!mounted) return;
         setAuthenticated(res.ok);
-      } catch {
+      } catch (error) {
+        console.error('Session check failed:', error);
         if (!mounted) return;
         setAuthenticated(false);
       } finally {
@@ -47,6 +49,16 @@ export default function App() {
     return () => {
       mounted = false;
     };
+  }, []);
+
+  // Global error handler
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error('Global error:', event.error);
+      setAppError(event.error?.message || 'Erro desconhecido');
+    };
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
   }, []);
 
   const handleLogin = async () => {
@@ -162,6 +174,35 @@ export default function App() {
       </div>
     </div>
   );
+  if (appError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--color-background)' }}>
+        <div className="w-full max-w-md rounded-3xl shadow-2xl p-8 border" style={{ background: 'var(--color-surface)', borderColor: 'var(--color-error-200)' }}>
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ backgroundColor: 'var(--color-error-50)' }}>
+              <svg className="w-8 h-8" style={{ color: 'var(--color-error-600)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-black mb-2" style={{ color: 'var(--color-text-primary)' }}>
+              Erro na Aplicação
+            </h1>
+            <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+              {appError}
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 rounded-xl font-bold transition-all"
+              style={{ background: 'var(--color-primary)', color: '#ffffff' }}
+            >
+              Recarregar Página
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (checkingSession) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--color-background)' }}>
