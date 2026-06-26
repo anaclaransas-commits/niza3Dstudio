@@ -17,14 +17,22 @@ import {
   type Budget,
   type BudgetStatus,
   type CalculatorDefaults,
+  type CalculatorTemplate,
   type CatalogSettings,
   type Client,
+  type DiscountCode,
+  type ExpenseCategory,
   type Filament,
   type FinanceEntry,
   type Printer,
+  type PrintQueueItem,
   type Product,
+  type QualityControlEntry,
   type ResinSupply,
   type SalesChannel,
+  type TimeTrackingEntry,
+  type ActivityLog,
+  type Reminder,
 } from './types';
 import {
   deleteCatalogProduct,
@@ -45,6 +53,14 @@ const STORAGE_KEYS = {
   calculatorDefaults: '3d_calculator_defaults',
   channels: '3d_channels',
   catalogSettings: '3d_catalog_settings',
+  calculatorTemplates: '3d_calculator_templates',
+  discountCodes: '3d_discount_codes',
+  printQueue: '3d_print_queue',
+  timeTracking: '3d_time_tracking',
+  qualityControl: '3d_quality_control',
+  activityLog: '3d_activity_log',
+  reminders: '3d_reminders',
+  expenseCategories: '3d_expense_categories',
 } as const;
 
 const defaultCatalogSettings: CatalogSettings = {
@@ -211,10 +227,19 @@ type StoreContextValue = {
   calculatorDefaults: CalculatorDefaults;
   channels: SalesChannel[];
   catalogSettings: CatalogSettings;
+  calculatorTemplates: CalculatorTemplate[];
+  discountCodes: DiscountCode[];
+  printQueue: PrintQueueItem[];
+  timeTracking: TimeTrackingEntry[];
+  qualityControl: QualityControlEntry[];
+  activityLog: ActivityLog[];
+  reminders: Reminder[];
+  expenseCategories: ExpenseCategory[];
   addPrinter: (data: Omit<Printer, 'id'>) => Printer;
   addFilament: (data: Omit<Filament, 'id'>) => Filament;
   addResin: (data: Omit<ResinSupply, 'id'>) => ResinSupply;
   addClient: (data: Omit<Client, 'id'>) => Client;
+  updateClient: (id: string, data: Partial<Omit<Client, 'id'>>) => void;
   addProduct: (data: Omit<Product, 'id'>) => Product;
   updateProduct: (id: string, data: Partial<Omit<Product, 'id'>>) => void;
   addBudget: (data: Omit<Budget, 'id'>) => Budget;
@@ -226,6 +251,24 @@ type StoreContextValue = {
   removeProduct: (productId: string) => void;
   updateCalculatorDefaults: (settings: Partial<CalculatorDefaults>) => void;
   updateCatalogSettings: (settings: Partial<CatalogSettings>) => void;
+  addCalculatorTemplate: (data: Omit<CalculatorTemplate, 'id'>) => CalculatorTemplate;
+  removeCalculatorTemplate: (templateId: string) => void;
+  addDiscountCode: (data: Omit<DiscountCode, 'id'>) => DiscountCode;
+  updateDiscountCode: (id: string, data: Partial<Omit<DiscountCode, 'id'>>) => void;
+  removeDiscountCode: (codeId: string) => void;
+  addPrintQueueItem: (data: Omit<PrintQueueItem, 'id'>) => PrintQueueItem;
+  updatePrintQueueItem: (id: string, data: Partial<Omit<PrintQueueItem, 'id'>>) => void;
+  removePrintQueueItem: (itemId: string) => void;
+  addTimeTrackingEntry: (data: Omit<TimeTrackingEntry, 'id'>) => TimeTrackingEntry;
+  updateTimeTrackingEntry: (id: string, data: Partial<Omit<TimeTrackingEntry, 'id'>>) => void;
+  addQualityControlEntry: (data: Omit<QualityControlEntry, 'id'>) => QualityControlEntry;
+  addActivityLog: (data: Omit<ActivityLog, 'id'>) => ActivityLog;
+  addReminder: (data: Omit<Reminder, 'id'>) => Reminder;
+  updateReminder: (id: string, data: Partial<Omit<Reminder, 'id'>>) => void;
+  removeReminder: (reminderId: string) => void;
+  addExpenseCategory: (data: Omit<ExpenseCategory, 'id'>) => ExpenseCategory;
+  updateExpenseCategory: (id: string, data: Partial<Omit<ExpenseCategory, 'id'>>) => void;
+  removeExpenseCategory: (categoryId: string) => void;
 };
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -241,6 +284,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [calculatorDefaults, setCalculatorDefaults] = useState<CalculatorDefaults>(() => readStoredValue(STORAGE_KEYS.calculatorDefaults, defaultCalculatorDefaults));
   const [channels, setChannels] = useState<SalesChannel[]>(() => readStoredValue(STORAGE_KEYS.channels, []));
   const [catalogSettings, setCatalogSettings] = useState<CatalogSettings>(() => readStoredValue(STORAGE_KEYS.catalogSettings, defaultCatalogSettings));
+  const [calculatorTemplates, setCalculatorTemplates] = useState<CalculatorTemplate[]>(() => readStoredValue(STORAGE_KEYS.calculatorTemplates, []));
+  const [discountCodes, setDiscountCodes] = useState<DiscountCode[]>(() => readStoredValue(STORAGE_KEYS.discountCodes, []));
+  const [printQueue, setPrintQueue] = useState<PrintQueueItem[]>(() => readStoredValue(STORAGE_KEYS.printQueue, []));
+  const [timeTracking, setTimeTracking] = useState<TimeTrackingEntry[]>(() => readStoredValue(STORAGE_KEYS.timeTracking, []));
+  const [qualityControl, setQualityControl] = useState<QualityControlEntry[]>(() => readStoredValue(STORAGE_KEYS.qualityControl, []));
+  const [activityLog, setActivityLog] = useState<ActivityLog[]>(() => readStoredValue(STORAGE_KEYS.activityLog, []));
+  const [reminders, setReminders] = useState<Reminder[]>(() => readStoredValue(STORAGE_KEYS.reminders, []));
+  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>(() => readStoredValue(STORAGE_KEYS.expenseCategories, [
+    { id: 'ec1', name: 'Materiais', color: '#3b82f6', budget: 1000 },
+    { id: 'ec2', name: 'Manutenção', color: '#ef4444', budget: 500 },
+    { id: 'ec3', name: 'Software', color: '#8b5cf6', budget: 200 },
+    { id: 'ec4', name: 'Marketing', color: '#f59e0b', budget: 300 },
+    { id: 'ec5', name: 'Outros', color: '#6b7280', budget: 200 },
+  ]));
 
   useEffect(() => {
     let isMounted = true;
@@ -286,6 +343,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     writeStoredValue(STORAGE_KEYS.calculatorDefaults, calculatorDefaults);
     writeStoredValue(STORAGE_KEYS.channels, channels);
     writeStoredValue(STORAGE_KEYS.catalogSettings, catalogSettings);
+    writeStoredValue(STORAGE_KEYS.calculatorTemplates, calculatorTemplates);
+    writeStoredValue(STORAGE_KEYS.discountCodes, discountCodes);
+    writeStoredValue(STORAGE_KEYS.printQueue, printQueue);
+    writeStoredValue(STORAGE_KEYS.timeTracking, timeTracking);
+    writeStoredValue(STORAGE_KEYS.qualityControl, qualityControl);
+    writeStoredValue(STORAGE_KEYS.activityLog, activityLog);
+    writeStoredValue(STORAGE_KEYS.reminders, reminders);
+    writeStoredValue(STORAGE_KEYS.expenseCategories, expenseCategories);
   }, [
     printers,
     filaments,
@@ -297,6 +362,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     calculatorDefaults,
     channels,
     catalogSettings,
+    calculatorTemplates,
+    discountCodes,
+    printQueue,
+    timeTracking,
+    qualityControl,
+    activityLog,
+    reminders,
+    expenseCategories,
   ]);
 
   const addPrinter = (data: Omit<Printer, 'id'>) => {
@@ -321,6 +394,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const newClient = { ...data, id: uuidv4() };
     setClients((currentClients) => [...currentClients, newClient]);
     return newClient;
+  };
+
+  const updateClient = (id: string, data: Partial<Omit<Client, 'id'>>) => {
+    setClients((currentClients) =>
+      currentClients.map((client) => (client.id === id ? { ...client, ...data } : client))
+    );
   };
 
   const addProduct = (data: Omit<Product, 'id'>) => {
@@ -413,6 +492,104 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const addCalculatorTemplate = (data: Omit<CalculatorTemplate, 'id'>) => {
+    const newTemplate = { ...data, id: uuidv4() };
+    setCalculatorTemplates((currentTemplates) => [...currentTemplates, newTemplate]);
+    return newTemplate;
+  };
+
+  const removeCalculatorTemplate = (templateId: string) => {
+    setCalculatorTemplates((currentTemplates) => currentTemplates.filter((template) => template.id !== templateId));
+  };
+
+  const addDiscountCode = (data: Omit<DiscountCode, 'id'>) => {
+    const newCode = { ...data, id: uuidv4() };
+    setDiscountCodes((currentCodes) => [...currentCodes, newCode]);
+    return newCode;
+  };
+
+  const updateDiscountCode = (id: string, data: Partial<Omit<DiscountCode, 'id'>>) => {
+    setDiscountCodes((currentCodes) =>
+      currentCodes.map((code) => (code.id === id ? { ...code, ...data } : code))
+    );
+  };
+
+  const removeDiscountCode = (codeId: string) => {
+    setDiscountCodes((currentCodes) => currentCodes.filter((code) => code.id !== codeId));
+  };
+
+  const addPrintQueueItem = (data: Omit<PrintQueueItem, 'id'>) => {
+    const newItem = { ...data, id: uuidv4() };
+    setPrintQueue((currentQueue) => [...currentQueue, newItem]);
+    return newItem;
+  };
+
+  const updatePrintQueueItem = (id: string, data: Partial<Omit<PrintQueueItem, 'id'>>) => {
+    setPrintQueue((currentQueue) =>
+      currentQueue.map((item) => (item.id === id ? { ...item, ...data } : item))
+    );
+  };
+
+  const removePrintQueueItem = (itemId: string) => {
+    setPrintQueue((currentQueue) => currentQueue.filter((item) => item.id !== itemId));
+  };
+
+  const addTimeTrackingEntry = (data: Omit<TimeTrackingEntry, 'id'>) => {
+    const newEntry = { ...data, id: uuidv4() };
+    setTimeTracking((currentTracking) => [...currentTracking, newEntry]);
+    return newEntry;
+  };
+
+  const updateTimeTrackingEntry = (id: string, data: Partial<Omit<TimeTrackingEntry, 'id'>>) => {
+    setTimeTracking((currentTracking) =>
+      currentTracking.map((entry) => (entry.id === id ? { ...entry, ...data } : entry))
+    );
+  };
+
+  const addQualityControlEntry = (data: Omit<QualityControlEntry, 'id'>) => {
+    const newEntry = { ...data, id: uuidv4() };
+    setQualityControl((currentQC) => [...currentQC, newEntry]);
+    return newEntry;
+  };
+
+  const addActivityLog = (data: Omit<ActivityLog, 'id'>) => {
+    const newLog = { ...data, id: uuidv4(), timestamp: data.timestamp || new Date().toISOString() };
+    setActivityLog((currentLog) => [newLog, ...currentLog].slice(0, 100)); // Keep last 100 entries
+    return newLog;
+  };
+
+  const addReminder = (data: Omit<Reminder, 'id'>) => {
+    const newReminder = { ...data, id: uuidv4() };
+    setReminders((currentReminders) => [...currentReminders, newReminder]);
+    return newReminder;
+  };
+
+  const updateReminder = (id: string, data: Partial<Omit<Reminder, 'id'>>) => {
+    setReminders((currentReminders) =>
+      currentReminders.map((reminder) => (reminder.id === id ? { ...reminder, ...data } : reminder))
+    );
+  };
+
+  const removeReminder = (reminderId: string) => {
+    setReminders((currentReminders) => currentReminders.filter((reminder) => reminder.id !== reminderId));
+  };
+
+  const addExpenseCategory = (data: Omit<ExpenseCategory, 'id'>) => {
+    const newCategory = { ...data, id: uuidv4() };
+    setExpenseCategories((currentCategories) => [...currentCategories, newCategory]);
+    return newCategory;
+  };
+
+  const updateExpenseCategory = (id: string, data: Partial<Omit<ExpenseCategory, 'id'>>) => {
+    setExpenseCategories((currentCategories) =>
+      currentCategories.map((category) => (category.id === id ? { ...category, ...data } : category))
+    );
+  };
+
+  const removeExpenseCategory = (categoryId: string) => {
+    setExpenseCategories((currentCategories) => currentCategories.filter((category) => category.id !== categoryId));
+  };
+
   const value = useMemo<StoreContextValue>(
     () => ({
       printers,
@@ -425,10 +602,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       calculatorDefaults,
       channels,
       catalogSettings,
+      calculatorTemplates,
+      discountCodes,
+      printQueue,
+      timeTracking,
+      qualityControl,
+      activityLog,
+      reminders,
+      expenseCategories,
       addPrinter,
       addFilament,
       addResin,
       addClient,
+      updateClient,
       addProduct,
       updateProduct,
       addBudget,
@@ -440,6 +626,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       removeProduct,
       updateCalculatorDefaults,
       updateCatalogSettings,
+      addCalculatorTemplate,
+      removeCalculatorTemplate,
+      addDiscountCode,
+      updateDiscountCode,
+      removeDiscountCode,
+      addPrintQueueItem,
+      updatePrintQueueItem,
+      removePrintQueueItem,
+      addTimeTrackingEntry,
+      updateTimeTrackingEntry,
+      addQualityControlEntry,
+      addActivityLog,
+      addReminder,
+      updateReminder,
+      removeReminder,
+      addExpenseCategory,
+      updateExpenseCategory,
+      removeExpenseCategory,
     }),
     [
       printers,
@@ -452,6 +656,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       calculatorDefaults,
       channels,
       catalogSettings,
+      calculatorTemplates,
+      discountCodes,
+      printQueue,
+      timeTracking,
+      qualityControl,
+      activityLog,
+      reminders,
+      expenseCategories,
     ],
   );
 

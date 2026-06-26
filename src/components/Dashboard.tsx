@@ -17,8 +17,18 @@ import {
   Users,
   Wallet,
   Wrench,
+  Printer,
+  CheckCircle,
+  AlertCircle,
+  Activity,
+  Play,
+  Pause,
+  MoreHorizontal,
+  Calendar,
+  User as UserIcon,
+  DollarSign,
+  Settings,
 } from 'lucide-react';
-import { QuickSale } from './QuickSale';
 import {
   Bar,
   BarChart,
@@ -52,7 +62,7 @@ const RANGE_OPTIONS: Array<{ value: AnalyticsRange; label: string }> = [
 ];
 
 export function Dashboard({ onNavigate }: DashboardProps) {
-  const { budgets, clients, products, filaments, financeEntries } = useStore();
+  const { budgets, clients, products, filaments, financeEntries, printQueue, activityLog, updateBudgetStatus, addPrintQueueItem, updatePrintQueueItem } = useStore();
   const [selectedRange, setSelectedRange] = useState<AnalyticsRange>('30d');
 
   const metrics = calculateBusinessMetrics(budgets, financeEntries);
@@ -86,6 +96,38 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   const todayRevenue = todaySales.reduce((total, budget) => total + budget.price, 0);
   const todayProfit = todaySales.reduce((total, budget) => total + budget.profit, 0);
 
+  const formatTrend = (value: number) => {
+    if (value === 0) return '0%';
+    const sign = value > 0 ? '+' : '';
+    return `${sign}${value.toFixed(1)}%`;
+  };
+
+  const getTrendIcon = (value: number) => {
+    if (value > 0) return '↑';
+    if (value < 0) return '↓';
+    return '→';
+  };
+
+  const getTrendColor = (value: number, isExpense = false) => {
+    if (value === 0) return 'text-slate-500';
+    if (isExpense) {
+      // For expenses, lower is better (green), higher is worse (red)
+      return value < 0 ? 'text-emerald-600' : 'text-rose-600';
+    }
+    // For revenue/profit, higher is better (green), lower is worse (red)
+    return value > 0 ? 'text-emerald-600' : 'text-rose-600';
+  };
+
+  const handleQuickApprove = (budgetId: string) => {
+    updateBudgetStatus(budgetId, 'Aprovado');
+    addActivityLog({
+      type: 'approval',
+      description: `Orçamento #${budgetId.slice(0, 6)} aprovado rapidamente`,
+      entityId: budgetId,
+      entityType: 'budget',
+    });
+  };
+
   const statCards = [
     {
       label: 'Vendas de Hoje',
@@ -103,6 +145,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       icon: TrendingUp,
       gradient: 'from-blue-400 to-indigo-400',
       bgColor: 'bg-gradient-to-br from-blue-50 to-indigo-50',
+      trend: rangeSummary.trends.revenue,
     },
     {
       label: 'Lucro do período',
@@ -111,6 +154,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       icon: PiggyBank,
       gradient: 'from-violet-400 to-purple-400',
       bgColor: 'bg-gradient-to-br from-violet-50 to-purple-50',
+      trend: rangeSummary.trends.profit,
     },
     {
       label: 'Gastos do período',
@@ -119,6 +163,8 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       icon: TrendingDown,
       gradient: 'from-rose-400 to-pink-400',
       bgColor: 'bg-gradient-to-br from-rose-50 to-pink-50',
+      trend: rangeSummary.trends.expenses,
+      isExpense: true,
     },
     {
       label: 'Ticket médio do período',
@@ -127,6 +173,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       icon: Wallet,
       gradient: 'from-amber-400 to-orange-400',
       bgColor: 'bg-gradient-to-br from-amber-50 to-orange-50',
+      trend: rangeSummary.trends.averageTicket,
     },
     {
       label: 'Clientes ativos no período',
@@ -135,6 +182,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       icon: Users,
       gradient: 'from-slate-400 to-gray-400',
       bgColor: 'bg-gradient-to-br from-slate-50 to-gray-50',
+      trend: rangeSummary.trends.salesCount,
     },
   ];
 
@@ -145,10 +193,10 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     icon: typeof CalculatorIcon;
   }> = [
     {
-      label: 'Novo orçamento',
-      description: 'Abrir a calculadora com seus parâmetros salvos.',
+      label: 'Nova Impressão',
+      description: 'Criar nova impressão, orçamento ou venda.',
       page: 'calculator',
-      icon: CalculatorIcon,
+      icon: Printer,
     },
     {
       label: 'Histórico de vendas',
@@ -216,14 +264,21 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         </div>
       </section>
 
-      {/* Quick Sale Section */}
+      {/* Nova Impressão Section */}
       <section className="rounded-[36px] border border-slate-200/60 bg-gradient-to-br from-white to-slate-50 p-8 shadow-xl shadow-slate-200/50">
         <div className="mb-6">
-          <p className="text-xs font-black uppercase tracking-[0.25em] bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">Vendas</p>
-          <h3 className="mt-2 text-2xl font-black text-slate-900">Registre vendas rapidamente</h3>
-          <p className="text-sm text-slate-500 mt-1">Adicione vendas em segundos sem passar pela calculadora completa</p>
+          <p className="text-xs font-black uppercase tracking-[0.25em] bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">Impressões</p>
+          <h3 className="mt-2 text-2xl font-black text-slate-900">Inicie uma nova impressão</h3>
+          <p className="text-sm text-slate-500 mt-1">Crie orçamentos, vendas e peças personalizadas em um só lugar</p>
         </div>
-        <QuickSale />
+        <button
+          onClick={() => onNavigate('calculator')}
+          className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-8 py-5 rounded-2xl shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 hover:-translate-y-1 transition-all duration-300 font-bold text-lg"
+        >
+          <Printer className="w-6 h-6" />
+          <span>Nova Impressão</span>
+          <ArrowRight className="w-6 h-6" />
+        </button>
       </section>
 
       <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -236,8 +291,16 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               <div className={`rounded-2xl bg-gradient-to-br ${stat.gradient} p-3 text-white shadow-lg shadow-slate-900/20`}>
                 <stat.icon className="h-5 w-5" />
               </div>
-              <div className={`text-xs font-black uppercase tracking-wider bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>
-                {stat.label}
+              <div className="flex items-center gap-2">
+                <div className={`text-xs font-black uppercase tracking-wider bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>
+                  {stat.label}
+                </div>
+                {stat.trend !== undefined && (
+                  <div className={`text-xs font-bold ${getTrendColor(stat.trend, stat.isExpense)} flex items-center gap-1`}>
+                    <span>{getTrendIcon(stat.trend)}</span>
+                    <span>{formatTrend(stat.trend)}</span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="mb-2">
@@ -281,19 +344,155 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         </article>
 
         <div className="space-y-6">
-          <article className="rounded-[36px] border border-slate-200/60 bg-gradient-to-br from-slate-900 to-slate-800 p-8 shadow-xl shadow-slate-900/50">
-            <p className="text-xs font-black uppercase tracking-[0.25em] bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Operação acumulada</p>
-            <div className="mt-8 space-y-5">
-              <div className="flex items-center justify-between rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
-                <span className="flex items-center gap-2 text-sm text-slate-300"><Package className="h-4 w-4" />Peças vendidas</span>
-                <strong className="text-lg font-black text-white">{metrics.totalPiecesSold}</strong>
+          {/* Pending Approvals Widget */}
+          <article className="rounded-[36px] border border-slate-200/60 bg-gradient-to-br from-white to-slate-50 p-6 shadow-xl shadow-slate-200/50">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-amber-500" />
+                <p className="text-xs font-black uppercase tracking-[0.25em] bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">Aprovações Pendentes</p>
               </div>
-              <div className="flex items-center justify-between rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
-                <span className="flex items-center gap-2 text-sm text-slate-300"><Clock3 className="h-4 w-4" />Horas produzidas</span>
-                <strong className="text-lg font-black text-white">{metrics.totalPrintHours.toFixed(1)}h</strong>
+              <span className="text-xs font-bold text-slate-500">{pendingBudgets.length} orçamento(s)</span>
+            </div>
+            {pendingBudgets.length === 0 ? (
+              <div className="text-center py-6 text-slate-400 text-sm">
+                <CheckCircle className="w-8 h-8 mx-auto mb-2 text-emerald-400" />
+                Nenhum orçamento pendente
               </div>
-              <div className="flex items-center justify-between rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
-                <span className="flex items-center gap-2 text-sm text-slate-300"><Wrench className="h-4 w-4" />Filamentos cadastrados</span>
+            ) : (
+              <div className="space-y-3">
+                {pendingBudgets.slice(0, 3).map((budget) => {
+                  const client = clients.find(c => c.id === budget.clientId);
+                  const product = products.find(p => p.id === budget.productId);
+                  return (
+                    <div key={budget.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-slate-800 truncate">{client?.name || 'Cliente Avulso'}</p>
+                        <p className="text-xs text-slate-500 truncate">{product?.name || 'Peça Customizada'}</p>
+                      </div>
+                      <div className="flex items-center gap-2 ml-3">
+                        <span className="text-sm font-bold text-emerald-600">{formatCurrency(budget.price)}</span>
+                        <button
+                          onClick={() => handleQuickApprove(budget.id)}
+                          className="p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+                          title="Aprovar rapidamente"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {pendingBudgets.length > 3 && (
+                  <button
+                    onClick={() => onNavigate('budgets')}
+                    className="w-full text-center text-xs font-bold text-slate-500 hover:text-slate-700 py-2"
+                  >
+                    Ver todos os {pendingBudgets.length} orçamentos →
+                  </button>
+                )}
+              </div>
+            )}
+          </article>
+
+          {/* Production Queue Widget */}
+          <article className="rounded-[36px] border border-slate-200/60 bg-gradient-to-br from-white to-slate-50 p-6 shadow-xl shadow-slate-200/50">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Play className="w-5 h-5 text-blue-500" />
+                <p className="text-xs font-black uppercase tracking-[0.25em] bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Fila de Produção</p>
+              </div>
+              <span className="text-xs font-bold text-slate-500">{printQueue.filter(q => q.status !== 'completed').length} ativo(s)</span>
+            </div>
+            {printQueue.filter(q => q.status !== 'completed').length === 0 ? (
+              <div className="text-center py-6 text-slate-400 text-sm">
+                <Printer className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                Nenhuma impressão ativa
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {printQueue.filter(q => q.status !== 'completed').slice(0, 3).map((item) => {
+                  const budget = budgets.find(b => b.id === item.budgetId);
+                  const client = budget ? clients.find(c => c.id === budget.clientId) : null;
+                  return (
+                    <div key={item.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          {item.status === 'printing' && <Play className="w-3 h-3 text-emerald-500" />}
+                          {item.status === 'queued' && <Clock3 className="w-3 h-3 text-amber-500" />}
+                          {item.status === 'paused' && <Pause className="w-3 h-3 text-rose-500" />}
+                          <p className="text-sm font-bold text-slate-800 truncate">{client?.name || 'Cliente'}</p>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="flex-1 bg-slate-200 rounded-full h-1.5">
+                            <div 
+                              className="bg-blue-500 h-1.5 rounded-full transition-all" 
+                              style={{ width: `${item.progress || 0}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-slate-500">{item.progress || 0}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </article>
+
+          {/* Recent Activity Widget */}
+          <article className="rounded-[36px] border border-slate-200/60 bg-gradient-to-br from-white to-slate-50 p-6 shadow-xl shadow-slate-200/50">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-purple-500" />
+                <p className="text-xs font-black uppercase tracking-[0.25em] bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Atividade Recente</p>
+              </div>
+            </div>
+            {activityLog.length === 0 ? (
+              <div className="text-center py-6 text-slate-400 text-sm">
+                <Calendar className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                Nenhuma atividade recente
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {activityLog.slice(0, 4).map((log) => {
+                  const icon = log.type === 'sale' ? DollarSign : 
+                              log.type === 'approval' ? CheckCircle : 
+                              log.type === 'production' ? Printer : 
+                              log.type === 'client' ? UserIcon : Settings;
+                  const color = log.type === 'sale' ? 'text-emerald-500' : 
+                              log.type === 'approval' ? 'text-blue-500' : 
+                              log.type === 'production' ? 'text-purple-500' : 
+                              log.type === 'client' ? 'text-amber-500' : 'text-slate-500';
+                  return (
+                    <div key={log.id} className="flex items-start gap-3 p-2 hover:bg-slate-50 rounded-lg transition-colors">
+                      <icon className={`w-4 h-4 mt-0.5 ${color}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-slate-700">{log.description}</p>
+                        <p className="text-xs text-slate-400">{new Date(log.timestamp).toLocaleString('pt-BR')}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </article>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.8fr_1fr]">
+        <article className="rounded-[36px] border border-slate-200/60 bg-gradient-to-br from-slate-900 to-slate-800 p-8 shadow-xl shadow-slate-900/50">
+          <p className="text-xs font-black uppercase tracking-[0.25em] bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Operação acumulada</p>
+          <div className="mt-8 space-y-5">
+            <div className="flex items-center justify-between rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <span className="flex items-center gap-2 text-sm text-slate-300"><Package className="h-4 w-4" />Peças vendidas</span>
+              <strong className="text-lg font-black text-white">{metrics.totalPiecesSold}</strong>
+            </div>
+            <div className="flex items-center justify-between rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <span className="flex items-center gap-2 text-sm text-slate-300"><Clock3 className="h-4 w-4" />Horas produzidas</span>
+              <strong className="text-lg font-black text-white">{metrics.totalPrintHours.toFixed(1)}h</strong>
+            </div>
+            <div className="flex items-center justify-between rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <span className="flex items-center gap-2 text-sm text-slate-300"><Wrench className="h-4 w-4" />Filamentos cadastrados</span>
                 <strong className="text-lg font-black text-white">{filaments.length}</strong>
               </div>
               <div className="flex items-center justify-between rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
@@ -328,7 +527,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               </div>
             </div>
           </article>
-        </div>
       </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.5fr_1fr]">

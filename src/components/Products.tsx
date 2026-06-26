@@ -53,6 +53,7 @@ const EMPTY_FORM = {
   avgPrintTimeHours: '',
   tags: '',
   isPublic: true,
+  variants: [] as Array<{ id: string; name: string; size: string; color: string; material: string; priceAdjustment: number; defaultWeightG: string }>,
 };
 
 async function* getDirectoryImageFiles(
@@ -301,6 +302,15 @@ export function Products() {
       avgPrintTimeHours: p.avgPrintTimeHours?.toString() || '',
       tags: p.tags || '',
       isPublic: p.isPublic !== false,
+      variants: p.variants?.map(v => ({
+        id: v.id,
+        name: v.name,
+        size: v.size || '',
+        color: v.color || '',
+        material: v.material || '',
+        priceAdjustment: v.priceAdjustment,
+        defaultWeightG: v.defaultWeightG?.toString() || ''
+      })) || [],
     });
     setShowForm(true);
   };
@@ -426,6 +436,15 @@ export function Products() {
       avgPrintTimeHours: formData.avgPrintTimeHours ? Number(formData.avgPrintTimeHours) : undefined,
       tags: formData.tags.trim() || undefined,
       isPublic: formData.isPublic,
+      variants: formData.variants && formData.variants.length > 0 ? formData.variants.map(v => ({
+        id: v.id,
+        name: v.name,
+        size: v.size || undefined,
+        color: v.color || undefined,
+        material: v.material || undefined,
+        priceAdjustment: v.priceAdjustment,
+        defaultWeightG: v.defaultWeightG ? Number(v.defaultWeightG) : undefined,
+      })) : undefined,
     };
     if (editingId) {
       updateProduct(editingId, payload);
@@ -716,6 +735,143 @@ export function Products() {
                   className="px-8 py-2.5 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors text-sm">
                   {editingId ? 'Salvar Alterações' : 'Adicionar ao Catálogo'}
                 </button>
+              </div>
+
+              {/* Product Variants */}
+              <div className="md:col-span-3 space-y-4 pt-4 border-t border-slate-200">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
+                    <Package className="w-3 h-3" /> Variantes do Produto
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newVariant = {
+                        id: Date.now().toString(),
+                        name: '',
+                        size: '',
+                        color: '',
+                        material: '',
+                        priceAdjustment: 0,
+                        defaultWeightG: ''
+                      };
+                      setFormData(p => ({ ...p, variants: [...(p.variants || []), newVariant] }));
+                    }}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors"
+                  >
+                    <Plus className="w-3 h-3" /> Adicionar Variante
+                  </button>
+                </div>
+
+                {formData.variants && formData.variants.length > 0 && (
+                  <div className="space-y-3">
+                    {formData.variants.map((variant, index) => (
+                      <div key={variant.id} className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-xs font-bold text-slate-600">Variante #{index + 1}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData(p => ({
+                                ...p,
+                                variants: p.variants?.filter((_, i) => i !== index) || []
+                              }));
+                            }}
+                            className="p-1 hover:bg-rose-100 rounded transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4 text-rose-500" />
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-400 uppercase">Nome</label>
+                            <input
+                              type="text"
+                              value={variant.name}
+                              onChange={(e) => {
+                                const newVariants = [...(formData.variants || [])];
+                                newVariants[index] = { ...variant, name: e.target.value };
+                                setFormData(p => ({ ...p, variants: newVariants }));
+                              }}
+                              className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm"
+                              placeholder="Pequeno, Azul..."
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-400 uppercase">Tamanho</label>
+                            <input
+                              type="text"
+                              value={variant.size}
+                              onChange={(e) => {
+                                const newVariants = [...(formData.variants || [])];
+                                newVariants[index] = { ...variant, size: e.target.value };
+                                setFormData(p => ({ ...p, variants: newVariants }));
+                              }}
+                              className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm"
+                              placeholder="P, M, G, 10cm..."
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-400 uppercase">Cor</label>
+                            <input
+                              type="text"
+                              value={variant.color}
+                              onChange={(e) => {
+                                const newVariants = [...(formData.variants || [])];
+                                newVariants[index] = { ...variant, color: e.target.value };
+                                setFormData(p => ({ ...p, variants: newVariants }));
+                              }}
+                              className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm"
+                              placeholder="Azul, Vermelho..."
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-400 uppercase">Ajuste Preço (R$)</label>
+                            <input
+                              type="number"
+                              value={variant.priceAdjustment}
+                              onChange={(e) => {
+                                const newVariants = [...(formData.variants || [])];
+                                newVariants[index] = { ...variant, priceAdjustment: parseFloat(e.target.value) || 0 };
+                                setFormData(p => ({ ...p, variants: newVariants }));
+                              }}
+                              className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm"
+                              placeholder="0"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-400 uppercase">Material</label>
+                            <input
+                              type="text"
+                              value={variant.material}
+                              onChange={(e) => {
+                                const newVariants = [...(formData.variants || [])];
+                                newVariants[index] = { ...variant, material: e.target.value };
+                                setFormData(p => ({ ...p, variants: newVariants }));
+                              }}
+                              className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm"
+                              placeholder="PLA, ABS..."
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-400 uppercase">Peso (g)</label>
+                            <input
+                              type="number"
+                              value={variant.defaultWeightG}
+                              onChange={(e) => {
+                                const newVariants = [...(formData.variants || [])];
+                                newVariants[index] = { ...variant, defaultWeightG: e.target.value };
+                                setFormData(p => ({ ...p, variants: newVariants }));
+                              }}
+                              className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm"
+                              placeholder="50"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </form>

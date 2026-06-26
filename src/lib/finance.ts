@@ -60,6 +60,22 @@ export type RangeSummary = {
   extraEntriesCount: number;
   recurringRevenueMonthly: number;
   recurringExpensesMonthly: number;
+  trends: {
+    revenue: number;
+    expenses: number;
+    profit: number;
+    salesCount: number;
+    averageTicket: number;
+  };
+};
+
+export type CashFlowProjection = {
+  month: string;
+  projectedRevenue: number;
+  projectedExpenses: number;
+  projectedProfit: number;
+  pendingBudgets: number;
+  probability: 'high' | 'medium' | 'low';
 };
 
 function parseEntryDate(value: string) {
@@ -429,6 +445,9 @@ export function calculateRangeSummary(
     }
   });
 
+  // Calculate trends by comparing with previous period
+  const trends = calculateTrends(budgets, financeEntries, range, referenceDate);
+
   return {
     revenue,
     expenses,
@@ -443,6 +462,102 @@ export function calculateRangeSummary(
     extraEntriesCount: financeOccurrences.length,
     recurringRevenueMonthly: recurringTotals.revenue,
     recurringExpensesMonthly: recurringTotals.expenses,
+    trends,
+  };
+}
+
+function calculateTrends(
+  budgets: Budget[],
+  financeEntries: FinanceEntry[],
+  range: AnalyticsRange,
+  referenceDate = new Date(),
+) {
+  // Calculate previous period dates
+  const rangeStart = getRangeStart(range, referenceDate);
+  const rangeEnd = referenceDate;
+  
+  let previousStart: Date;
+  let previousEnd: Date;
+  
+  if (!rangeStart) {
+    // For 'all' range, compare last 30 days with previous 30 days
+    previousEnd = new Date(referenceDate);
+    previousEnd.setDate(referenceDate.getDate() - 30);
+    previousStart = new Date(referenceDate);
+    previousStart.setDate(referenceDate.getDate() - 60);
+  } else {
+    const periodLength = rangeEnd.getTime() - rangeStart.getTime();
+    previousEnd = new Date(rangeStart.getTime() - 1);
+    previousStart = new Date(previousEnd.getTime() - periodLength);
+  }
+  
+  // Calculate current period metrics
+  const currentMetrics = calculatePeriodMetrics(budgets, financeEntries, rangeStart, rangeEnd);
+  
+  // Calculate previous period metrics
+  const previousMetrics = calculatePeriodMetrics(budgets, financeEntries, previousStart, previousEnd);
+  
+  // Calculate percentage changes
+  const calculateTrend = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
+  };
+  
+  return {
+    revenue: calculateTrend(currentMetrics.revenue, previousMetrics.revenue),
+    expenses: calculateTrend(currentMetrics.expenses, previousMetrics.expenses),
+    profit: calculateTrend(currentMetrics.profit, previousMetrics.profit),
+    salesCount: calculateTrend(currentMetrics.salesCount, previousMetrics.salesCount),
+    averageTicket: calculateTrend(currentMetrics.averageTicket, previousMetrics.averageTicket),
+  };
+}
+
+function calculatePeriodMetrics(
+  budgets: Budget[],
+  financeEntries: FinanceEntry[],
+  startDate: Date | undefined,
+  endDate: Date,
+) {
+  const approvedBudgets = budgets.filter((budget) => {
+    const budgetDate = parseEntryDate(budget.date);
+    if (!budgetDate) return false;
+    if (startDate && budgetDate < startDate) return false;
+    if (budgetDate > endDate) return false;
+    return isApprovedBudget(budget.status);
+  });
+  
+  const financeOccurrences = buildFinanceOccurrences(financeEntries, {
+    startDate,
+    endDate,
+  });
+  
+  let revenue = 0;
+  let expenses = 0;
+  let salesCount = 0;
+  let salesRevenue = 0;
+  
+  approvedBudgets.forEach((budget) => {
+    revenue += budget.price;
+    expenses += getBudgetCost(budget);
+    salesCount += 1;
+    salesRevenue += budget.price;
+  });
+  
+  financeOccurrences.forEach((entry) => {
+    const amount = Math.max(0, entry.amount);
+    if (entry.type === 'Receita') {
+      revenue += amount;
+    } else {
+      expenses += amount;
+    }
+  });
+  
+  return {
+    revenue,
+    expenses,
+    profit: revenue - expenses,
+    salesCount,
+    averageTicket: salesCount > 0 ? salesRevenue / salesCount : 0,
   };
 }
 
@@ -502,6 +617,87 @@ export function buildMonthlyFinancialSeries(
   });
 
   return Array.from(monthBuckets.values());
+}
+
+export function calculateCashFlowProjection(
+  budgets: Budget[],
+  financeEntries: FinanceEntry[],
+  monthsToProject = 6,
+): CashFlowProjection[] {
+  const projections: CashFlowProjection[] = [];
+  const today = new Date();
+  const pendingBudgets = budgets.filter(b => b.status === 'Pendente');
+  
+  for (let i = 0; i < monthsToProject; i++) {
+    const projectionDate = new Date(today.getFullYear(), today.getMonth() + i, 1);
+    const monthKey = `${projectionDate.getFullYear()}-${String(projectionDate.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Calculate conversion probability based on age of pending budgets
+    let conversionRate = 0.5; // Base 50% conversion rate
+    let highProbabilityCount = 0;
+    let mediumProbabilityCount = 0;
+    let lowProbabilityCount = 0;
+    
+    pendingBudgets.forEach(budget => {
+      const budgetDate = new Date(budget.date);
+      const daysSinceCreation = Math.floor((today.getTime() - budgetDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysSinceCreation < 7) {
+        highProbabilityCount++;
+      } else if (daysSinceCreation < 14) {
+        mediumProbabilityCount++;
+      } else {
+        lowProbabilityCount++;
+      }
+    });
+    
+    // Weighted probability calculation
+    const totalPending = pendingBudgets.length;
+    const weightedProbability = totalPending > 0 
+      ? (highProbabilityCount * 0.8 + mediumProbabilityCount * 0.5 + lowProbabilityCount * 0.2) / totalPending
+      : 0;
+    
+    // Project revenue from pending budgets
+    const projectedPendingRevenue = pendingBudgets.reduce((sum, budget) => {
+      return sum + (budget.price * weightedProbability);
+    }, 0);
+    
+    // Get recurring monthly expenses
+    const monthlyRecurringExpenses = financeEntries
+      .filter(entry => entry.recurrence === 'Mensal' && entry.type === 'Despesa')
+      .reduce((sum, entry) => sum + Math.abs(entry.amount), 0);
+    
+    // Get recurring monthly revenue
+    const monthlyRecurringRevenue = financeEntries
+      .filter(entry => entry.recurrence === 'Mensal' && entry.type === 'Receita')
+      .reduce((sum, entry) => sum + entry.amount, 0);
+    
+    // Calculate averages from historical data
+    const approvedBudgets = budgets.filter(b => isApprovedBudget(b.status));
+    const avgMonthlyRevenue = approvedBudgets.length > 0 
+      ? approvedBudgets.reduce((sum, b) => sum + b.price, 0) / 6 // Divide by 6 months as approximation
+      : 0;
+    
+    const projectedRevenue = avgMonthlyRevenue + projectedPendingRevenue + monthlyRecurringRevenue;
+    const projectedExpenses = monthlyRecurringExpenses + (avgMonthlyRevenue * 0.4); // Assume 40% costs
+    const projectedProfit = projectedRevenue - projectedExpenses;
+    
+    // Determine overall probability
+    let probability: 'high' | 'medium' | 'low' = 'medium';
+    if (weightedProbability > 0.6) probability = 'high';
+    else if (weightedProbability < 0.3) probability = 'low';
+    
+    projections.push({
+      month: monthKey,
+      projectedRevenue,
+      projectedExpenses,
+      projectedProfit,
+      pendingBudgets: totalPending,
+      probability,
+    });
+  }
+  
+  return projections;
 }
 
 export function buildExpenseBreakdown(

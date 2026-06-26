@@ -39,6 +39,13 @@ export interface Client {
   phone: string;
   cpf?: string;
   address?: string;
+  notes?: string;
+  loyaltyTier?: 'Novo' | 'Regular' | 'Frequente' | 'VIP';
+  totalOrders?: number;
+  totalRevenue?: number;
+  discountPercent?: number;
+  preferences?: string;
+  paymentTerms?: string;
 }
 
 export interface Product {
@@ -58,6 +65,9 @@ export interface Product {
   avgPrintTimeHours?: number;
   tags?: string;
   isPublic?: boolean;
+  isFeatured?: boolean;
+  variants?: ProductVariant[];
+  discountCodes?: string[];
 }
 
 export interface CatalogSettings {
@@ -163,4 +173,99 @@ export interface SalesChannel {
   id: string;
   name: string;
   feePercentage: number;
+}
+
+export interface ProductVariant {
+  id: string;
+  name: string;
+  size?: string;
+  color?: string;
+  material?: string;
+  priceAdjustment: number;
+  defaultWeightG?: number;
+}
+
+export interface DiscountCode {
+  id: string;
+  code: string;
+  discountPercent: number;
+  minOrderValue?: number;
+  maxUses?: number;
+  currentUses?: number;
+  validUntil?: string;
+  applicableClients?: string[];
+  applicableProducts?: string[];
+  isActive: boolean;
+}
+
+export interface CalculatorTemplate {
+  id: string;
+  name: string;
+  filamentId: string;
+  printerId: string;
+  weightG: number;
+  printTimeHours: number;
+  margin: number;
+  laborCostFixed: number;
+  fixedCostPerPiece: number;
+  quantity: number;
+}
+
+export interface PrintQueueItem {
+  id: string;
+  budgetId: string;
+  printerId: string;
+  status: 'queued' | 'printing' | 'completed' | 'paused';
+  priority: 'low' | 'normal' | 'high';
+  estimatedStartTime?: string;
+  estimatedCompletionTime?: string;
+  actualStartTime?: string;
+  actualCompletionTime?: string;
+  progress?: number;
+}
+
+export interface TimeTrackingEntry {
+  id: string;
+  budgetId: string;
+  estimatedHours: number;
+  actualHours?: number;
+  difference?: number;
+  notes?: string;
+}
+
+export interface QualityControlEntry {
+  id: string;
+  budgetId: string;
+  pass: boolean;
+  photos?: string[];
+  notes?: string;
+  issues?: string[];
+  inspector?: string;
+  date: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  type: 'sale' | 'approval' | 'production' | 'client' | 'system';
+  description: string;
+  entityId?: string;
+  entityType?: string;
+  timestamp: string;
+  userId?: string;
+}
+
+export interface Reminder {
+  id: string;
+  budgetId: string;
+  type: 'follow_up' | 'payment' | 'production';
+  scheduledDate: string;
+  sent: boolean;
+  notes?: string;
+}
+
+export interface ExpenseCategory {
+  id: string;
+  name: string;
+  color: string;
+  budget?: number;
 }

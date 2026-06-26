@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   Clock,
   Eye,
@@ -11,10 +11,16 @@ import {
   Printer,
   Search,
   Trash2,
+  LayoutGrid,
+  List,
+  CheckSquare,
+  X,
+  Bell,
+  Mail,
 } from 'lucide-react';
 import { useStore } from '../store';
 import { cn, formatCurrency, getBudgetQuantity, isApprovedBudget } from '../lib/utils';
-import { type BudgetStatus } from '../types';
+import { type BudgetStatus, type Budget } from '../types';
 import { createQuoteNotificationEmail, sendEmailNotification } from '../lib/emailService';
 
 const statusFilters: Array<'Todos' | BudgetStatus> = ['Todos', 'Pendente', 'Aprovado', 'Concluido', 'Recusado'];
@@ -31,10 +37,51 @@ const statusActions: Array<{
 ];
 
 export function Budgets() {
-  const { budgets, clients, products, updateBudgetStatus, deleteBudget, catalogSettings } = useStore();
+  const { budgets, clients, products, updateBudgetStatus, deleteBudget, catalogSettings, addActivityLog, reminders, addReminder, updateReminder } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBudgetId, setSelectedBudgetId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'Todos' | BudgetStatus>('Todos');
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+  const [selectedForBatch, setSelectedForBatch] = useState<Set<string>>(new Set());
+
+  // Auto-reminders for pending budgets
+  useEffect(() => {
+    const checkPendingReminders = () => {
+      const pendingBudgets = budgets.filter(b => b.status === 'Pendente');
+      const today = new Date();
+      
+      pendingBudgets.forEach(budget => {
+        const budgetDate = new Date(budget.date);
+        const daysSinceCreation = Math.floor((today.getTime() - budgetDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Check if reminder already exists for this budget
+        const existingReminder = reminders.find(r => r.budgetId === budget.id);
+        
+        // Create reminder if 3 days have passed and no reminder exists
+        if (daysSinceCreation >= 3 && !existingReminder) {
+          const scheduledDate = new Date(today);
+          scheduledDate.setDate(scheduledDate.getDate() + 1); // Schedule for tomorrow
+          
+          addReminder({
+            budgetId: budget.id,
+            type: 'follow_up',
+            scheduledDate: scheduledDate.toISOString(),
+            sent: false,
+            notes: `Orçamento pendente há ${daysSinceCreation} dias`
+          });
+          
+          addActivityLog({
+            type: 'system',
+            description: `Lembrete criado para orçamento #${budget.id.slice(0, 6)}`,
+            entityId: budget.id,
+            entityType: 'budget',
+          });
+        }
+      });
+    };
+
+    checkPendingReminders();
+  }, [budgets, reminders, addReminder, addActivityLog]);
 
   const getClientName = (id: string) => clients.find((client) => client.id === id)?.name || 'Cliente Avulso';
   const getProductName = (id: string) => products.find((product) => product.id === id)?.name || 'Peça Customizada';
@@ -67,6 +114,39 @@ export function Budgets() {
     window.print();
   };
 
+  const handleEmailQuote = (budget: Budget) => {
+    const client = clients.find(c => c.id === budget.clientId);
+    const product = products.find(p => p.id === budget.productId);
+    
+    if (!client?.email) {
+      alert('Cliente não possui email cadastrado.');
+      return;
+    }
+
+    const subject = encodeURIComponent(`Orçamento #${budget.id.slice(0, 6)} - ${catalogSettings.businessName}`);
+    const body = encodeURIComponent(
+      `Olá ${client.name},\n\n` +
+      `Segue o orçamento para ${product?.name || 'peça personalizada'}:\n\n` +
+      `Valor: ${formatCurrency(budget.price)}\n` +
+      `Quantidade: ${budget.quantity || 1}\n` +
+      `Peso: ${budget.weightG}g\n` +
+      `Tempo de impressão: ${budget.printTimeHours}h\n\n` +
+      `Aguardamos seu retorno!\n\n` +
+      `${catalogSettings.businessName}\n` +
+      `${catalogSettings.phone || ''}\n` +
+      `${catalogSettings.email || ''}`
+    );
+
+    window.location.href = `mailto:${client.email}?subject=${subject}&body=${body}`;
+    
+    addActivityLog({
+      type: 'approval',
+      description: `Orçamento #${budget.id.slice(0, 6)} enviado por email para ${client.name}`,
+      entityId: budget.id,
+      entityType: 'budget',
+    });
+  };
+
   const handleDeleteBudget = (budgetId: string) => {
     if (!window.confirm('Deseja excluir este orçamento? Essa ação não pode ser desfeita.')) {
       return;
@@ -97,6 +177,48 @@ export function Budgets() {
         });
       }
     }
+    
+    addActivityLog({
+      type: 'approval',
+      description: `Orçamento #${budgetId.slice(0, 6)} alterado para ${status}`,
+      entityId: budgetId,
+      entityType: 'budget',
+    });
+  };
+
+  const handleBatchStatusChange = (status: BudgetStatus) => {
+    if (selectedForBatch.size === 0) return;
+    
+    if (!window.confirm(`Deseja alterar ${selectedForBatch.size} orçamento(s) para ${status}?`)) {
+      return;
+    }
+    
+    selectedForBatch.forEach(budgetId => {
+      handleStatusChange(budgetId, status);
+    });
+    
+    setSelectedForBatch(new Set());
+  };
+
+  const toggleBatchSelection = (budgetId: string) => {
+    const newSelection = new Set(selectedForBatch);
+    if (newSelection.has(budgetId)) {
+      newSelection.delete(budgetId);
+    } else {
+      newSelection.add(budgetId);
+    }
+    setSelectedForBatch(newSelection);
+  };
+
+  const kanbanColumns: Array<{ status: BudgetStatus; label: string; color: string }> = [
+    { status: 'Pendente', label: 'Pendente', color: 'bg-amber-50 border-amber-200' },
+    { status: 'Aprovado', label: 'Em Produção', color: 'bg-emerald-50 border-emerald-200' },
+    { status: 'Concluido', label: 'Concluído', color: 'bg-blue-50 border-blue-200' },
+    { status: 'Recusado', label: 'Recusado', color: 'bg-rose-50 border-rose-200' },
+  ];
+
+  const getKanbanBudgets = (status: BudgetStatus) => {
+    return filteredBudgets.filter(b => b.status === status);
   };
 
   if (selectedBudget) {
@@ -138,6 +260,12 @@ export function Budgets() {
                 className="px-4 py-2 bg-slate-900 text-white rounded-xl flex items-center shadow-lg shadow-slate-200"
               >
                 <Printer className="w-4 h-4 mr-2" /> Imprimir / PDF
+              </button>
+              <button
+                onClick={() => handleEmailQuote(selectedBudget)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-xl flex items-center shadow-lg shadow-blue-200 hover:bg-blue-700 transition-colors"
+              >
+                <Mail className="w-4 h-4 mr-2" /> Enviar por Email
               </button>
             </div>
           </div>
@@ -288,8 +416,60 @@ export function Budgets() {
               </option>
             ))}
           </select>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-xl ${viewMode === 'list' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-600'}`}
+              title="Visualização em Lista"
+            >
+              <List className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('kanban')}
+              className={`p-2 rounded-xl ${viewMode === 'kanban' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-600'}`}
+              title="Visualização Kanban"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Batch Actions */}
+      {selectedForBatch.size > 0 && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <CheckSquare className="w-5 h-5 text-blue-600" />
+            <span className="font-bold text-blue-900">{selectedForBatch.size} orçamento(s) selecionado(s)</span>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleBatchStatusChange('Aprovado')}
+              className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700"
+            >
+              Aprovar Todos
+            </button>
+            <button
+              onClick={() => handleBatchStatusChange('Concluido')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700"
+            >
+              Concluir Todos
+            </button>
+            <button
+              onClick={() => handleBatchStatusChange('Recusado')}
+              className="px-4 py-2 bg-rose-600 text-white rounded-xl font-bold text-sm hover:bg-rose-700"
+            >
+              Recusar Todos
+            </button>
+            <button
+              onClick={() => setSelectedForBatch(new Set())}
+              className="px-4 py-2 bg-slate-200 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-300"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
@@ -314,74 +494,97 @@ export function Budgets() {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">ID</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Produto</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Cliente</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">Qtd</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Valor</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Lucro</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Status</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">Opções</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {filteredBudgets.map((budget) => (
-                <tr key={budget.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 text-xs font-bold text-slate-400 text-center">#{budget.id.slice(0, 4)}</td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm font-bold text-slate-800">{getProductName(budget.productId)}</p>
-                    <p className="text-xs text-slate-500 flex items-center mt-0.5">
-                      <Clock className="w-3 h-3 mr-1" /> {new Date(budget.date).toLocaleDateString('pt-BR')}
-                    </p>
-                  </td>
-                  <td className="px-6 py-4 text-sm font-medium text-slate-600">{getClientName(budget.clientId)}</td>
-                  <td className="px-6 py-4 text-sm font-bold text-slate-700 text-center">{getBudgetQuantity(budget)}</td>
-                  <td className="px-6 py-4 text-sm font-bold text-slate-800">{formatCurrency(budget.price)}</td>
-                  <td className="px-6 py-4 text-sm font-bold text-emerald-600">+{formatCurrency(budget.profit)}</td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={cn(
-                        'text-[10px] px-2.5 py-1 rounded-full font-bold inline-flex items-center',
-                        budget.status === 'Aprovado'
-                          ? 'bg-emerald-50 text-emerald-600'
-                          : budget.status === 'Concluido'
-                            ? 'bg-blue-50 text-blue-600'
-                            : budget.status === 'Recusado'
-                              ? 'bg-rose-50 text-rose-600'
-                              : 'bg-amber-50 text-amber-600',
-                      )}
-                    >
-                      {budget.status.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => setSelectedBudgetId(budget.id)}
-                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                        aria-label={`Visualizar orçamento ${budget.id}`}
-                      >
-                        <Eye className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteBudget(budget.id)}
-                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
-                        aria-label={`Excluir orçamento ${budget.id}`}
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </td>
+      {viewMode === 'list' && (
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-100">
+                  <th className="px-4 py-4 text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedForBatch.size === filteredBudgets.length && filteredBudgets.length > 0}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedForBatch(new Set(filteredBudgets.map(b => b.id)));
+                        } else {
+                          setSelectedForBatch(new Set());
+                        }
+                      }}
+                      className="w-4 h-4 rounded"
+                    />
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">ID</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Produto</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Cliente</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">Qtd</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Valor</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Lucro</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Status</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">Opções</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {filteredBudgets.map((budget) => (
+                  <tr key={budget.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-4 py-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedForBatch.has(budget.id)}
+                        onChange={() => toggleBatchSelection(budget.id)}
+                        className="w-4 h-4 rounded"
+                      />
+                    </td>
+                    <td className="px-6 py-4 text-xs font-bold text-slate-400 text-center">#{budget.id.slice(0, 4)}</td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm font-bold text-slate-800">{getProductName(budget.productId)}</p>
+                      <p className="text-xs text-slate-500 flex items-center mt-0.5">
+                        <Clock className="w-3 h-3 mr-1" /> {new Date(budget.date).toLocaleDateString('pt-BR')}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium text-slate-600">{getClientName(budget.clientId)}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-slate-700 text-center">{getBudgetQuantity(budget)}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-slate-800">{formatCurrency(budget.price)}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-emerald-600">+{formatCurrency(budget.profit)}</td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={cn(
+                          'text-[10px] px-2.5 py-1 rounded-full font-bold inline-flex items-center',
+                          budget.status === 'Aprovado'
+                            ? 'bg-emerald-50 text-emerald-600'
+                            : budget.status === 'Concluido'
+                              ? 'bg-blue-50 text-blue-600'
+                              : budget.status === 'Recusado'
+                                ? 'bg-rose-50 text-rose-600'
+                                : 'bg-amber-50 text-amber-600',
+                        )}
+                      >
+                        {budget.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => setSelectedBudgetId(budget.id)}
+                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                          aria-label={`Visualizar orçamento ${budget.id}`}
+                        >
+                          <Eye className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteBudget(budget.id)}
+                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                          aria-label={`Excluir orçamento ${budget.id}`}
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
         {filteredBudgets.length === 0 && (
           <div className="py-20 flex flex-col items-center text-slate-400">
@@ -390,6 +593,48 @@ export function Budgets() {
           </div>
         )}
       </div>
+      )}
+
+      {viewMode === 'kanban' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          {kanbanColumns.map((column) => (
+            <div key={column.status} className={`${column.color} border-2 rounded-3xl p-4 min-h-[500px]`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-slate-800">{column.label}</h3>
+                <span className="bg-white px-3 py-1 rounded-full text-xs font-bold text-slate-600">
+                  {getKanbanBudgets(column.status).length}
+                </span>
+              </div>
+              <div className="space-y-3">
+                {getKanbanBudgets(column.status).map((budget) => (
+                  <div
+                    key={budget.id}
+                    className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => setSelectedBudgetId(budget.id)}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-slate-800 text-sm truncate">{getProductName(budget.productId)}</p>
+                        <p className="text-xs text-slate-500 truncate">{getClientName(budget.clientId)}</p>
+                      </div>
+                      <span className="text-sm font-bold text-emerald-600 ml-2">{formatCurrency(budget.price)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                      <span>#{budget.id.slice(0, 4)}</span>
+                      <span>{new Date(budget.date).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                  </div>
+                ))}
+                {getKanbanBudgets(column.status).length === 0 && (
+                  <div className="text-center py-8 text-slate-400 text-sm">
+                    Nenhum orçamento
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

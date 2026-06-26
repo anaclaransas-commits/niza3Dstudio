@@ -35,6 +35,7 @@ import {
   buildMonthlyFinancialSeries,
   buildRecentSales,
   calculateBusinessMetrics,
+  calculateCashFlowProjection,
   calculateRangeSummary,
   getFinanceEntryOccurrencesInRange,
   getRangeStart,
@@ -93,6 +94,11 @@ export function Reports() {
       endDate: new Date(),
     }),
     [financeEntries, selectedRange],
+  );
+
+  const cashFlowProjection = useMemo(
+    () => calculateCashFlowProjection(budgets, financeEntries, 6),
+    [budgets, financeEntries],
   );
 
   const [entryTypeFilter, setEntryTypeFilter] = useState<'Todos' | FinanceEntryType>('Todos');
@@ -336,6 +342,214 @@ export function Reports() {
               <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} dot={false} strokeDasharray="5 5" />
             </LineChart>
           </ResponsiveContainer>
+        </div>
+      </section>
+
+      {/* Profit Margins Analysis */}
+      <section className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
+        <div className="mb-8">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Análise de Margens</p>
+          <h3 className="mt-2 text-2xl font-black text-slate-900">Rentabilidade por produto e cliente</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Top Products by Profit Margin */}
+          <div>
+            <h4 className="font-bold text-slate-800 mb-4">Produtos mais lucrativos</h4>
+            <div className="space-y-3">
+              {(() => {
+                const productProfits = new Map<string, { revenue: number; profit: number; count: number }>();
+                budgets.filter(b => isApprovedBudget(b.status)).forEach(budget => {
+                  const product = products.find(p => p.id === budget.productId);
+                  if (product) {
+                    const current = productProfits.get(product.name) || { revenue: 0, profit: 0, count: 0 };
+                    productProfits.set(product.name, {
+                      revenue: current.revenue + budget.price,
+                      profit: current.profit + budget.profit,
+                      count: current.count + 1
+                    });
+                  }
+                });
+                
+                return Array.from(productProfits.entries())
+                  .map(([name, data]) => ({
+                    name,
+                    revenue: data.revenue,
+                    profit: data.profit,
+                    margin: data.revenue > 0 ? (data.profit / data.revenue) * 100 : 0,
+                    count: data.count
+                  }))
+                  .sort((a, b) => b.margin - a.margin)
+                  .slice(0, 5)
+                  .map((item, index) => (
+                    <div key={item.name} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 text-xs font-bold flex items-center justify-center">{index + 1}</span>
+                        <div>
+                          <p className="font-medium text-slate-800 text-sm">{item.name}</p>
+                          <p className="text-xs text-slate-500">{item.count} venda(s)</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-emerald-600">{item.margin.toFixed(1)}%</p>
+                        <p className="text-xs text-slate-500">{formatCurrency(item.profit)}</p>
+                      </div>
+                    </div>
+                  ));
+              })()}
+            </div>
+          </div>
+
+          {/* Top Clients by Profit */}
+          <div>
+            <h4 className="font-bold text-slate-800 mb-4">Clientes mais rentáveis</h4>
+            <div className="space-y-3">
+              {(() => {
+                const clientProfits = new Map<string, { revenue: number; profit: number; count: number }>();
+                budgets.filter(b => isApprovedBudget(b.status)).forEach(budget => {
+                  const client = clients.find(c => c.id === budget.clientId);
+                  if (client) {
+                    const current = clientProfits.get(client.name) || { revenue: 0, profit: 0, count: 0 };
+                    clientProfits.set(client.name, {
+                      revenue: current.revenue + budget.price,
+                      profit: current.profit + budget.profit,
+                      count: current.count + 1
+                    });
+                  }
+                });
+                
+                return Array.from(clientProfits.entries())
+                  .map(([name, data]) => ({
+                    name,
+                    revenue: data.revenue,
+                    profit: data.profit,
+                    count: data.count
+                  }))
+                  .sort((a, b) => b.profit - a.profit)
+                  .slice(0, 5)
+                  .map((item, index) => (
+                    <div key={item.name} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center">{index + 1}</span>
+                        <div>
+                          <p className="font-medium text-slate-800 text-sm">{item.name}</p>
+                          <p className="text-xs text-slate-500">{item.count} pedido(s)</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-blue-600">{formatCurrency(item.profit)}</p>
+                        <p className="text-xs text-slate-500">{formatCurrency(item.revenue)}</p>
+                      </div>
+                    </div>
+                  ));
+              })()}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Tax Reporting */}
+      <section className="rounded-[36px] border border-slate-100 bg-white p-8 shadow-sm">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">Relatório Fiscal</p>
+            <h3 className="mt-2 text-2xl font-black text-slate-900">Preparação para declaração de impostos</h3>
+          </div>
+          <button
+            onClick={() => {
+              const doc = new jsPDF();
+              const pageWidth = doc.internal.pageSize.getWidth();
+              
+              doc.setFontSize(20);
+              doc.text('Relatório Fiscal', pageWidth / 2, 20, { align: 'center' });
+              
+              doc.setFontSize(12);
+              doc.text(`Período: ${RANGE_OPTIONS.find(r => r.value === selectedRange)?.label}`, pageWidth / 2, 30, { align: 'center' });
+              doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, 38, { align: 'center' });
+              
+              doc.setFontSize(14);
+              doc.text('Resumo Fiscal', 20, 55);
+              
+              const approvedBudgets = budgets.filter(b => isApprovedBudget(b.status));
+              const totalRevenue = approvedBudgets.reduce((sum, b) => sum + b.price, 0);
+              const totalProfit = approvedBudgets.reduce((sum, b) => sum + b.profit, 0);
+              const totalCost = totalRevenue - totalProfit;
+              
+              doc.setFontSize(11);
+              let y = 65;
+              doc.text(`Receita Bruta Total: ${formatCurrency(totalRevenue)}`, 20, y); y += 8;
+              doc.text(`Custo Total: ${formatCurrency(totalCost)}`, 20, y); y += 8;
+              doc.text(`Lucro Líquido: ${formatCurrency(totalProfit)}`, 20, y); y += 8;
+              doc.text(`Margem de Lucro: ${totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0}%`, 20, y); y += 15;
+              
+              doc.setFontSize(14);
+              doc.text('Detalhamento por Categoria', 20, y); y += 10;
+              
+              const categories = new Map<string, number>();
+              approvedBudgets.forEach(budget => {
+                const product = products.find(p => p.id === budget.productId);
+                const category = product?.materialType || 'Outros';
+                categories.set(category, (categories.get(category) || 0) + budget.price);
+              });
+              
+              doc.setFontSize(10);
+              categories.forEach((value, category) => {
+                doc.text(`${category}: ${formatCurrency(value)}`, 20, y);
+                y += 7;
+              });
+              
+              doc.save(`relatorio-fiscal-${selectedRange}-${new Date().toISOString().slice(0, 10)}.pdf`);
+            }}
+            className="px-4 py-2 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors"
+          >
+            Exportar Relatório Fiscal PDF
+          </button>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-slate-50 p-6 rounded-2xl">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Receita Bruta</p>
+            <p className="text-2xl font-black text-slate-900">
+              {formatCurrency(budgets.filter(b => isApprovedBudget(b.status)).reduce((sum, b) => sum + b.price, 0))}
+            </p>
+            <p className="text-xs text-slate-500 mt-2">Total de vendas aprovadas</p>
+          </div>
+          
+          <div className="bg-slate-50 p-6 rounded-2xl">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Custo Total</p>
+            <p className="text-2xl font-black text-slate-900">
+              {formatCurrency(budgets.filter(b => isApprovedBudget(b.status)).reduce((sum, b) => sum + (b.price - b.profit), 0))}
+            </p>
+            <p className="text-xs text-slate-500 mt-2">Material + energia + mão de obra</p>
+          </div>
+          
+          <div className="bg-slate-50 p-6 rounded-2xl">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Lucro Líquido</p>
+            <p className="text-2xl font-black text-emerald-600">
+              {formatCurrency(budgets.filter(b => isApprovedBudget(b.status)).reduce((sum, b) => sum + b.profit, 0))}
+            </p>
+            <p className="text-xs text-slate-500 mt-2">Base para cálculo de impostos</p>
+          </div>
+        </div>
+        
+        <div className="mt-6">
+          <h4 className="font-bold text-slate-800 mb-4">Receita por Categoria de Material</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {(() => {
+              const categories = new Map<string, number>();
+              budgets.filter(b => isApprovedBudget(b.status)).forEach(budget => {
+                const product = products.find(p => p.id === budget.productId);
+                const category = product?.materialType || 'Outros';
+                categories.set(category, (categories.get(category) || 0) + budget.price);
+              });
+              
+              return Array.from(categories.entries()).map(([category, value]) => (
+                <div key={category} className="bg-slate-50 p-4 rounded-xl">
+                  <p className="text-xs font-bold text-slate-500 uppercase">{category}</p>
+                  <p className="text-lg font-black text-slate-900 mt-1">{formatCurrency(value)}</p>
+                </div>
+              ));
+            })()}
+          </div>
         </div>
       </section>
 

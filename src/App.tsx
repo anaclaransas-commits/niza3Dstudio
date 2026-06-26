@@ -5,6 +5,8 @@
 
 import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { Sidebar, type PageId } from './components/Sidebar';
+import { GlobalSearch } from './components/GlobalSearch';
+import { KeyboardShortcuts } from './components/KeyboardShortcuts';
 import { motion, AnimatePresence } from 'motion/react';
 
 // Lazy loading para componentes pesados
@@ -16,6 +18,7 @@ const Clients = lazy(() => import('./components/Clients').then(m => ({ default: 
 const Products = lazy(() => import('./components/Products').then(m => ({ default: m.Products })));
 const Reports = lazy(() => import('./components/Reports').then(m => ({ default: m.Reports })));
 const Budgets = lazy(() => import('./components/Budgets').then(m => ({ default: m.Budgets })));
+const DiscountCodes = lazy(() => import('./components/DiscountCodes').then(m => ({ default: m.DiscountCodes })));
 
 export default function App() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -112,6 +115,20 @@ export default function App() {
   };
   const [activePage, setActivePage] = useState<PageId>('dashboard');
 
+  const keyboardShortcuts = [
+    { key: 'Ctrl+K', description: 'Busca global', action: () => {} },
+    { key: '1', description: 'Dashboard', action: () => setActivePage('dashboard') },
+    { key: '2', description: 'Calculadora', action: () => setActivePage('calculator') },
+    { key: '3', description: 'Orçamentos', action: () => setActivePage('budgets') },
+    { key: '4', description: 'Cadastros', action: () => setActivePage('registration') },
+    { key: '5', description: 'Produtos', action: () => setActivePage('products') },
+    { key: '6', description: 'Catálogo', action: () => setActivePage('catalog') },
+    { key: '7', description: 'Clientes', action: () => setActivePage('clients') },
+    { key: '8', description: 'Descontos', action: () => setActivePage('discounts') },
+    { key: '9', description: 'Financeiro', action: () => setActivePage('reports') },
+    { key: '?', description: 'Mostrar atalhos', action: () => {} },
+  ];
+
   const renderPage = () => {
     switch (activePage) {
       case 'dashboard':
@@ -130,6 +147,8 @@ export default function App() {
         return <Reports />;
       case 'budgets':
         return <Budgets />;
+      case 'discounts':
+        return <DiscountCodes />;
       default:
         return <Dashboard onNavigate={setActivePage} />;
     }
@@ -242,6 +261,8 @@ export default function App() {
   return (
     <div className="flex h-screen overflow-hidden font-sans" style={{ background: 'var(--color-background)' }}>
       <Sidebar activePage={activePage} onPageChange={setActivePage} />
+      <GlobalSearch onNavigate={setActivePage} />
+      <KeyboardShortcuts shortcuts={keyboardShortcuts} />
 
       <main className="flex-1 overflow-y-auto no-print">
         <div className="max-w-[1400px] mx-auto p-4 md:p-8 lg:p-10">

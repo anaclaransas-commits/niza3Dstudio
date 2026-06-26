@@ -23,7 +23,7 @@ import {
 import { cn } from '../lib/utils';
 import { useTheme } from '../contexts/ThemeContext';
 
-export type PageId = 'dashboard' | 'calculator' | 'registration' | 'clients' | 'products' | 'catalog' | 'reports' | 'budgets';
+export type PageId = 'dashboard' | 'calculator' | 'registration' | 'clients' | 'products' | 'catalog' | 'reports' | 'budgets' | 'discounts';
 
 interface SidebarProps {
   activePage: PageId;
@@ -42,6 +42,7 @@ export function Sidebar({ activePage, onPageChange }: SidebarProps) {
     { id: 'products', icon: Package, label: 'Produtos', fromColor: 'var(--color-primary)', toColor: 'var(--color-primary-hover)' },
     { id: 'catalog', icon: BookOpen, label: 'Catálogo Cliente', fromColor: 'var(--color-primary)', toColor: 'var(--color-primary-hover)' },
     { id: 'clients', icon: Users, label: 'Clientes', fromColor: 'var(--color-primary)', toColor: 'var(--color-primary-hover)' },
+    { id: 'discounts', icon: Sparkles, label: 'Descontos', fromColor: 'var(--color-primary)', toColor: 'var(--color-primary-hover)' },
     { id: 'reports', icon: BarChart3, label: 'Financeiro', fromColor: 'var(--color-primary)', toColor: 'var(--color-primary-hover)' },
   ] as const;
 

@@ -14,7 +14,19 @@ import {
   Percent,
   User,
   Package,
-  TrendingUp
+  TrendingUp,
+  UserPlus,
+  Box,
+  Tag,
+  CheckCircle2,
+  X,
+  Save,
+  History,
+  Layers,
+  PieChart,
+  Copy,
+  Trash2,
+  Plus
 } from 'lucide-react';
 import { useStore } from '../store';
 import {
@@ -22,8 +34,17 @@ import {
   formatCurrency,
   parseLocalizedNumber,
   roundCurrencyValue,
+  isApprovedBudget,
 } from '../lib/utils';
-import { CalculationResult } from '../types';
+import { CalculationResult, CalculatorTemplate } from '../types';
+import {
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+} from 'recharts';
 
 const DEFAULT_CEMIG_ENERGY_PRICE_KWH = '0.85858';
 const DEFAULT_MANUAL_POWER_CONSUMPTION_W = '200';
@@ -34,9 +55,16 @@ export function Calculator() {
     printers,
     clients,
     addBudget,
+    addClient,
+    addProduct,
     products,
     calculatorDefaults,
     updateCalculatorDefaults,
+    calculatorTemplates,
+    addCalculatorTemplate,
+    removeCalculatorTemplate,
+    budgets,
+    addActivityLog,
   } = useStore();
   
   const [selectedFilamentId, setSelectedFilamentId] = useState(calculatorDefaults.selectedFilamentId);
@@ -58,16 +86,80 @@ export function Calculator() {
 
   const [result, setResult] = useState<CalculationResult | null>(null);
 
+  // Product type modes
+  const [productType, setProductType] = useState<'catalog' | 'custom' | 'generic'>('catalog');
+  
+  // Quick add client
+  const [showQuickAddClient, setShowQuickAddClient] = useState(false);
+  const [quickClientForm, setQuickClientForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: ''
+  });
+  
+  // Custom product form
+  const [customProductForm, setCustomProductForm] = useState({
+    name: '',
+    description: '',
+    materialType: 'PLA',
+    basePrice: '',
+    defaultWeightG: '50',
+    avgPrintTimeHours: '5'
+  });
+  
+  // Generic sale form
+  const [genericSaleForm, setGenericSaleForm] = useState({
+    description: '',
+    weightG: '50',
+    printTimeHours: '5'
+  });
+
+  // Quick Templates
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  
+  // Price History
+  const [showPriceHistory, setShowPriceHistory] = useState(false);
+  
+  // Bulk Calculator
+  const [showBulkCalculator, setShowBulkCalculator] = useState(false);
+  const [bulkItems, setBulkItems] = useState<Array<{ weightG: string; printTimeHours: string; quantity: string }>>([
+    { weightG: '50', printTimeHours: '5', quantity: '1' }
+  ]);
+  
+  // Cost Breakdown
+  const [showCostBreakdown, setShowCostBreakdown] = useState(false);
+
   const selectedFilament = filaments.find(f => f.id === selectedFilamentId);
   const selectedPrinter = printers.find(p => p.id === selectedPrinterId);
   const selectedProduct = products.find(p => p.id === selectedProductId);
 
   // Auto-fill product weights
   useEffect(() => {
-    if (selectedProduct && selectedProduct.defaultWeightG) {
+    if (selectedProduct && selectedProduct.defaultWeightG && productType === 'catalog') {
       setWeightG(selectedProduct.defaultWeightG.toString());
     }
-  }, [selectedProduct]);
+  }, [selectedProduct, productType]);
+
+  const handleQuickAddClient = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickClientForm.name.trim() || !quickClientForm.phone.trim()) {
+      alert('Preencha pelo menos nome e telefone do cliente.');
+      return;
+    }
+    
+    const newClient = addClient({
+      name: quickClientForm.name,
+      email: quickClientForm.email,
+      phone: quickClientForm.phone,
+      address: quickClientForm.address
+    });
+    
+    setSelectedClientId(newClient.id);
+    setQuickClientForm({ name: '', email: '', phone: '', address: '' });
+    setShowQuickAddClient(false);
+  };
 
   useEffect(() => {
     updateCalculatorDefaults({
@@ -121,7 +213,7 @@ export function Calculator() {
     selectedPrinter,
   ]);
 
-  const handleSaveBudget = () => {
+  const handleSaveBudget = (status: 'Pendente' | 'Aprovado' = 'Pendente') => {
     if (!result) {
       return;
     }
@@ -135,22 +227,173 @@ export function Calculator() {
       return;
     }
 
-    addBudget({
+    // Handle different product types
+    let finalProductId = selectedProductId;
+    let finalWeightG = safeWeight;
+    let finalPrintTimeHours = safePrintTime;
+
+    if (productType === 'custom') {
+      // Create custom product
+      const customProduct = addProduct({
+        name: customProductForm.name,
+        description: customProductForm.description,
+        materialType: customProductForm.materialType,
+        basePrice: result.batchFinalPrice / safeQuantity,
+        defaultWeightG: parseLocalizedNumber(customProductForm.defaultWeightG, 50),
+        avgPrintTimeHours: parseLocalizedNumber(customProductForm.avgPrintTimeHours, 5),
+        isPublic: false
+      });
+      finalProductId = customProduct.id;
+      finalWeightG = customProduct.defaultWeightG || safeWeight;
+      finalPrintTimeHours = customProduct.avgPrintTimeHours || safePrintTime;
+    } else if (productType === 'generic') {
+      // Create generic product for tracking
+      const genericProduct = addProduct({
+        name: `Impressão Avulsa - ${genericSaleForm.description.substring(0, 30)}...`,
+        description: genericSaleForm.description,
+        materialType: 'PLA',
+        basePrice: result.batchFinalPrice / safeQuantity,
+        defaultWeightG: parseLocalizedNumber(genericSaleForm.weightG, 50),
+        avgPrintTimeHours: parseLocalizedNumber(genericSaleForm.printTimeHours, 5),
+        isPublic: false
+      });
+      finalProductId = genericProduct.id;
+      finalWeightG = genericProduct.defaultWeightG || safeWeight;
+      finalPrintTimeHours = genericProduct.avgPrintTimeHours || safePrintTime;
+    }
+
+    const newBudget = addBudget({
       clientId: selectedClientId,
-      productId: selectedProductId,
+      productId: finalProductId,
       printerId: selectedPrinterId,
       filamentId: selectedFilamentId,
-      status: 'Pendente',
+      status: status,
       date: new Date().toISOString(),
-      printTimeHours: safePrintTime,
-      weightG: safeWeight,
+      printTimeHours: finalPrintTimeHours,
+      weightG: finalWeightG,
       quantity: safeQuantity,
       price: roundCurrencyValue(result.batchFinalPrice),
       profit: roundCurrencyValue(result.batchTotalProfit),
       calculation: result,
     });
 
-    alert('Orçamento de lote salvo com sucesso!');
+    // Log activity
+    addActivityLog({
+      type: status === 'Aprovado' ? 'sale' : 'approval',
+      description: `${status === 'Aprovado' ? 'Venda' : 'Orçamento'} criado: ${formatCurrency(result.batchFinalPrice)}`,
+      entityId: newBudget.id,
+      entityType: 'budget',
+    });
+
+    const message = status === 'Aprovado' 
+      ? 'Venda registrada com sucesso!' 
+      : 'Orçamento salvo com sucesso!';
+    
+    alert(message);
+    
+    // Reset form
+    if (status === 'Aprovado') {
+      handleResetDefaults();
+    }
+  };
+
+  // Template functions
+  const handleSaveTemplate = () => {
+    if (!templateName.trim()) {
+      alert('Digite um nome para o template.');
+      return;
+    }
+
+    addCalculatorTemplate({
+      name: templateName,
+      filamentId: selectedFilamentId,
+      printerId: selectedPrinterId,
+      weightG: parseLocalizedNumber(weightG, 50),
+      printTimeHours: parseLocalizedNumber(printTimeHours, 5),
+      margin: parseLocalizedNumber(margin, 30),
+      laborCostFixed: parseLocalizedNumber(laborCostFixed, 0),
+      fixedCostPerPiece: parseLocalizedNumber(fixedCostPerPiece, 0),
+      quantity: parseLocalizedNumber(quantity, 1),
+    });
+
+    setTemplateName('');
+    setShowTemplates(false);
+    alert('Template salvo com sucesso!');
+  };
+
+  const handleLoadTemplate = (template: CalculatorTemplate) => {
+    setSelectedFilamentId(template.filamentId);
+    setSelectedPrinterId(template.printerId);
+    setWeightG(template.weightG.toString());
+    setPrintTimeHours(template.printTimeHours.toString());
+    setMargin(template.margin.toString());
+    setLaborCostFixed(template.laborCostFixed.toString());
+    setFixedCostPerPiece(template.fixedCostPerPiece.toString());
+    setQuantity(template.quantity.toString());
+    setShowTemplates(false);
+  };
+
+  const handleDeleteTemplate = (templateId: string) => {
+    if (window.confirm('Deseja excluir este template?')) {
+      removeCalculatorTemplate(templateId);
+    }
+  };
+
+  // Price history for client/product
+  const getPriceHistory = () => {
+    const clientBudgets = selectedClientId 
+      ? budgets.filter(b => b.clientId === selectedClientId && isApprovedBudget(b.status))
+      : [];
+    const productBudgets = selectedProductId
+      ? budgets.filter(b => b.productId === selectedProductId && isApprovedBudget(b.status))
+      : [];
+    
+    return [...clientBudgets, ...productBudgets].slice(0, 5);
+  };
+
+  // Bulk calculator functions
+  const handleAddBulkItem = () => {
+    setBulkItems([...bulkItems, { weightG: '50', printTimeHours: '5', quantity: '1' }]);
+  };
+
+  const handleRemoveBulkItem = (index: number) => {
+    setBulkItems(bulkItems.filter((_, i) => i !== index));
+  };
+
+  const handleBulkItemChange = (index: number, field: string, value: string) => {
+    const newItems = [...bulkItems];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setBulkItems(newItems);
+  };
+
+  const calculateBulkTotal = () => {
+    return bulkItems.reduce((total, item) => {
+      const calc = calculate3DPrintCost({
+        pricePerKg: selectedFilament ? selectedFilament.pricePerKg : manualFilamentPrice,
+        weightG: item.weightG,
+        printTimeHours: item.printTimeHours,
+        powerConsumptionW: selectedPrinter ? selectedPrinter.powerConsumption : manualPowerConsumptionW,
+        energyPriceKWh,
+        laborCostFixed,
+        fixedCostPerPiece,
+        profitMarginPercent: margin,
+        quantity: item.quantity,
+      });
+      return total + calc.batchFinalPrice;
+    }, 0);
+  };
+
+  // Cost breakdown data
+  const getCostBreakdownData = () => {
+    if (!result) return [];
+    
+    return [
+      { name: 'Material', value: result.unitMaterialCost * parseLocalizedNumber(quantity, 1), color: '#3b82f6' },
+      { name: 'Energia', value: result.unitEnergyCost * parseLocalizedNumber(quantity, 1), color: '#f59e0b' },
+      { name: 'Mão de obra', value: result.unitLaborCost * parseLocalizedNumber(quantity, 1), color: '#10b981' },
+      { name: 'Custo fixo', value: result.unitFixedCost * parseLocalizedNumber(quantity, 1), color: '#8b5cf6' },
+      { name: 'Lucro', value: result.batchTotalProfit, color: '#ec4899' },
+    ];
   };
 
   const handleResetDefaults = () => {
@@ -167,6 +410,9 @@ export function Calculator() {
     setFixedCostPerPiece('0');
     setMargin('30');
     setQuantity('1');
+    setProductType('catalog');
+    setCustomProductForm({ name: '', description: '', materialType: 'PLA', basePrice: '', defaultWeightG: '50', avgPrintTimeHours: '5' });
+    setGenericSaleForm({ description: '', weightG: '50', printTimeHours: '5' });
   };
 
   const normalizedPowerConsumptionW = selectedPrinter
@@ -200,6 +446,38 @@ export function Calculator() {
               </span>
               <button
                 type="button"
+                onClick={() => setShowTemplates(!showTemplates)}
+                className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-bold text-slate-600 transition-colors hover:bg-slate-50 flex items-center gap-1"
+              >
+                <Save className="w-3 h-3" />
+                Templates
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPriceHistory(!showPriceHistory)}
+                className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-bold text-slate-600 transition-colors hover:bg-slate-50 flex items-center gap-1"
+              >
+                <History className="w-3 h-3" />
+                Histórico
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowBulkCalculator(!showBulkCalculator)}
+                className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-bold text-slate-600 transition-colors hover:bg-slate-50 flex items-center gap-1"
+              >
+                <Layers className="w-3 h-3" />
+                Bulk
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCostBreakdown(!showCostBreakdown)}
+                className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-bold text-slate-600 transition-colors hover:bg-slate-50 flex items-center gap-1"
+              >
+                <PieChart className="w-3 h-3" />
+                Custos
+              </button>
+              <button
+                type="button"
                 onClick={handleResetDefaults}
                 className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-bold text-slate-600 transition-colors hover:bg-slate-50"
               >
@@ -211,18 +489,140 @@ export function Calculator() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
-                <Package className="w-3 h-3 mr-2" /> Produto Cadastrado
+                <Package className="w-3 h-3 mr-2" /> Tipo de Produto
               </label>
-              <select 
-                value={selectedProductId}
-                onChange={(e) => setSelectedProductId(e.target.value)}
-                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 text-sm font-medium transition-all"
-              >
-                <option value="">Peça Personalizada</option>
-                {products.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
+              <div className="flex gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setProductType('catalog')}
+                  className={`flex-1 px-3 py-2 rounded-xl font-medium text-xs transition-all ${
+                    productType === 'catalog' 
+                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30' 
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  Catálogo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProductType('custom')}
+                  className={`flex-1 px-3 py-2 rounded-xl font-medium text-xs transition-all ${
+                    productType === 'custom' 
+                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30' 
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  Personalizado
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProductType('generic')}
+                  className={`flex-1 px-3 py-2 rounded-xl font-medium text-xs transition-all ${
+                    productType === 'generic' 
+                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30' 
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  Avulso
+                </button>
+              </div>
+
+              {productType === 'catalog' && (
+                <select 
+                  value={selectedProductId}
+                  onChange={(e) => setSelectedProductId(e.target.value)}
+                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 text-sm font-medium transition-all"
+                >
+                  <option value="">Selecione um produto...</option>
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              )}
+
+              {productType === 'custom' && (
+                <div className="bg-blue-50 rounded-2xl p-4 border border-blue-100 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <h4 className="text-sm font-bold text-blue-800 mb-3 flex items-center gap-2">
+                    <Box className="w-4 h-4" />
+                    Produto Personalizado
+                  </h4>
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="Nome do produto *"
+                      value={customProductForm.name}
+                      onChange={(e) => setCustomProductForm({...customProductForm, name: e.target.value})}
+                      className="w-full p-2.5 bg-white border border-blue-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
+                    />
+                    <textarea
+                      placeholder="Descrição (opcional)"
+                      value={customProductForm.description}
+                      onChange={(e) => setCustomProductForm({...customProductForm, description: e.target.value})}
+                      className="w-full p-2.5 bg-white border border-blue-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-none h-16 resize-none"
+                    />
+                    <div className="grid grid-cols-3 gap-2">
+                      <select
+                        value={customProductForm.materialType}
+                        onChange={(e) => setCustomProductForm({...customProductForm, materialType: e.target.value})}
+                        className="p-2.5 bg-white border border-blue-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
+                      >
+                        <option value="PLA">PLA</option>
+                        <option value="ABS">ABS</option>
+                        <option value="PETG">PETG</option>
+                        <option value="TPU">TPU</option>
+                        <option value="Resina">Resina</option>
+                      </select>
+                      <input
+                        type="text"
+                        placeholder="Peso (g)"
+                        value={customProductForm.defaultWeightG}
+                        onChange={(e) => setCustomProductForm({...customProductForm, defaultWeightG: e.target.value})}
+                        className="p-2.5 bg-white border border-blue-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Tempo (h)"
+                        value={customProductForm.avgPrintTimeHours}
+                        onChange={(e) => setCustomProductForm({...customProductForm, avgPrintTimeHours: e.target.value})}
+                        className="p-2.5 bg-white border border-blue-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {productType === 'generic' && (
+                <div className="bg-cyan-50 rounded-2xl p-4 border border-cyan-100 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <h4 className="text-sm font-bold text-cyan-800 mb-3 flex items-center gap-2">
+                    <Tag className="w-4 h-4" />
+                    Impressão Avulsa
+                  </h4>
+                  <div className="space-y-3">
+                    <textarea
+                      placeholder="Descrição do que será impresso *"
+                      value={genericSaleForm.description}
+                      onChange={(e) => setGenericSaleForm({...genericSaleForm, description: e.target.value})}
+                      className="w-full p-2.5 bg-white border border-cyan-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500/20 outline-none h-16 resize-none"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        placeholder="Peso estimado (g)"
+                        value={genericSaleForm.weightG}
+                        onChange={(e) => setGenericSaleForm({...genericSaleForm, weightG: e.target.value})}
+                        className="p-2.5 bg-white border border-cyan-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500/20 outline-none"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Tempo estimado (h)"
+                        value={genericSaleForm.printTimeHours}
+                        onChange={(e) => setGenericSaleForm({...genericSaleForm, printTimeHours: e.target.value})}
+                        className="p-2.5 bg-white border border-cyan-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500/20 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -295,14 +695,83 @@ export function Calculator() {
               <label className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
                 <User className="w-3 h-3 mr-2" /> Cliente do Orçamento
               </label>
-              <select 
-                value={selectedClientId}
-                onChange={(e) => setSelectedClientId(e.target.value)}
-                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 text-sm font-medium transition-all"
-              >
-                <option value="">Cliente Avulso</option>
-                {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              <div className="flex gap-2">
+                <select 
+                  value={selectedClientId}
+                  onChange={(e) => setSelectedClientId(e.target.value)}
+                  className="flex-1 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 text-sm font-medium transition-all"
+                >
+                  <option value="">Cliente Avulso</option>
+                  {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowQuickAddClient(!showQuickAddClient)}
+                  className="px-4 py-3 bg-indigo-50 text-indigo-600 rounded-2xl hover:bg-indigo-100 transition-all font-medium border border-indigo-200"
+                >
+                  <UserPlus className="w-4 h-4" />
+                </button>
+              </div>
+              
+              {showQuickAddClient && (
+                <div className="bg-indigo-50 rounded-2xl p-4 border border-indigo-100 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <h4 className="text-sm font-bold text-indigo-800 mb-3 flex items-center gap-2">
+                    <UserPlus className="w-4 h-4" />
+                    Cadastro Rápido de Cliente
+                  </h4>
+                  <form onSubmit={handleQuickAddClient} className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        placeholder="Nome *"
+                        value={quickClientForm.name}
+                        onChange={(e) => setQuickClientForm({...quickClientForm, name: e.target.value})}
+                        className="w-full p-2.5 bg-white border border-indigo-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                        required
+                      />
+                      <input
+                        type="tel"
+                        placeholder="Telefone *"
+                        value={quickClientForm.phone}
+                        onChange={(e) => setQuickClientForm({...quickClientForm, phone: e.target.value})}
+                        className="w-full p-2.5 bg-white border border-indigo-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                        required
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <input
+                        type="email"
+                        placeholder="Email"
+                        value={quickClientForm.email}
+                        onChange={(e) => setQuickClientForm({...quickClientForm, email: e.target.value})}
+                        className="w-full p-2.5 bg-white border border-indigo-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Endereço"
+                        value={quickClientForm.address}
+                        onChange={(e) => setQuickClientForm({...quickClientForm, address: e.target.value})}
+                        className="w-full p-2.5 bg-white border border-indigo-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowQuickAddClient(false)}
+                        className="flex-1 px-4 py-2 bg-white text-slate-600 rounded-xl font-medium hover:bg-slate-50 transition-all border border-slate-200"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-all"
+                      >
+                        Salvar
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -470,19 +939,253 @@ export function Calculator() {
                 </div>
               </div>
 
-              <button 
-                id="save-budget-final"
-                onClick={handleSaveBudget}
-                disabled={!result}
-                className="w-full py-5 bg-white text-slate-900 rounded-3xl font-black text-sm uppercase tracking-widest hover:bg-slate-100 active:scale-95 transition-all shadow-xl disabled:opacity-50"
-              >
-                Salvar Orçamento
-              </button>
+              <div className="space-y-3">
+                <button 
+                  id="save-budget-pending"
+                  onClick={() => handleSaveBudget('Pendente')}
+                  disabled={!result}
+                  className="w-full py-4 bg-white text-slate-900 rounded-3xl font-black text-sm uppercase tracking-widest hover:bg-slate-100 active:scale-95 transition-all shadow-xl disabled:opacity-50"
+                >
+                  Salvar como Orçamento
+                </button>
+                <button 
+                  id="save-budget-approved"
+                  onClick={() => handleSaveBudget('Aprovado')}
+                  disabled={!result}
+                  className="w-full py-4 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white rounded-3xl font-black text-sm uppercase tracking-widest hover:from-emerald-600 hover:to-cyan-600 active:scale-95 transition-all shadow-xl disabled:opacity-50"
+                >
+                  Aprovar e Registrar Venda
+                </button>
+              </div>
             </div>
           </div>
           
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[100px] -mr-32 -mt-32"></div>
         </div>
+
+        {/* Templates Modal */}
+        {showTemplates && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-slate-800">Templates Rápidos</h3>
+                <button onClick={() => setShowTemplates(false)} className="p-2 hover:bg-slate-100 rounded-full">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Nome do template..."
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    className="flex-1 p-3 border border-slate-200 rounded-xl"
+                  />
+                  <button
+                    onClick={handleSaveTemplate}
+                    className="px-4 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700"
+                  >
+                    <Save className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {calculatorTemplates.length === 0 ? (
+                    <p className="text-center text-slate-400 py-4">Nenhum template salvo</p>
+                  ) : (
+                    calculatorTemplates.map((template) => (
+                      <div key={template.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100">
+                        <div>
+                          <p className="font-bold text-slate-800">{template.name}</p>
+                          <p className="text-xs text-slate-500">
+                            {template.weightG}g • {template.printTimeHours}h • {template.margin}% margem
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleLoadTemplate(template)}
+                            className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTemplate(template.id)}
+                            className="p-2 bg-rose-100 text-rose-600 rounded-lg hover:bg-rose-200"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Price History Modal */}
+        {showPriceHistory && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-slate-800">Histórico de Preços</h3>
+                <button onClick={() => setShowPriceHistory(false)} className="p-2 hover:bg-slate-100 rounded-full">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {getPriceHistory().length === 0 ? (
+                  <p className="text-center text-slate-400 py-4">Nenhum histórico encontrado</p>
+                ) : (
+                  getPriceHistory().map((budget) => {
+                    const client = clients.find(c => c.id === budget.clientId);
+                    const product = products.find(p => p.id === budget.productId);
+                    return (
+                      <div key={budget.id} className="p-3 bg-slate-50 rounded-xl">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-bold text-slate-800">{product?.name || 'Peça Customizada'}</p>
+                            <p className="text-xs text-slate-500">{client?.name || 'Cliente'}</p>
+                          </div>
+                          <p className="font-bold text-emerald-600">{formatCurrency(budget.price)}</p>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">{new Date(budget.date).toLocaleDateString('pt-BR')}</p>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Bulk Calculator Modal */}
+        {showBulkCalculator && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-slate-800">Calculadora em Massa</h3>
+                <button onClick={() => setShowBulkCalculator(false)} className="p-2 hover:bg-slate-100 rounded-full">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {bulkItems.map((item, index) => (
+                  <div key={index} className="p-4 bg-slate-50 rounded-xl space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-slate-700">Item #{index + 1}</span>
+                      {bulkItems.length > 1 && (
+                        <button
+                          onClick={() => handleRemoveBulkItem(index)}
+                          className="p-1 bg-rose-100 text-rose-600 rounded-lg hover:bg-rose-200"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="text-xs font-bold text-slate-500">Peso (g)</label>
+                        <input
+                          type="text"
+                          value={item.weightG}
+                          onChange={(e) => handleBulkItemChange(index, 'weightG', e.target.value)}
+                          className="w-full p-2 border border-slate-200 rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-slate-500">Tempo (h)</label>
+                        <input
+                          type="text"
+                          value={item.printTimeHours}
+                          onChange={(e) => handleBulkItemChange(index, 'printTimeHours', e.target.value)}
+                          className="w-full p-2 border border-slate-200 rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-slate-500">Qtd</label>
+                        <input
+                          type="text"
+                          value={item.quantity}
+                          onChange={(e) => handleBulkItemChange(index, 'quantity', e.target.value)}
+                          className="w-full p-2 border border-slate-200 rounded-lg"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <button
+                  onClick={handleAddBulkItem}
+                  className="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 font-medium hover:border-blue-500 hover:text-blue-500 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  Adicionar Item
+                </button>
+
+                <div className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl text-white">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold">Total Estimado:</span>
+                    <span className="text-2xl font-black">{formatCurrency(calculateBulkTotal())}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Cost Breakdown Modal */}
+        {showCostBreakdown && result && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl p-6 max-w-lg w-full">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-slate-800">Breakdown de Custos</h3>
+                <button onClick={() => setShowCostBreakdown(false)} className="p-2 hover:bg-slate-100 rounded-full">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <Pie
+                      data={getCostBreakdownData()}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {getCostBreakdownData().map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                    <Legend />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                {getCostBreakdownData().map((item) => (
+                  <div key={item.name} className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="text-sm text-slate-600">{item.name}</span>
+                    </div>
+                    <span className="font-bold text-slate-800">{formatCurrency(item.value)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
