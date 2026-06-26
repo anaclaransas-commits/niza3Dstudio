@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   Box,
   Clock,
@@ -24,7 +24,7 @@ import {
 import { useStore } from '../store';
 import { uploadCatalogAsset } from '../lib/catalogApi';
 import { coerceProductImageUrls } from '../lib/catalogUtils';
-import { cn } from '../lib/utils';
+import { cn, calculate3DPrintCost, parseLocalizedNumber } from '../lib/utils';
 import type { Product } from '../types';
 import JSZip from 'jszip';
 import { ProductGallery } from './ProductGallery';
@@ -253,7 +253,7 @@ function slugifySegment(value: string) {
 }
 
 export function Products() {
-  const { products, addProduct, updateProduct, removeProduct, budgets } = useStore();
+  const { products, addProduct, updateProduct, removeProduct, budgets, calculatorDefaults, filaments, printers } = useStore();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
@@ -263,6 +263,38 @@ export function Products() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({ ...EMPTY_FORM });
+
+  // Auto-calculate suggested price based on calculator defaults
+  useEffect(() => {
+    if (!showForm) return;
+
+    const weight = formData.defaultWeightG;
+    const time = formData.avgPrintTimeHours;
+
+    // Only calculate if both weight and time have values
+    if (weight && time && weight !== '' && time !== '') {
+      const selectedFilament = filaments.find(f => f.id === calculatorDefaults.selectedFilamentId);
+      const selectedPrinter = printers.find(p => p.id === calculatorDefaults.selectedPrinterId);
+
+      const calc = calculate3DPrintCost({
+        pricePerKg: selectedFilament ? selectedFilament.pricePerKg : calculatorDefaults.manualFilamentPrice,
+        weightG: weight,
+        printTimeHours: time,
+        powerConsumptionW: selectedPrinter ? selectedPrinter.powerConsumption : calculatorDefaults.manualPowerConsumptionW,
+        energyPriceKWh: calculatorDefaults.energyPriceKWh,
+        laborCostFixed: calculatorDefaults.laborCostFixed,
+        fixedCostPerPiece: calculatorDefaults.fixedCostPerPiece,
+        profitMarginPercent: calculatorDefaults.margin,
+        quantity: calculatorDefaults.quantity,
+      });
+
+      // Update basePrice with calculated price
+      setFormData(prev => ({
+        ...prev,
+        basePrice: calc.unitFinalPrice.toFixed(2)
+      }));
+    }
+  }, [formData.defaultWeightG, formData.avgPrintTimeHours, showForm, calculatorDefaults, filaments, printers]);
 
 
   // Collections list
@@ -709,7 +741,12 @@ export function Products() {
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm" placeholder="4" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">Preço sugerido (R$)</label>
+                <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1">
+                  Preço sugerido (R$)
+                  {formData.defaultWeightG && formData.avgPrintTimeHours && (
+                    <span className="text-[10px] text-emerald-600 font-normal">Calculado automaticamente</span>
+                  )}
+                </label>
                 <input type="number" value={formData.basePrice}
                   onChange={e => setFormData(p => ({ ...p, basePrice: e.target.value }))}
                   onKeyDown={e => { if (e.key === 'Enter') e.preventDefault(); }}
