@@ -740,6 +740,7 @@ export function CatalogPublic() {
   const [activeOcasião, setActiveOcasião] = useState('Todos');
   const [activeAmbiente, setActiveAmbiente] = useState('Todos');
   const [activePublico, setActivePublico] = useState('Todos');
+  const [activeHighlightTab, setActiveHighlightTab] = useState<'destaques' | 'mais_vendidos' | 'novidades'>('destaques');
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'material' | 'collection'>('name');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
@@ -1142,16 +1143,48 @@ export function CatalogPublic() {
         </div>
       </section>
 
-      {/* Destaques - Cards menores */}
+      {/* Destaques unificados - Cards menores com abas */}
       {!isLoading && featuredProducts.length > 0 && (
         <section className="px-4 py-6 sm:px-6" style={{ backgroundColor: palette.pageBg }}>
           <div className="mx-auto max-w-6xl">
             <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: palette.textMuted }}>Destaques</h3>
-                <p className="mt-1 text-sm" style={{ color: palette.textMuted }}>
-                  Seleção especial de produtos
-                </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveHighlightTab('destaques')}
+                  className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition-all"
+                  style={{
+                    backgroundColor: activeHighlightTab === 'destaques' ? accent : 'transparent',
+                    color: activeHighlightTab === 'destaques' ? palette.text : palette.textMuted,
+                    border: `1px solid ${activeHighlightTab === 'destaques' ? accent : palette.border}`
+                  }}
+                >
+                  Destaques
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveHighlightTab('mais_vendidos')}
+                  className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition-all"
+                  style={{
+                    backgroundColor: activeHighlightTab === 'mais_vendidos' ? accent : 'transparent',
+                    color: activeHighlightTab === 'mais_vendidos' ? palette.text : palette.textMuted,
+                    border: `1px solid ${activeHighlightTab === 'mais_vendidos' ? accent : palette.border}`
+                  }}
+                >
+                  Mais vendidos
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveHighlightTab('novidades')}
+                  className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition-all"
+                  style={{
+                    backgroundColor: activeHighlightTab === 'novidades' ? accent : 'transparent',
+                    color: activeHighlightTab === 'novidades' ? palette.text : palette.textMuted,
+                    border: `1px solid ${activeHighlightTab === 'novidades' ? accent : palette.border}`
+                  }}
+                >
+                  Novidades
+                </button>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
@@ -1160,113 +1193,7 @@ export function CatalogPublic() {
                 const cover = images[0];
                 return (
                   <button
-                    key={product.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedProduct(product);
-                      setDetailsOpen(true);
-                    }}
-                    className="group relative aspect-square overflow-hidden rounded-xl shadow-sm transition-all hover:scale-105 hover:shadow-md"
-                    style={{ backgroundColor: palette.cardBg }}
-                  >
-                    {cover ? (
-                      <img
-                        src={cover}
-                        alt={product.name}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center" style={{ backgroundColor: lightenHex(accent) }}>
-                        <span className="text-xs font-bold text-slate-400">Sem foto</span>
-                      </div>
-                    )}
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                    <div className="absolute bottom-2 left-2 right-2">
-                      <p className="text-[10px] font-bold text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 line-clamp-2">
-                        {product.name}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Mais vendidos - Cards menores */}
-      {!isLoading && featuredProducts.length > 0 && (
-        <section className="px-4 py-6 sm:px-6" style={{ backgroundColor: palette.pageBg }}>
-          <div className="mx-auto max-w-6xl">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: palette.textMuted }}>Mais vendidos</h3>
-                <p className="mt-1 text-sm" style={{ color: palette.textMuted }}>
-                  Produtos mais procurados
-                </p>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
-              {featuredProducts.slice(0, 8).map((product) => {
-                const images = getProductImages(product);
-                const cover = images[0];
-                return (
-                  <button
-                    key={`bestseller-${product.id}`}
-                    type="button"
-                    onClick={() => {
-                      setSelectedProduct(product);
-                      setDetailsOpen(true);
-                    }}
-                    className="group relative aspect-square overflow-hidden rounded-xl shadow-sm transition-all hover:scale-105 hover:shadow-md"
-                    style={{ backgroundColor: palette.cardBg }}
-                  >
-                    {cover ? (
-                      <img
-                        src={cover}
-                        alt={product.name}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center" style={{ backgroundColor: lightenHex(accent) }}>
-                        <span className="text-xs font-bold text-slate-400">Sem foto</span>
-                      </div>
-                    )}
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                    <div className="absolute bottom-2 left-2 right-2">
-                      <p className="text-[10px] font-bold text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 line-clamp-2">
-                        {product.name}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Novidades - Cards menores */}
-      {!isLoading && featuredProducts.length > 0 && (
-        <section className="px-4 py-6 sm:px-6" style={{ backgroundColor: palette.pageBg }}>
-          <div className="mx-auto max-w-6xl">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: palette.textMuted }}>Novidades</h3>
-                <p className="mt-1 text-sm" style={{ color: palette.textMuted }}>
-                  Recém adicionados ao catálogo
-                </p>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
-              {featuredProducts.slice(0, 8).map((product) => {
-                const images = getProductImages(product);
-                const cover = images[0];
-                return (
-                  <button
-                    key={`new-${product.id}`}
+                    key={`${activeHighlightTab}-${product.id}`}
                     type="button"
                     onClick={() => {
                       setSelectedProduct(product);
@@ -1395,7 +1322,7 @@ export function CatalogPublic() {
           <div className="mx-auto max-w-6xl">
             <h3 className="mb-4 text-sm font-black uppercase tracking-[0.2em]" style={{ color: palette.textMuted }}>Filtrar por</h3>
             
-            <div className="space-y-4">
+            <div className="flex flex-wrap gap-6">
               {/* Tipo */}
               {(() => {
                 const values = getValuesByCategoryAndField(activeCollection, 'tipo');
