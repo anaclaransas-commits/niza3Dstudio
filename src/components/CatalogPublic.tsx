@@ -9,6 +9,11 @@ import {
   Search,
   X,
   ZoomIn,
+  Sparkles,
+  Shield,
+  Zap,
+  Package,
+  Filter,
 } from 'lucide-react';
 import { getCatalogPublicData } from '../lib/catalogApi';
 import {
@@ -721,6 +726,7 @@ export function CatalogPublic() {
   const [settings, setSettings] = useState<CatalogSettings>(fallbackSettings);
   const [publicProducts, setPublicProducts] = useState<Product[]>(fallbackProducts);
   const [isLoading, setIsLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -1062,87 +1068,108 @@ export function CatalogPublic() {
       </header>
 
       {/* Faixa de benefícios */}
-      <section className="px-4 py-6 sm:px-6" style={{ backgroundColor: palette.sectionBg, borderBottom: `1px solid ${palette.border}` }}>
-        <div className="mx-auto flex max-w-6xl flex-wrap gap-4" style={{ color: palette.text }}>
-          <div className="flex flex-1 min-w-[220px] items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-2xl text-xs font-black shadow-sm" style={{ backgroundColor: palette.cardBg, color: accent, border: `1px solid ${palette.border}` }}>
-              3D
-            </span>
+      <section className="px-4 py-3 sm:px-6" style={{ backgroundColor: palette.sectionBg, borderBottom: `1px solid ${palette.border}` }}>
+        <div className="mx-auto flex max-w-6xl flex-wrap gap-3" style={{ color: palette.text }}>
+          <div className="flex flex-1 min-w-[180px] items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-xl" style={{ backgroundColor: palette.cardBg, color: accent, border: `1px solid ${palette.border}` }}>
+              <Sparkles className="h-3.5 w-3.5" />
+            </div>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Impressão 3D sob medida</p>
-              <p className="text-xs" style={{ color: palette.textMuted }}>Ajuste de escala, cor e acabamento para cada projeto.</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: palette.textMuted }}>Personalizado</p>
+              <p className="text-[10px]" style={{ color: palette.textMuted }}>Escala, cor e acabamento</p>
             </div>
           </div>
-          <div className="flex flex-1 min-w-[220px] items-center gap-3">
-            <div className="h-9 w-9 rounded-2xl" style={{ backgroundColor: palette.cardBg, border: `1px solid ${palette.border}` }} />
+          <div className="flex flex-1 min-w-[180px] items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-xl" style={{ backgroundColor: palette.cardBg, color: accent, border: `1px solid ${palette.border}` }}>
+              <Shield className="h-3.5 w-3.5" />
+            </div>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Acabamento profissional</p>
-              <p className="text-xs" style={{ color: palette.textMuted }}>Peças pensadas para decoração, organização e presentes.</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: palette.textMuted }}>Qualidade</p>
+              <p className="text-[10px]" style={{ color: palette.textMuted }}>Acabamento profissional</p>
             </div>
           </div>
-          <div className="flex flex-1 min-w-[220px] items-center gap-3">
-            <div className="h-9 w-9 rounded-2xl" style={{ backgroundColor: palette.cardBg, border: `1px solid ${palette.border}` }} />
+          <div className="flex flex-1 min-w-[180px] items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-xl" style={{ backgroundColor: palette.cardBg, color: accent, border: `1px solid ${palette.border}` }}>
+              <Zap className="h-3.5 w-3.5" />
+            </div>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Atendimento especializado</p>
-              <p className="text-xs" style={{ color: palette.textMuted }}>Orçamentos rápidos direto pelo WhatsApp.</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: palette.textMuted }}>Rápido</p>
+              <p className="text-[10px]" style={{ color: palette.textMuted }}>Orçamentos pelo WhatsApp</p>
             </div>
           </div>
-          <div className="flex flex-1 min-w-[220px] items-center gap-3">
-            <div className="h-9 w-9 rounded-2xl" style={{ backgroundColor: palette.cardBg, border: `1px solid ${palette.border}` }} />
+          <div className="flex flex-1 min-w-[180px] items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-xl" style={{ backgroundColor: palette.cardBg, color: accent, border: `1px solid ${palette.border}` }}>
+              <Package className="h-3.5 w-3.5" />
+            </div>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Pagamento seguro</p>
-              <p className="text-xs" style={{ color: palette.textMuted }}>Produção sob demanda com embalagem cuidadosa.</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: palette.textMuted }}>Cuidado</p>
+              <p className="text-[10px]" style={{ color: palette.textMuted }}>Embalagem protegida</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Filtros + visão geral */}
-      <section className="px-4 py-8 sm:px-6" style={{ backgroundColor: palette.pageBg, borderBottom: `1px solid ${palette.border}` }}>
+      <section className="px-4 py-6 sm:px-6" style={{ backgroundColor: palette.pageBg, borderBottom: `1px solid ${palette.border}` }}>
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-xl font-black sm:text-2xl" style={{ color: palette.text }}>
-            {catalogHeadline || 'Nossos produtos'}
-          </h2>
-          {catalogSubheadline && <p className="mt-1 text-sm" style={{ color: palette.textMuted }}>{catalogSubheadline}</p>}
-
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="search"
-                placeholder="Buscar produto, tag ou coleção..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none focus:ring-2"
-                style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, boxShadow: `0 0 0 0 transparent`, outlineColor: accent }}
-              />
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-black sm:text-2xl" style={{ color: palette.text }}>
+                {catalogHeadline || 'Nossos produtos'}
+              </h2>
+              {catalogSubheadline && <p className="mt-1 text-sm" style={{ color: palette.textMuted }}>{catalogSubheadline}</p>}
             </div>
             <button
               type="button"
-              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
-                showFavoritesOnly ? 'bg-rose-50 text-rose-600' : ''
-              }`}
-              style={{ backgroundColor: showFavoritesOnly ? undefined : palette.sectionBg, border: `1px solid ${palette.border}`, color: showFavoritesOnly ? undefined : palette.text }}
-            >
-              <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'fill-rose-500' : ''}`} />
-              Favoritos
-            </button>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="rounded-xl px-4 py-2.5 text-sm font-medium outline-none"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
               style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, color: palette.text }}
-              aria-label="Ordenar produtos"
             >
-              <option value="name">Nome A–Z</option>
-              <option value="collection">Coleção</option>
-              <option value="material">Material</option>
-            </select>
+              <Filter className="h-4 w-4" />
+              {showFilters ? 'Ocultar filtros' : 'Filtros'}
+            </button>
           </div>
 
-          {collections.length > 1 && (
-            <div className="mt-4 flex flex-wrap gap-2">
+          {showFilters && (
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="search"
+                  placeholder="Buscar produto, tag ou coleção..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none focus:ring-2"
+                  style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, boxShadow: `0 0 0 0 transparent`, outlineColor: accent }}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
+                  showFavoritesOnly ? 'bg-rose-50 text-rose-600' : ''
+                }`}
+                style={{ backgroundColor: showFavoritesOnly ? undefined : palette.sectionBg, border: `1px solid ${palette.border}`, color: showFavoritesOnly ? undefined : palette.text }}
+              >
+                <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'fill-rose-500' : ''}`} />
+                Favoritos
+              </button>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="rounded-xl px-4 py-2.5 text-sm font-medium outline-none"
+                style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, color: palette.text }}
+                aria-label="Ordenar produtos"
+              >
+                <option value="name">Nome A–Z</option>
+                <option value="collection">Coleção</option>
+                <option value="material">Material</option>
+              </select>
+            </div>
+          )}
+
+          {showFilters && collections.length > 1 && (
+            <div className="mt-3 flex flex-wrap gap-2">
               {collections.map((col) => (
                 <button
                   key={col}
