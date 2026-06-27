@@ -736,6 +736,10 @@ export function CatalogPublic() {
   const [activeCollection, setActiveCollection] = useState('Todos');
   const [activeMaterial, setActiveMaterial] = useState('Todos');
   const [activeTag, setActiveTag] = useState('Todos');
+  const [activeTipo, setActiveTipo] = useState('Todos');
+  const [activeOcasião, setActiveOcasião] = useState('Todos');
+  const [activeAmbiente, setActiveAmbiente] = useState('Todos');
+  const [activePublico, setActivePublico] = useState('Todos');
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'material' | 'collection'>('name');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
@@ -787,6 +791,25 @@ export function CatalogPublic() {
     return ['Todos', ...Array.from(new Set(allTags))];
   }, [publicProducts]);
 
+  // Extrair tags por categoria e tipo específico
+  const getTagsByCategoryAndType = useMemo(() => {
+    return (category: string, tagType: string) => {
+      const categoryProducts = category === 'Todos' 
+        ? publicProducts 
+        : publicProducts.filter(p => (p.collection || 'Geral') === category);
+      
+      const allTags = categoryProducts.flatMap((p) => {
+        if (!p.tags) return [];
+        const tagList = p.tags.split(',').map(t => t.trim()).filter(Boolean);
+        // Filtrar tags que começam com o tipo específico (ex: "tipo:decoração")
+        return tagList.filter(t => t.toLowerCase().startsWith(`${tagType.toLowerCase()}:`))
+          .map(t => t.split(':')[1]?.trim())
+          .filter(Boolean);
+      });
+      return ['Todos', ...Array.from(new Set(allTags))];
+    };
+  }, [publicProducts]);
+
   const categorySummaries = useMemo(
     () =>
       Array.from(
@@ -814,6 +837,14 @@ export function CatalogPublic() {
       const matchesCollection = activeCollection === 'Todos' || collection === activeCollection;
       const matchesMaterial = activeMaterial === 'Todos' || product.materialType === activeMaterial;
       const matchesTag = activeTag === 'Todos' || product.tags?.toLowerCase().includes(activeTag.toLowerCase());
+      
+      // Filtros específicos por tipo de tag
+      const productTags = product.tags?.split(',').map(t => t.trim().toLowerCase()) ?? [];
+      const matchesTipo = activeTipo === 'Todos' || productTags.some(t => t.startsWith(`tipo:`) && t.split(':')[1]?.trim() === activeTipo.toLowerCase());
+      const matchesOcasião = activeOcasião === 'Todos' || productTags.some(t => t.startsWith(`ocasião:`) && t.split(':')[1]?.trim() === activeOcasião.toLowerCase());
+      const matchesAmbiente = activeAmbiente === 'Todos' || productTags.some(t => t.startsWith(`ambiente:`) && t.split(':')[1]?.trim() === activeAmbiente.toLowerCase());
+      const matchesPublico = activePublico === 'Todos' || productTags.some(t => t.startsWith(`publico:`) && t.split(':')[1]?.trim() === activePublico.toLowerCase());
+      
       const matchesFavorites = !showFavoritesOnly || favorites.includes(product.id);
       const matchesPrice = !product.basePrice || (product.basePrice >= priceRange[0] && product.basePrice <= priceRange[1]);
       const matchesWeight = !product.defaultWeightG || (product.defaultWeightG >= weightRange[0] && product.defaultWeightG <= weightRange[1]);
@@ -822,7 +853,7 @@ export function CatalogPublic() {
         .join(' ')
         .toLowerCase();
       const matchesSearch = !search || haystack.includes(search.toLowerCase());
-      return matchesCollection && matchesMaterial && matchesTag && matchesSearch && matchesFavorites && matchesPrice && matchesWeight;
+      return matchesCollection && matchesMaterial && matchesTag && matchesTipo && matchesOcasião && matchesAmbiente && matchesPublico && matchesSearch && matchesFavorites && matchesPrice && matchesWeight;
     });
 
     const sorted = [...visible];
@@ -837,7 +868,7 @@ export function CatalogPublic() {
       }
     });
     return sorted;
-  }, [publicProducts, activeCollection, activeMaterial, activeTag, search, sortBy, showFavoritesOnly, priceRange, weightRange]);
+  }, [publicProducts, activeCollection, activeMaterial, activeTag, activeTipo, activeOcasião, activeAmbiente, activePublico, search, sortBy, showFavoritesOnly, priceRange, weightRange]);
 
   useEffect(() => {
     let isMounted = true;
@@ -1116,77 +1147,9 @@ export function CatalogPublic() {
         </div>
       </section>
 
-      {/* Filtros + visão geral */}
-      <section className="px-4 py-6 sm:px-6" style={{ backgroundColor: palette.pageBg, borderBottom: `1px solid ${palette.border}` }}>
-        <div className="mx-auto max-w-6xl">
-          <div>
-            <h2 className="text-xl font-black sm:text-2xl" style={{ color: palette.text }}>
-              {catalogHeadline || 'Nossos produtos'}
-            </h2>
-            {catalogSubheadline && <p className="mt-1 text-sm" style={{ color: palette.textMuted }}>{catalogSubheadline}</p>}
-          </div>
-
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="search"
-                placeholder="Buscar produto, tag ou coleção..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none focus:ring-2"
-                style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, boxShadow: `0 0 0 0 transparent`, outlineColor: accent }}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
-                showFavoritesOnly ? 'bg-rose-50 text-rose-600' : ''
-              }`}
-              style={{ backgroundColor: showFavoritesOnly ? undefined : palette.sectionBg, border: `1px solid ${palette.border}`, color: showFavoritesOnly ? undefined : palette.text }}
-            >
-              <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'fill-rose-500' : ''}`} />
-              Favoritos
-            </button>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="rounded-xl px-4 py-2.5 text-sm font-medium outline-none"
-              style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, color: palette.text }}
-              aria-label="Ordenar produtos"
-            >
-              <option value="name">Nome A–Z</option>
-              <option value="collection">Coleção</option>
-              <option value="material">Material</option>
-            </select>
-          </div>
-
-          {tags.length > 1 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => setActiveTag(tag)}
-                  className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
-                  style={
-                    activeTag === tag
-                      ? { backgroundColor: accent, color: palette.text, borderColor: accent }
-                      : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
-                  }
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
       {/* Destaques - Cards menores */}
       {!isLoading && featuredProducts.length > 0 && (
-        <section className="px-4 py-8 sm:px-6" style={{ backgroundColor: palette.pageBg }}>
+        <section className="px-4 py-6 sm:px-6" style={{ backgroundColor: palette.pageBg }}>
           <div className="mx-auto max-w-6xl">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
@@ -1237,6 +1200,160 @@ export function CatalogPublic() {
         </section>
       )}
 
+      {/* Mais vendidos - Cards menores */}
+      {!isLoading && featuredProducts.length > 0 && (
+        <section className="px-4 py-6 sm:px-6" style={{ backgroundColor: palette.pageBg }}>
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: palette.textMuted }}>Mais vendidos</h3>
+                <p className="mt-1 text-sm" style={{ color: palette.textMuted }}>
+                  Produtos mais procurados
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+              {featuredProducts.slice(0, 8).map((product) => {
+                const images = getProductImages(product);
+                const cover = images[0];
+                return (
+                  <button
+                    key={`bestseller-${product.id}`}
+                    type="button"
+                    onClick={() => {
+                      setSelectedProduct(product);
+                      setDetailsOpen(true);
+                    }}
+                    className="group relative aspect-square overflow-hidden rounded-xl shadow-sm transition-all hover:scale-105 hover:shadow-md"
+                    style={{ backgroundColor: palette.cardBg }}
+                  >
+                    {cover ? (
+                      <img
+                        src={cover}
+                        alt={product.name}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center" style={{ backgroundColor: lightenHex(accent) }}>
+                        <span className="text-xs font-bold text-slate-400">Sem foto</span>
+                      </div>
+                    )}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    <div className="absolute bottom-2 left-2 right-2">
+                      <p className="text-[10px] font-bold text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 line-clamp-2">
+                        {product.name}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Novidades - Cards menores */}
+      {!isLoading && featuredProducts.length > 0 && (
+        <section className="px-4 py-6 sm:px-6" style={{ backgroundColor: palette.pageBg }}>
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: palette.textMuted }}>Novidades</h3>
+                <p className="mt-1 text-sm" style={{ color: palette.textMuted }}>
+                  Recém adicionados ao catálogo
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+              {featuredProducts.slice(0, 8).map((product) => {
+                const images = getProductImages(product);
+                const cover = images[0];
+                return (
+                  <button
+                    key={`new-${product.id}`}
+                    type="button"
+                    onClick={() => {
+                      setSelectedProduct(product);
+                      setDetailsOpen(true);
+                    }}
+                    className="group relative aspect-square overflow-hidden rounded-xl shadow-sm transition-all hover:scale-105 hover:shadow-md"
+                    style={{ backgroundColor: palette.cardBg }}
+                  >
+                    {cover ? (
+                      <img
+                        src={cover}
+                        alt={product.name}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center" style={{ backgroundColor: lightenHex(accent) }}>
+                        <span className="text-xs font-bold text-slate-400">Sem foto</span>
+                      </div>
+                    )}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    <div className="absolute bottom-2 left-2 right-2">
+                      <p className="text-[10px] font-bold text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 line-clamp-2">
+                        {product.name}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Filtros + visão geral */}
+      <section className="px-4 py-6 sm:px-6" style={{ backgroundColor: palette.pageBg, borderBottom: `1px solid ${palette.border}` }}>
+        <div className="mx-auto max-w-6xl">
+          <div>
+            <h2 className="text-xl font-black sm:text-2xl" style={{ color: palette.text }}>
+              {catalogHeadline || 'Nossos produtos'}
+            </h2>
+            {catalogSubheadline && <p className="mt-1 text-sm" style={{ color: palette.textMuted }}>{catalogSubheadline}</p>}
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="search"
+                placeholder="Buscar produto, tag ou coleção..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none focus:ring-2"
+                style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, boxShadow: `0 0 0 0 transparent`, outlineColor: accent }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
+                showFavoritesOnly ? 'bg-rose-50 text-rose-600' : ''
+              }`}
+              style={{ backgroundColor: showFavoritesOnly ? undefined : palette.sectionBg, border: `1px solid ${palette.border}`, color: showFavoritesOnly ? undefined : palette.text }}
+            >
+              <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'fill-rose-500' : ''}`} />
+              Favoritos
+            </button>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="rounded-xl px-4 py-2.5 text-sm font-medium outline-none"
+              style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, color: palette.text }}
+              aria-label="Ordenar produtos"
+            >
+              <option value="name">Nome A–Z</option>
+              <option value="collection">Coleção</option>
+              <option value="material">Material</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
       {/* Categorias */}
       {categorySummaries.length > 0 && (
         <section className="px-4 py-10 sm:px-6" style={{ backgroundColor: palette.pageBg }}>
@@ -1256,6 +1373,10 @@ export function CatalogPublic() {
                     setActiveCollection(category.name);
                     setActiveMaterial('Todos');
                     setActiveTag('Todos');
+                    setActiveTipo('Todos');
+                    setActiveOcasião('Todos');
+                    setActiveAmbiente('Todos');
+                    setActivePublico('Todos');
                   }}
                   className={`flex flex-col items-start rounded-2xl px-4 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
                     activeCollection === category.name ? 'border-slate-900' : 'border-slate-100'
@@ -1268,6 +1389,137 @@ export function CatalogPublic() {
                   </span>
                 </button>
               ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Filtros de tags específicos - aparecem ao selecionar categoria */}
+      {activeCollection !== 'Todos' && (
+        <section className="px-4 py-6 sm:px-6" style={{ backgroundColor: palette.pageBg, borderBottom: `1px solid ${palette.border}` }}>
+          <div className="mx-auto max-w-6xl">
+            <h3 className="mb-4 text-sm font-black uppercase tracking-[0.2em]" style={{ color: palette.textMuted }}>Filtrar por</h3>
+            
+            <div className="space-y-4">
+              {/* Tipo */}
+              {getTagsByCategoryAndType(activeCollection, 'tipo').length > 1 && (
+                <div>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Tipo</label>
+                  <div className="flex flex-wrap gap-2">
+                    {getTagsByCategoryAndType(activeCollection, 'tipo').map((tag) => (
+                      <button
+                        key={`tipo-${tag}`}
+                        type="button"
+                        onClick={() => setActiveTipo(tag)}
+                        className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
+                        style={
+                          activeTipo === tag
+                            ? { backgroundColor: accent, color: palette.text, borderColor: accent }
+                            : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
+                        }
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Ocasião */}
+              {getTagsByCategoryAndType(activeCollection, 'ocasião').length > 1 && (
+                <div>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Ocasião</label>
+                  <div className="flex flex-wrap gap-2">
+                    {getTagsByCategoryAndType(activeCollection, 'ocasião').map((tag) => (
+                      <button
+                        key={`ocasiao-${tag}`}
+                        type="button"
+                        onClick={() => setActiveOcasião(tag)}
+                        className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
+                        style={
+                          activeOcasião === tag
+                            ? { backgroundColor: accent, color: palette.text, borderColor: accent }
+                            : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
+                        }
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Ambiente */}
+              {getTagsByCategoryAndType(activeCollection, 'ambiente').length > 1 && (
+                <div>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Ambiente</label>
+                  <div className="flex flex-wrap gap-2">
+                    {getTagsByCategoryAndType(activeCollection, 'ambiente').map((tag) => (
+                      <button
+                        key={`ambiente-${tag}`}
+                        type="button"
+                        onClick={() => setActiveAmbiente(tag)}
+                        className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
+                        style={
+                          activeAmbiente === tag
+                            ? { backgroundColor: accent, color: palette.text, borderColor: accent }
+                            : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
+                        }
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Público */}
+              {getTagsByCategoryAndType(activeCollection, 'publico').length > 1 && (
+                <div>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Público</label>
+                  <div className="flex flex-wrap gap-2">
+                    {getTagsByCategoryAndType(activeCollection, 'publico').map((tag) => (
+                      <button
+                        key={`publico-${tag}`}
+                        type="button"
+                        onClick={() => setActivePublico(tag)}
+                        className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
+                        style={
+                          activePublico === tag
+                            ? { backgroundColor: accent, color: palette.text, borderColor: accent }
+                            : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
+                        }
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Material */}
+              {materials.length > 1 && (
+                <div>
+                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Material</label>
+                  <div className="flex flex-wrap gap-2">
+                    {materials.map((mat) => (
+                      <button
+                        key={`material-${mat}`}
+                        type="button"
+                        onClick={() => setActiveMaterial(mat)}
+                        className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
+                        style={
+                          activeMaterial === mat
+                            ? { backgroundColor: accent, color: palette.text, borderColor: accent }
+                            : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
+                        }
+                      >
+                        {mat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -1312,7 +1564,7 @@ export function CatalogPublic() {
           <div className="flex flex-col items-center justify-center py-24 text-slate-400">
             <p className="text-lg font-bold text-slate-500">Nenhum produto encontrado</p>
             <p className="mt-1 text-sm">Tente outro filtro ou termo de busca</p>
-            {(search || activeCollection !== 'Todos' || activeMaterial !== 'Todos' || activeTag !== 'Todos') && (
+            {(search || activeCollection !== 'Todos' || activeMaterial !== 'Todos' || activeTag !== 'Todos' || activeTipo !== 'Todos' || activeOcasião !== 'Todos' || activeAmbiente !== 'Todos' || activePublico !== 'Todos') && (
               <button
                 type="button"
                 onClick={() => {
@@ -1320,6 +1572,10 @@ export function CatalogPublic() {
                   setActiveCollection('Todos');
                   setActiveMaterial('Todos');
                   setActiveTag('Todos');
+                  setActiveTipo('Todos');
+                  setActiveOcasião('Todos');
+                  setActiveAmbiente('Todos');
+                  setActivePublico('Todos');
                 }}
                 className="mt-4 rounded-full px-4 py-2 text-sm font-bold text-white"
                 style={{ backgroundColor: accent }}
