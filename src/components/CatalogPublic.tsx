@@ -735,6 +735,7 @@ export function CatalogPublic() {
   const [search, setSearch] = useState('');
   const [activeCollection, setActiveCollection] = useState('Todos');
   const [activeMaterial, setActiveMaterial] = useState('Todos');
+  const [activeTag, setActiveTag] = useState('Todos');
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'material' | 'collection'>('name');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
@@ -781,6 +782,11 @@ export function CatalogPublic() {
     [publicProducts],
   );
 
+  const tags = useMemo(() => {
+    const allTags = publicProducts.flatMap((p) => p.tags?.split(',').map((t) => t.trim()).filter(Boolean) ?? []);
+    return ['Todos', ...Array.from(new Set(allTags))];
+  }, [publicProducts]);
+
   const categorySummaries = useMemo(
     () =>
       Array.from(
@@ -807,6 +813,7 @@ export function CatalogPublic() {
       const collection = product.collection || 'Geral';
       const matchesCollection = activeCollection === 'Todos' || collection === activeCollection;
       const matchesMaterial = activeMaterial === 'Todos' || product.materialType === activeMaterial;
+      const matchesTag = activeTag === 'Todos' || product.tags?.toLowerCase().includes(activeTag.toLowerCase());
       const matchesFavorites = !showFavoritesOnly || favorites.includes(product.id);
       const matchesPrice = !product.basePrice || (product.basePrice >= priceRange[0] && product.basePrice <= priceRange[1]);
       const matchesWeight = !product.defaultWeightG || (product.defaultWeightG >= weightRange[0] && product.defaultWeightG <= weightRange[1]);
@@ -815,7 +822,7 @@ export function CatalogPublic() {
         .join(' ')
         .toLowerCase();
       const matchesSearch = !search || haystack.includes(search.toLowerCase());
-      return matchesCollection && matchesMaterial && matchesSearch && matchesFavorites && matchesPrice && matchesWeight;
+      return matchesCollection && matchesMaterial && matchesTag && matchesSearch && matchesFavorites && matchesPrice && matchesWeight;
     });
 
     const sorted = [...visible];
@@ -830,7 +837,7 @@ export function CatalogPublic() {
       }
     });
     return sorted;
-  }, [publicProducts, activeCollection, activeMaterial, search, sortBy, showFavoritesOnly, priceRange, weightRange]);
+  }, [publicProducts, activeCollection, activeMaterial, activeTag, search, sortBy, showFavoritesOnly, priceRange, weightRange]);
 
   useEffect(() => {
     let isMounted = true;
@@ -1119,8 +1126,8 @@ export function CatalogPublic() {
             {catalogSubheadline && <p className="mt-1 text-sm" style={{ color: palette.textMuted }}>{catalogSubheadline}</p>}
           </div>
 
-          <div className="mt-4">
-            <div className="relative">
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="search"
@@ -1131,9 +1138,104 @@ export function CatalogPublic() {
                 style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, boxShadow: `0 0 0 0 transparent`, outlineColor: accent }}
               />
             </div>
+            <button
+              type="button"
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
+                showFavoritesOnly ? 'bg-rose-50 text-rose-600' : ''
+              }`}
+              style={{ backgroundColor: showFavoritesOnly ? undefined : palette.sectionBg, border: `1px solid ${palette.border}`, color: showFavoritesOnly ? undefined : palette.text }}
+            >
+              <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'fill-rose-500' : ''}`} />
+              Favoritos
+            </button>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="rounded-xl px-4 py-2.5 text-sm font-medium outline-none"
+              style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, color: palette.text }}
+              aria-label="Ordenar produtos"
+            >
+              <option value="name">Nome A–Z</option>
+              <option value="collection">Coleção</option>
+              <option value="material">Material</option>
+            </select>
           </div>
+
+          {tags.length > 1 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => setActiveTag(tag)}
+                  className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
+                  style={
+                    activeTag === tag
+                      ? { backgroundColor: accent, color: palette.text, borderColor: accent }
+                      : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
+                  }
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </section>
+
+      {/* Destaques - Cards menores */}
+      {!isLoading && featuredProducts.length > 0 && (
+        <section className="px-4 py-8 sm:px-6" style={{ backgroundColor: palette.pageBg }}>
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: palette.textMuted }}>Destaques</h3>
+                <p className="mt-1 text-sm" style={{ color: palette.textMuted }}>
+                  Seleção especial de produtos
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+              {featuredProducts.slice(0, 8).map((product) => {
+                const images = getProductImages(product);
+                const cover = images[0];
+                return (
+                  <button
+                    key={product.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedProduct(product);
+                      setDetailsOpen(true);
+                    }}
+                    className="group relative aspect-square overflow-hidden rounded-xl shadow-sm transition-all hover:scale-105 hover:shadow-md"
+                    style={{ backgroundColor: palette.cardBg }}
+                  >
+                    {cover ? (
+                      <img
+                        src={cover}
+                        alt={product.name}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center" style={{ backgroundColor: lightenHex(accent) }}>
+                        <span className="text-xs font-bold text-slate-400">Sem foto</span>
+                      </div>
+                    )}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    <div className="absolute bottom-2 left-2 right-2">
+                      <p className="text-[10px] font-bold text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 line-clamp-2">
+                        {product.name}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Categorias */}
       {categorySummaries.length > 0 && (
@@ -1153,6 +1255,7 @@ export function CatalogPublic() {
                   onClick={() => {
                     setActiveCollection(category.name);
                     setActiveMaterial('Todos');
+                    setActiveTag('Todos');
                   }}
                   className={`flex flex-col items-start rounded-2xl px-4 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
                     activeCollection === category.name ? 'border-slate-900' : 'border-slate-100'
@@ -1170,47 +1273,8 @@ export function CatalogPublic() {
         </section>
       )}
 
-      {/* Destaques + grid */}
+      {/* Grid de produtos */}
       <main id="produtos" className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-        {!isLoading && featuredProducts.length > 0 && (
-          <section className="mb-10 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-500">Produtos em destaque</h3>
-                <p className="mt-1 text-sm text-slate-500">
-                  Seleção de modelos para começar a explorar o catálogo.
-                </p>
-              </div>
-              {publicProducts.length > 8 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveCollection('Todos');
-                    setActiveMaterial('Todos');
-                    setSearch('');
-                  }}
-                  className="rounded-full border border-slate-200 px-4 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
-                >
-                  Ver todos os produtos
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {featuredProducts.map((p) => (
-                <ProductCard
-                  key={`featured-${p.id}`}
-                  product={p}
-                  accent={accent}
-                  primaryColor={primaryColor}
-                  ctaLabel={ctaLabel}
-                  onOpenDetails={openDetails}
-                  onOpenQuote={openQuote}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-
         {isLoading ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, index) => (
@@ -1233,8 +1297,14 @@ export function CatalogPublic() {
                 accent={accent}
                 primaryColor={primaryColor}
                 ctaLabel={ctaLabel}
-                onOpenDetails={openDetails}
-                onOpenQuote={openQuote}
+                onOpenDetails={(product) => {
+                  setSelectedProduct(product);
+                  setDetailsOpen(true);
+                }}
+                onOpenQuote={(product) => {
+                  setSelectedProduct(product);
+                  setQuoteOpen(true);
+                }}
               />
             ))}
           </div>
@@ -1242,13 +1312,14 @@ export function CatalogPublic() {
           <div className="flex flex-col items-center justify-center py-24 text-slate-400">
             <p className="text-lg font-bold text-slate-500">Nenhum produto encontrado</p>
             <p className="mt-1 text-sm">Tente outro filtro ou termo de busca</p>
-            {(search || activeCollection !== 'Todos' || activeMaterial !== 'Todos') && (
+            {(search || activeCollection !== 'Todos' || activeMaterial !== 'Todos' || activeTag !== 'Todos') && (
               <button
                 type="button"
                 onClick={() => {
                   setSearch('');
                   setActiveCollection('Todos');
                   setActiveMaterial('Todos');
+                  setActiveTag('Todos');
                 }}
                 className="mt-4 rounded-full px-4 py-2 text-sm font-bold text-white"
                 style={{ backgroundColor: accent }}
