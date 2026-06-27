@@ -54,6 +54,10 @@ const EMPTY_FORM = {
   dimensions: '',
   tags: '',
   isPublic: true,
+  tipo: '',
+  ocasião: '',
+  ambiente: '',
+  público: '',
   variants: [] as Array<{ id: string; name: string; size: string; color: string; material: string; priceAdjustment: number; defaultWeightG: string }>,
 };
 
@@ -301,6 +305,12 @@ export function Products() {
   // Collections list
   const collections = ['Todos', ...Array.from(new Set(products.map(p => p.collection || 'Sem Coleção')))];
 
+  // Extract unique values for filter fields
+  const tipoOptions = Array.from(new Set(products.map(p => p.tipo).filter(Boolean)));
+  const ocasiãoOptions = Array.from(new Set(products.map(p => p.ocasião).filter(Boolean)));
+  const ambienteOptions = Array.from(new Set(products.map(p => p.ambiente).filter(Boolean)));
+  const públicoOptions = Array.from(new Set(products.map(p => p.público).filter(Boolean)));
+
   const filtered = products.filter(p => {
     const matchSearch =
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -336,6 +346,10 @@ export function Products() {
       dimensions: p.dimensions || '',
       tags: p.tags || '',
       isPublic: p.isPublic !== false,
+      tipo: p.tipo || '',
+      ocasião: p.ocasião || '',
+      ambiente: p.ambiente || '',
+      público: p.público || '',
       variants: p.variants?.map(v => ({
         id: v.id,
         name: v.name,
@@ -471,6 +485,10 @@ export function Products() {
       dimensions: formData.dimensions.trim() || undefined,
       tags: formData.tags.trim() || undefined,
       isPublic: formData.isPublic,
+      tipo: formData.tipo.trim() || undefined,
+      ocasião: formData.ocasião.trim() || undefined,
+      ambiente: formData.ambiente.trim() || undefined,
+      público: formData.público.trim() || undefined,
       variants: formData.variants && formData.variants.length > 0 ? formData.variants.map(v => ({
         id: v.id,
         name: v.name,
@@ -722,6 +740,58 @@ export function Products() {
                 <input value={formData.collection} onChange={e => setFormData(p => ({ ...p, collection: e.target.value }))}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
                   placeholder="Ex: Decoração, Geek, Funcional" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Tipo</label>
+                <input 
+                  list="tipo-options" 
+                  value={formData.tipo} 
+                  onChange={e => setFormData(p => ({ ...p, tipo: e.target.value }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                  placeholder="Ex: Personalizado, Produto pronto" 
+                />
+                <datalist id="tipo-options">
+                  {tipoOptions.map(opt => <option key={opt} value={opt} />)}
+                </datalist>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Ocasião</label>
+                <input 
+                  list="ocasiao-options" 
+                  value={formData.ocasião} 
+                  onChange={e => setFormData(p => ({ ...p, ocasião: e.target.value }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                  placeholder="Ex: Dia das mães, Dia dos pais" 
+                />
+                <datalist id="ocasiao-options">
+                  {ocasiãoOptions.map(opt => <option key={opt} value={opt} />)}
+                </datalist>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Ambiente</label>
+                <input 
+                  list="ambiente-options" 
+                  value={formData.ambiente} 
+                  onChange={e => setFormData(p => ({ ...p, ambiente: e.target.value }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                  placeholder="Ex: Casa, Escritório, Quarto" 
+                />
+                <datalist id="ambiente-options">
+                  {ambienteOptions.map(opt => <option key={opt} value={opt} />)}
+                </datalist>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Público</label>
+                <input 
+                  list="publico-options" 
+                  value={formData.público} 
+                  onChange={e => setFormData(p => ({ ...p, público: e.target.value }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                  placeholder="Ex: Infantil, Adulto, Geek" 
+                />
+                <datalist id="publico-options">
+                  {públicoOptions.map(opt => <option key={opt} value={opt} />)}
+                </datalist>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Tags (separadas por vírgula)</label>

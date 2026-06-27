@@ -791,22 +791,18 @@ export function CatalogPublic() {
     return ['Todos', ...Array.from(new Set(allTags))];
   }, [publicProducts]);
 
-  // Extrair tags por categoria e tipo específico
-  const getTagsByCategoryAndType = useMemo(() => {
-    return (category: string, tagType: string) => {
+  // Extrair valores por categoria e campo específico
+  const getValuesByCategoryAndField = useMemo(() => {
+    return (category: string, field: 'tipo' | 'ocasião' | 'ambiente' | 'público') => {
       const categoryProducts = category === 'Todos' 
         ? publicProducts 
         : publicProducts.filter(p => (p.collection || 'Geral') === category);
       
-      const allTags = categoryProducts.flatMap((p) => {
-        if (!p.tags) return [];
-        const tagList = p.tags.split(',').map(t => t.trim()).filter(Boolean);
-        // Filtrar tags que começam com o tipo específico (ex: "tipo:decoração")
-        return tagList.filter(t => t.toLowerCase().startsWith(`${tagType.toLowerCase()}:`))
-          .map(t => t.split(':')[1]?.trim())
-          .filter(Boolean);
+      const allValues = categoryProducts.flatMap((p) => {
+        const value = p[field];
+        return value ? [value] : [];
       });
-      return ['Todos', ...Array.from(new Set(allTags))];
+      return ['Todos', ...Array.from(new Set(allValues))];
     };
   }, [publicProducts]);
 
@@ -838,12 +834,11 @@ export function CatalogPublic() {
       const matchesMaterial = activeMaterial === 'Todos' || product.materialType === activeMaterial;
       const matchesTag = activeTag === 'Todos' || product.tags?.toLowerCase().includes(activeTag.toLowerCase());
       
-      // Filtros específicos por tipo de tag
-      const productTags = product.tags?.split(',').map(t => t.trim().toLowerCase()) ?? [];
-      const matchesTipo = activeTipo === 'Todos' || productTags.some(t => t.startsWith(`tipo:`) && t.split(':')[1]?.trim() === activeTipo.toLowerCase());
-      const matchesOcasião = activeOcasião === 'Todos' || productTags.some(t => t.startsWith(`ocasião:`) && t.split(':')[1]?.trim() === activeOcasião.toLowerCase());
-      const matchesAmbiente = activeAmbiente === 'Todos' || productTags.some(t => t.startsWith(`ambiente:`) && t.split(':')[1]?.trim() === activeAmbiente.toLowerCase());
-      const matchesPublico = activePublico === 'Todos' || productTags.some(t => t.startsWith(`publico:`) && t.split(':')[1]?.trim() === activePublico.toLowerCase());
+      // Filtros específicos por campo
+      const matchesTipo = activeTipo === 'Todos' || product.tipo === activeTipo;
+      const matchesOcasião = activeOcasião === 'Todos' || product.ocasião === activeOcasião;
+      const matchesAmbiente = activeAmbiente === 'Todos' || product.ambiente === activeAmbiente;
+      const matchesPublico = activePublico === 'Todos' || product.público === activePublico;
       
       const matchesFavorites = !showFavoritesOnly || favorites.includes(product.id);
       const matchesPrice = !product.basePrice || (product.basePrice >= priceRange[0] && product.basePrice <= priceRange[1]);
@@ -1402,11 +1397,11 @@ export function CatalogPublic() {
             
             <div className="space-y-4">
               {/* Tipo */}
-              {getTagsByCategoryAndType(activeCollection, 'tipo').length > 1 && (
+              {getValuesByCategoryAndField(activeCollection, 'tipo').length > 1 && (
                 <div>
                   <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Tipo</label>
                   <div className="flex flex-wrap gap-2">
-                    {getTagsByCategoryAndType(activeCollection, 'tipo').map((tag) => (
+                    {getValuesByCategoryAndField(activeCollection, 'tipo').map((tag) => (
                       <button
                         key={`tipo-${tag}`}
                         type="button"
@@ -1426,11 +1421,11 @@ export function CatalogPublic() {
               )}
 
               {/* Ocasião */}
-              {getTagsByCategoryAndType(activeCollection, 'ocasião').length > 1 && (
+              {getValuesByCategoryAndField(activeCollection, 'ocasião').length > 1 && (
                 <div>
                   <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Ocasião</label>
                   <div className="flex flex-wrap gap-2">
-                    {getTagsByCategoryAndType(activeCollection, 'ocasião').map((tag) => (
+                    {getValuesByCategoryAndField(activeCollection, 'ocasião').map((tag) => (
                       <button
                         key={`ocasiao-${tag}`}
                         type="button"
@@ -1450,11 +1445,11 @@ export function CatalogPublic() {
               )}
 
               {/* Ambiente */}
-              {getTagsByCategoryAndType(activeCollection, 'ambiente').length > 1 && (
+              {getValuesByCategoryAndField(activeCollection, 'ambiente').length > 1 && (
                 <div>
                   <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Ambiente</label>
                   <div className="flex flex-wrap gap-2">
-                    {getTagsByCategoryAndType(activeCollection, 'ambiente').map((tag) => (
+                    {getValuesByCategoryAndField(activeCollection, 'ambiente').map((tag) => (
                       <button
                         key={`ambiente-${tag}`}
                         type="button"
@@ -1474,11 +1469,11 @@ export function CatalogPublic() {
               )}
 
               {/* Público */}
-              {getTagsByCategoryAndType(activeCollection, 'publico').length > 1 && (
+              {getValuesByCategoryAndField(activeCollection, 'público').length > 1 && (
                 <div>
                   <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Público</label>
                   <div className="flex flex-wrap gap-2">
-                    {getTagsByCategoryAndType(activeCollection, 'publico').map((tag) => (
+                    {getValuesByCategoryAndField(activeCollection, 'público').map((tag) => (
                       <button
                         key={`publico-${tag}`}
                         type="button"
