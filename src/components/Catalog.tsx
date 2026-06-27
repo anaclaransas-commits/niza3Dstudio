@@ -668,9 +668,9 @@ export function Catalog() {
               <p className="mt-1 text-sm opacity-75">{tagline}</p>
               {heroDescription && <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80">{heroDescription}</p>}
               {previewHighlights.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-4">
+                <div className="flex flex-nowrap gap-1.5 mt-4 overflow-x-auto md:flex-wrap md:overflow-visible">
                   {previewHighlights.map((highlight) => (
-                    <span key={highlight} className="rounded-full border border-white/16 bg-white/12 px-3 py-1.5 text-[11px] font-bold tracking-wide text-white/80">
+                    <span key={highlight} className="whitespace-nowrap rounded-full border border-white/16 bg-white/12 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white/80 md:px-3 md:py-1.5 md:text-[11px]">
                       {highlight}
                     </span>
                   ))}

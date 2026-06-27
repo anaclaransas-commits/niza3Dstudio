@@ -45,9 +45,9 @@ const DEFAULT_SETTINGS: CatalogSettings = {
   coverImageUrl: '',
   announcementText: 'Catálogo sob encomenda • personalização de cor, escala e acabamento • atendimento direto',
   heroDescription: 'A Niza3D Studio cria peças decorativas, utilitárias e presentes personalizados com visual limpo, produção cuidadosa e contato rápido para orçamento.',
-  highlightOne: 'Decoração, organização e presentes',
-  highlightTwo: 'Escala, cor e acabamento sob medida',
-  highlightThree: 'Atendimento rápido pelo WhatsApp',
+  highlightOne: 'Design exclusivo e moderno',
+  highlightTwo: 'Projetos exclusivos criados sob medidas',
+  highlightThree: 'Entrega segura para todo Brasil',
   catalogHeadline: 'Peças que saem do catálogo para o seu projeto',
   catalogSubheadline: 'Explore as coleções, escolha o modelo ideal e fale conosco para personalizar cada detalhe.',
   aboutTitle: 'Feito com atenção aos detalhes',
@@ -998,11 +998,11 @@ export function CatalogPublic() {
               <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/75 md:mx-0">{heroDescription}</p>
             )}
             {highlights.length > 0 && (
-              <div className="mt-5 flex flex-wrap justify-center gap-2 md:justify-start">
+              <div className="mt-4 flex flex-nowrap justify-center gap-1.5 overflow-x-auto md:justify-start md:flex-wrap md:overflow-visible">
                 {highlights.map((h) => (
                   <span
                     key={h}
-                    className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-bold text-white/85"
+                    className="whitespace-nowrap rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-bold text-white/85 md:px-3 md:py-1.5 md:text-[11px]"
                   >
                     {h}
                   </span>
