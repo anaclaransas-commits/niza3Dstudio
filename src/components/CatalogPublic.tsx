@@ -1286,7 +1286,7 @@ export function CatalogPublic() {
                 {publicProducts.length} modelo{publicProducts.length === 1 ? '' : 's'} disponível(eis)
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5">
+            <div className="flex flex-wrap gap-3 md:grid md:grid-cols-4 lg:grid-cols-5">
               {categorySummaries.map((category) => (
                 <button
                   key={category.name}
@@ -1300,7 +1300,7 @@ export function CatalogPublic() {
                     setActiveAmbiente('Todos');
                     setActivePublico('Todos');
                   }}
-                  className={`flex flex-col items-start rounded-2xl px-4 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
+                  className={`flex flex-col items-start rounded-2xl px-4 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md flex-1 min-w-[80px] max-w-[120px] ${
                     activeCollection === category.name ? 'border-slate-900' : 'border-slate-100'
                   }`}
                   style={{ backgroundColor: palette.cardBg, borderColor: activeCollection === category.name ? primaryColor : palette.border }}

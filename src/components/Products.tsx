@@ -743,55 +743,47 @@ export function Products() {
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Tipo</label>
-                <input 
-                  list="tipo-options" 
+                <select 
                   value={formData.tipo} 
                   onChange={e => setFormData(p => ({ ...p, tipo: e.target.value }))}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                  placeholder="Ex: Personalizado, Produto pronto" 
-                />
-                <datalist id="tipo-options">
-                  {tipoOptions.map(opt => <option key={opt} value={opt} />)}
-                </datalist>
+                >
+                  <option value="">Selecione...</option>
+                  {tipoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Ocasião</label>
-                <input 
-                  list="ocasiao-options" 
+                <select 
                   value={formData.ocasião} 
                   onChange={e => setFormData(p => ({ ...p, ocasião: e.target.value }))}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                  placeholder="Ex: Dia das mães, Dia dos pais" 
-                />
-                <datalist id="ocasiao-options">
-                  {ocasiãoOptions.map(opt => <option key={opt} value={opt} />)}
-                </datalist>
+                >
+                  <option value="">Selecione...</option>
+                  {ocasiãoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Ambiente</label>
-                <input 
-                  list="ambiente-options" 
+                <select 
                   value={formData.ambiente} 
                   onChange={e => setFormData(p => ({ ...p, ambiente: e.target.value }))}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                  placeholder="Ex: Casa, Escritório, Quarto" 
-                />
-                <datalist id="ambiente-options">
-                  {ambienteOptions.map(opt => <option key={opt} value={opt} />)}
-                </datalist>
+                >
+                  <option value="">Selecione...</option>
+                  {ambienteOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Público</label>
-                <input 
-                  list="publico-options" 
+                <select 
                   value={formData.público} 
                   onChange={e => setFormData(p => ({ ...p, público: e.target.value }))}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                  placeholder="Ex: Infantil, Adulto, Geek" 
-                />
-                <datalist id="publico-options">
-                  {públicoOptions.map(opt => <option key={opt} value={opt} />)}
-                </datalist>
+                >
+                  <option value="">Selecione...</option>
+                  {públicoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Tags (separadas por vírgula)</label>
