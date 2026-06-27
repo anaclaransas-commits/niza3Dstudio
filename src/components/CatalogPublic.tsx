@@ -798,11 +798,18 @@ export function CatalogPublic() {
         ? publicProducts 
         : publicProducts.filter(p => (p.collection || 'Geral') === category);
       
+      console.log('DEBUG - Category:', category, 'Field:', field);
+      console.log('DEBUG - Category products:', categoryProducts.map(p => ({ name: p.name, collection: p.collection, [field]: p[field] })));
+      
       const allValues = categoryProducts.flatMap((p) => {
         const value = p[field];
         return value ? [value] : [];
       });
-      return ['Todos', ...Array.from(new Set(allValues))];
+      
+      const result = ['Todos', ...Array.from(new Set(allValues))];
+      console.log('DEBUG - Result values:', result);
+      
+      return result;
     };
   }, [publicProducts]);
 
@@ -1397,100 +1404,116 @@ export function CatalogPublic() {
             
             <div className="space-y-4">
               {/* Tipo */}
-              {getValuesByCategoryAndField(activeCollection, 'tipo').filter(v => v !== 'Todos').length > 0 && (
-                <div>
-                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Tipo</label>
-                  <div className="flex flex-wrap gap-2">
-                    {getValuesByCategoryAndField(activeCollection, 'tipo').map((tag) => (
-                      <button
-                        key={`tipo-${tag}`}
-                        type="button"
-                        onClick={() => setActiveTipo(tag)}
-                        className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
-                        style={
-                          activeTipo === tag
-                            ? { backgroundColor: accent, color: palette.text, borderColor: accent }
-                            : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
-                        }
-                      >
-                        {tag}
-                      </button>
-                    ))}
+              {(() => {
+                const values = getValuesByCategoryAndField(activeCollection, 'tipo');
+                const hasValues = values.filter(v => v !== 'Todos').length > 0;
+                return hasValues ? (
+                  <div>
+                    <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Tipo</label>
+                    <div className="flex flex-wrap gap-2">
+                      {values.map((tag) => (
+                        <button
+                          key={`tipo-${tag}`}
+                          type="button"
+                          onClick={() => setActiveTipo(tag)}
+                          className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
+                          style={
+                            activeTipo === tag
+                              ? { backgroundColor: accent, color: palette.text, borderColor: accent }
+                              : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
+                          }
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                ) : null;
+              })()}
 
               {/* Ocasião */}
-              {getValuesByCategoryAndField(activeCollection, 'ocasião').filter(v => v !== 'Todos').length > 0 && (
-                <div>
-                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Ocasião</label>
-                  <div className="flex flex-wrap gap-2">
-                    {getValuesByCategoryAndField(activeCollection, 'ocasião').map((tag) => (
-                      <button
-                        key={`ocasiao-${tag}`}
-                        type="button"
-                        onClick={() => setActiveOcasião(tag)}
-                        className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
-                        style={
-                          activeOcasião === tag
-                            ? { backgroundColor: accent, color: palette.text, borderColor: accent }
-                            : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
-                        }
-                      >
-                        {tag}
-                      </button>
-                    ))}
+              {(() => {
+                const values = getValuesByCategoryAndField(activeCollection, 'ocasião');
+                const hasValues = values.filter(v => v !== 'Todos').length > 0;
+                return hasValues ? (
+                  <div>
+                    <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Ocasião</label>
+                    <div className="flex flex-wrap gap-2">
+                      {values.map((tag) => (
+                        <button
+                          key={`ocasiao-${tag}`}
+                          type="button"
+                          onClick={() => setActiveOcasião(tag)}
+                          className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
+                          style={
+                            activeOcasião === tag
+                              ? { backgroundColor: accent, color: palette.text, borderColor: accent }
+                              : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
+                          }
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                ) : null;
+              })()}
 
               {/* Ambiente */}
-              {getValuesByCategoryAndField(activeCollection, 'ambiente').filter(v => v !== 'Todos').length > 0 && (
-                <div>
-                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Ambiente</label>
-                  <div className="flex flex-wrap gap-2">
-                    {getValuesByCategoryAndField(activeCollection, 'ambiente').map((tag) => (
-                      <button
-                        key={`ambiente-${tag}`}
-                        type="button"
-                        onClick={() => setActiveAmbiente(tag)}
-                        className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
-                        style={
-                          activeAmbiente === tag
-                            ? { backgroundColor: accent, color: palette.text, borderColor: accent }
-                            : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
-                        }
-                      >
-                        {tag}
-                      </button>
-                    ))}
+              {(() => {
+                const values = getValuesByCategoryAndField(activeCollection, 'ambiente');
+                const hasValues = values.filter(v => v !== 'Todos').length > 0;
+                return hasValues ? (
+                  <div>
+                    <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Ambiente</label>
+                    <div className="flex flex-wrap gap-2">
+                      {values.map((tag) => (
+                        <button
+                          key={`ambiente-${tag}`}
+                          type="button"
+                          onClick={() => setActiveAmbiente(tag)}
+                          className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
+                          style={
+                            activeAmbiente === tag
+                              ? { backgroundColor: accent, color: palette.text, borderColor: accent }
+                              : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
+                          }
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                ) : null;
+              })()}
 
               {/* Público */}
-              {getValuesByCategoryAndField(activeCollection, 'público').filter(v => v !== 'Todos').length > 0 && (
-                <div>
-                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Público</label>
-                  <div className="flex flex-wrap gap-2">
-                    {getValuesByCategoryAndField(activeCollection, 'público').map((tag) => (
-                      <button
-                        key={`publico-${tag}`}
-                        type="button"
-                        onClick={() => setActivePublico(tag)}
-                        className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
-                        style={
-                          activePublico === tag
-                            ? { backgroundColor: accent, color: palette.text, borderColor: accent }
-                            : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
-                        }
-                      >
-                        {tag}
-                      </button>
-                    ))}
+              {(() => {
+                const values = getValuesByCategoryAndField(activeCollection, 'público');
+                const hasValues = values.filter(v => v !== 'Todos').length > 0;
+                return hasValues ? (
+                  <div>
+                    <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Público</label>
+                    <div className="flex flex-wrap gap-2">
+                      {values.map((tag) => (
+                        <button
+                          key={`publico-${tag}`}
+                          type="button"
+                          onClick={() => setActivePublico(tag)}
+                          className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
+                          style={
+                            activePublico === tag
+                              ? { backgroundColor: accent, color: palette.text, borderColor: accent }
+                              : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
+                          }
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                ) : null;
+              })()}
 
               {/* Material */}
               {materials.length > 1 && (
