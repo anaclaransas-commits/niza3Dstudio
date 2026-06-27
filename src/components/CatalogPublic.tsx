@@ -1076,7 +1076,7 @@ export function CatalogPublic() {
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: palette.textMuted }}>Personalizado</p>
-              <p className="text-[10px] whitespace-nowrap" style={{ color: palette.textMuted }}>Projetos exclusivos criados sob medidas</p>
+              <p className="text-[10px]" style={{ color: palette.textMuted }}>Projetos exclusivos criados sob medidas</p>
             </div>
           </div>
           <div className="flex flex-1 min-w-[140px] items-center gap-2">
@@ -1085,7 +1085,7 @@ export function CatalogPublic() {
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: palette.textMuted }}>Qualidade</p>
-              <p className="text-[10px] whitespace-nowrap" style={{ color: palette.textMuted }}>Acabamento premium e durável</p>
+              <p className="text-[10px]" style={{ color: palette.textMuted }}>Acabamento premium e durável</p>
             </div>
           </div>
           <div className="flex flex-1 min-w-[140px] items-center gap-2">
@@ -1094,7 +1094,7 @@ export function CatalogPublic() {
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: palette.textMuted }}>Rápido</p>
-              <p className="text-[10px] whitespace-nowrap" style={{ color: palette.textMuted }}>Atendimento ágil e direto</p>
+              <p className="text-[10px]" style={{ color: palette.textMuted }}>Atendimento ágil e direto</p>
             </div>
           </div>
           <div className="flex flex-1 min-w-[140px] items-center gap-2">
@@ -1103,7 +1103,7 @@ export function CatalogPublic() {
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: palette.textMuted }}>Cuidado</p>
-              <p className="text-[10px] whitespace-nowrap" style={{ color: palette.textMuted }}>Embalagem segura e protegida</p>
+              <p className="text-[10px]" style={{ color: palette.textMuted }}>Embalagem segura e protegida</p>
             </div>
           </div>
         </div>
@@ -1112,150 +1112,24 @@ export function CatalogPublic() {
       {/* Filtros + visão geral */}
       <section className="px-4 py-6 sm:px-6" style={{ backgroundColor: palette.pageBg, borderBottom: `1px solid ${palette.border}` }}>
         <div className="mx-auto max-w-6xl">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-black sm:text-2xl" style={{ color: palette.text }}>
-                {catalogHeadline || 'Nossos produtos'}
-              </h2>
-              {catalogSubheadline && <p className="mt-1 text-sm" style={{ color: palette.textMuted }}>{catalogSubheadline}</p>}
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
-              style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, color: palette.text }}
-            >
-              <Filter className="h-4 w-4" />
-              {showFilters ? 'Ocultar filtros' : 'Filtros'}
-            </button>
+          <div>
+            <h2 className="text-xl font-black sm:text-2xl" style={{ color: palette.text }}>
+              {catalogHeadline || 'Nossos produtos'}
+            </h2>
+            {catalogSubheadline && <p className="mt-1 text-sm" style={{ color: palette.textMuted }}>{catalogSubheadline}</p>}
           </div>
 
-          {showFilters && (
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="search"
-                  placeholder="Buscar produto, tag ou coleção..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none focus:ring-2"
-                  style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, boxShadow: `0 0 0 0 transparent`, outlineColor: accent }}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
-                  showFavoritesOnly ? 'bg-rose-50 text-rose-600' : ''
-                }`}
-                style={{ backgroundColor: showFavoritesOnly ? undefined : palette.sectionBg, border: `1px solid ${palette.border}`, color: showFavoritesOnly ? undefined : palette.text }}
-              >
-                <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'fill-rose-500' : ''}`} />
-                Favoritos
-              </button>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="rounded-xl px-4 py-2.5 text-sm font-medium outline-none"
-                style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, color: palette.text }}
-                aria-label="Ordenar produtos"
-              >
-                <option value="name">Nome A–Z</option>
-                <option value="collection">Coleção</option>
-                <option value="material">Material</option>
-              </select>
-            </div>
-          )}
-
-          {showFilters && collections.length > 1 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {collections.map((col) => (
-                <button
-                  key={col}
-                  type="button"
-                  onClick={() => setActiveCollection(col)}
-                  className="rounded-full border px-4 py-1.5 text-xs font-bold transition-all"
-                  style={
-                    activeCollection === col
-                      ? { backgroundColor: primaryColor, color: '#ffffff', borderColor: primaryColor }
-                      : { backgroundColor: palette.sectionBg, color: palette.textMuted, borderColor: palette.border }
-                  }
-                >
-                  {col}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {materials.length > 2 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {materials.map((mat) => (
-                <button
-                  key={mat}
-                  type="button"
-                  onClick={() => setActiveMaterial(mat)}
-                  className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
-                  style={
-                    activeMaterial === mat
-                      ? { backgroundColor: accent, color: palette.text, borderColor: accent }
-                      : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
-                  }
-                >
-                  {mat}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: palette.textMuted }}>
-                Faixa de preço (R$)
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={priceRange[0]}
-                  onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
-                  className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-                  style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}` }}
-                  placeholder="Min"
-                />
-                <span style={{ color: palette.textMuted }}>-</span>
-                <input
-                  type="number"
-                  value={priceRange[1]}
-                  onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
-                  className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-                  style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}` }}
-                  placeholder="Max"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: palette.textMuted }}>
-                Faixa de peso (g)
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={weightRange[0]}
-                  onChange={(e) => setWeightRange([Number(e.target.value), weightRange[1]])}
-                  className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-                  style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}` }}
-                  placeholder="Min"
-                />
-                <span style={{ color: palette.textMuted }}>-</span>
-                <input
-                  type="number"
-                  value={weightRange[1]}
-                  onChange={(e) => setWeightRange([weightRange[0], Number(e.target.value)])}
-                  className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-                  style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}` }}
-                  placeholder="Max"
-                />
-              </div>
+          <div className="mt-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="search"
+                placeholder="Buscar produto, tag ou coleção..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none focus:ring-2"
+                style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, boxShadow: `0 0 0 0 transparent`, outlineColor: accent }}
+              />
             </div>
           </div>
         </div>
