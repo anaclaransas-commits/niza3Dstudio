@@ -24,7 +24,7 @@ import {
 import { useStore } from '../store';
 import { uploadCatalogAsset } from '../lib/catalogApi';
 import { coerceProductImageUrls } from '../lib/catalogUtils';
-import { cn, calculate3DPrintCost, parseLocalizedNumber } from '../lib/utils';
+import { cn, calculate3DPrintCost, parseLocalizedNumber, formatCurrency } from '../lib/utils';
 import type { Product } from '../types';
 import JSZip from 'jszip';
 import { ProductGallery } from './ProductGallery';
@@ -51,6 +51,7 @@ const EMPTY_FORM = {
   stlUrl: '',
   referenceUrl: '',
   avgPrintTimeHours: '',
+  dimensions: '',
   tags: '',
   isPublic: true,
   variants: [] as Array<{ id: string; name: string; size: string; color: string; material: string; priceAdjustment: number; defaultWeightG: string }>,
@@ -332,6 +333,7 @@ export function Products() {
       stlUrl: p.stlUrl || '',
       referenceUrl: p.referenceUrl || '',
       avgPrintTimeHours: p.avgPrintTimeHours?.toString() || '',
+      dimensions: p.dimensions || '',
       tags: p.tags || '',
       isPublic: p.isPublic !== false,
       variants: p.variants?.map(v => ({
@@ -466,6 +468,7 @@ export function Products() {
       stlUrl: formData.stlUrl.trim() || undefined,
       referenceUrl: formData.referenceUrl.trim() || undefined,
       avgPrintTimeHours: formData.avgPrintTimeHours ? Number(formData.avgPrintTimeHours) : undefined,
+      dimensions: formData.dimensions.trim() || undefined,
       tags: formData.tags.trim() || undefined,
       isPublic: formData.isPublic,
       variants: formData.variants && formData.variants.length > 0 ? formData.variants.map(v => ({
@@ -741,6 +744,13 @@ export function Products() {
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm" placeholder="4" />
               </div>
               <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Tamanho (ex: 4cm x 4cm)</label>
+                <input type="text" value={formData.dimensions}
+                  onChange={e => setFormData(p => ({ ...p, dimensions: e.target.value }))}
+                  onKeyDown={e => { if (e.key === 'Enter') e.preventDefault(); }}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm" placeholder="4cm x 4cm" />
+              </div>
+              <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1">
                   Preço sugerido (R$)
                   {formData.defaultWeightG && formData.avgPrintTimeHours && (
@@ -981,8 +991,18 @@ export function Products() {
                         <Clock className="w-3 h-3" /> {product.avgPrintTimeHours}h
                       </span>
                     )}
+                    {product.dimensions && (
+                      <span className="flex items-center gap-1 font-semibold">
+                        <Box className="w-3 h-3" /> {product.dimensions}
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
+                    {product.basePrice && (
+                      <span className="font-bold text-emerald-600">
+                        {formatCurrency(product.basePrice)}
+                      </span>
+                    )}
                     {product.stlUrl && (
                       <a href={product.stlUrl} target="_blank" rel="noopener noreferrer"
                         className="p-1.5 bg-blue-50 text-blue-500 rounded-lg hover:bg-blue-100 transition-colors" title="Abrir STL">

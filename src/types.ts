@@ -68,6 +68,7 @@ export interface Product {
   isFeatured?: boolean;
   variants?: ProductVariant[];
   discountCodes?: string[];
+  dimensions?: string; // Tamanho do produto (ex: "4cm x 4cm")
 }
 
 export interface CatalogSettings {

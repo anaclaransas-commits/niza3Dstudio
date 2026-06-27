@@ -324,12 +324,19 @@ function ProductDetailsModal({
                 <p className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{product.defaultWeightG}g</p>
               </div>
             )}
-            {product.avgPrintTimeHours != null && (
+            {product.dimensions && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>Tempo de impressão</p>
-                <p className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{product.avgPrintTimeHours}h</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>Tamanho</p>
+                <p className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{product.dimensions}</p>
               </div>
             )}
+          </div>
+
+          {/* Size change notice */}
+          <div className="mb-6 rounded-2xl p-4 text-center" style={{ backgroundColor: `${accent}15`, border: `1px solid ${accent}30` }}>
+            <p className="text-xs font-semibold" style={{ color: accent }}>
+              💡 O tamanho pode ser alterado conforme sua necessidade.
+            </p>
           </div>
 
           {/* Professional contact information */}
@@ -678,7 +685,7 @@ function ProductCard({
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 text-xs text-slate-400">
             {product.defaultWeightG != null && <span>{product.defaultWeightG}g</span>}
-            {product.avgPrintTimeHours != null && <span>~{product.avgPrintTimeHours}h</span>}
+            {product.dimensions && <span>{product.dimensions}</span>}
           </div>
         </div>
 
