@@ -150,6 +150,10 @@ function normalizeProduct(input: Partial<Product> = {}): Product {
     avgPrintTimeHours: sanitizeNumber(input.avgPrintTimeHours),
     tags: sanitizeOptionalText(input.tags),
     isPublic: sanitizeBoolean(input.isPublic, true),
+    tipo: sanitizeOptionalText(input.tipo),
+    ocasião: sanitizeOptionalText(input.ocasião),
+    ambiente: sanitizeOptionalText(input.ambiente),
+    público: sanitizeOptionalText(input.público),
   };
 }
 

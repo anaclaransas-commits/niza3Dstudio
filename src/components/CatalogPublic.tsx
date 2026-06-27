@@ -1397,7 +1397,7 @@ export function CatalogPublic() {
             
             <div className="space-y-4">
               {/* Tipo */}
-              {getValuesByCategoryAndField(activeCollection, 'tipo').length > 1 && (
+              {getValuesByCategoryAndField(activeCollection, 'tipo').filter(v => v !== 'Todos').length > 0 && (
                 <div>
                   <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Tipo</label>
                   <div className="flex flex-wrap gap-2">
@@ -1421,7 +1421,7 @@ export function CatalogPublic() {
               )}
 
               {/* Ocasião */}
-              {getValuesByCategoryAndField(activeCollection, 'ocasião').length > 1 && (
+              {getValuesByCategoryAndField(activeCollection, 'ocasião').filter(v => v !== 'Todos').length > 0 && (
                 <div>
                   <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Ocasião</label>
                   <div className="flex flex-wrap gap-2">
@@ -1445,7 +1445,7 @@ export function CatalogPublic() {
               )}
 
               {/* Ambiente */}
-              {getValuesByCategoryAndField(activeCollection, 'ambiente').length > 1 && (
+              {getValuesByCategoryAndField(activeCollection, 'ambiente').filter(v => v !== 'Todos').length > 0 && (
                 <div>
                   <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Ambiente</label>
                   <div className="flex flex-wrap gap-2">
@@ -1469,7 +1469,7 @@ export function CatalogPublic() {
               )}
 
               {/* Público */}
-              {getValuesByCategoryAndField(activeCollection, 'público').length > 1 && (
+              {getValuesByCategoryAndField(activeCollection, 'público').filter(v => v !== 'Todos').length > 0 && (
                 <div>
                   <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Público</label>
                   <div className="flex flex-wrap gap-2">
