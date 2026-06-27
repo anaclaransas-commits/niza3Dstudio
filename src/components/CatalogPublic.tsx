@@ -1069,8 +1069,8 @@ export function CatalogPublic() {
 
       {/* Faixa de benefícios */}
       <section className="px-4 py-3 sm:px-6" style={{ backgroundColor: palette.sectionBg, borderBottom: `1px solid ${palette.border}` }}>
-        <div className="mx-auto flex flex-nowrap gap-2 overflow-x-auto md:flex-wrap md:gap-3" style={{ color: palette.text }}>
-          <div className="flex flex-1 min-w-[160px] items-center gap-2">
+        <div className="mx-auto flex flex-nowrap gap-3 overflow-x-auto md:flex-wrap md:gap-3" style={{ color: palette.text }}>
+          <div className="flex flex-1 min-w-[180px] items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-xl flex-shrink-0" style={{ backgroundColor: palette.cardBg, color: accent, border: `1px solid ${palette.border}` }}>
               <Sparkles className="h-3.5 w-3.5" />
             </div>
@@ -1079,7 +1079,7 @@ export function CatalogPublic() {
               <p className="text-[10px] whitespace-nowrap" style={{ color: palette.textMuted }}>Projetos exclusivos criados sob medidas</p>
             </div>
           </div>
-          <div className="flex flex-1 min-w-[160px] items-center gap-2">
+          <div className="flex flex-1 min-w-[180px] items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-xl flex-shrink-0" style={{ backgroundColor: palette.cardBg, color: accent, border: `1px solid ${palette.border}` }}>
               <Shield className="h-3.5 w-3.5" />
             </div>
@@ -1088,7 +1088,7 @@ export function CatalogPublic() {
               <p className="text-[10px] whitespace-nowrap" style={{ color: palette.textMuted }}>Acabamento premium e durável</p>
             </div>
           </div>
-          <div className="flex flex-1 min-w-[160px] items-center gap-2">
+          <div className="flex flex-1 min-w-[180px] items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-xl flex-shrink-0" style={{ backgroundColor: palette.cardBg, color: accent, border: `1px solid ${palette.border}` }}>
               <Zap className="h-3.5 w-3.5" />
             </div>
@@ -1097,7 +1097,7 @@ export function CatalogPublic() {
               <p className="text-[10px] whitespace-nowrap" style={{ color: palette.textMuted }}>Atendimento ágil e direto</p>
             </div>
           </div>
-          <div className="flex flex-1 min-w-[160px] items-center gap-2">
+          <div className="flex flex-1 min-w-[180px] items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-xl flex-shrink-0" style={{ backgroundColor: palette.cardBg, color: accent, border: `1px solid ${palette.border}` }}>
               <Package className="h-3.5 w-3.5" />
             </div>
