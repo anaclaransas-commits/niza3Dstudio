@@ -798,18 +798,11 @@ export function CatalogPublic() {
         ? publicProducts 
         : publicProducts.filter(p => (p.collection || 'Geral') === category);
       
-      console.log('DEBUG - Category:', category, 'Field:', field);
-      console.log('DEBUG - Category products:', categoryProducts.map(p => ({ name: p.name, collection: p.collection, [field]: p[field] })));
-      
       const allValues = categoryProducts.flatMap((p) => {
         const value = p[field];
         return value ? [value] : [];
       });
-      
-      const result = ['Todos', ...Array.from(new Set(allValues))];
-      console.log('DEBUG - Result values:', result);
-      
-      return result;
+      return ['Todos', ...Array.from(new Set(allValues))];
     };
   }, [publicProducts]);
 
