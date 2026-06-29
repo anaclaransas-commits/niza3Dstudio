@@ -60,7 +60,6 @@ const EMPTY_FORM = {
   público: [] as string[],
   estilo: [] as string[],
   ocasião: [] as string[],
-  coleção: [] as string[],
   tipo: [] as string[],
   variants: [] as Array<{ id: string; name: string; size: string; color: string; material: string; priceAdjustment: number; defaultWeightG: string }>,
 };
@@ -452,7 +451,6 @@ export function Products() {
       ambiente: Array.isArray(p.ambiente) ? p.ambiente : (p.ambiente ? [p.ambiente] : []),
       público: Array.isArray(p.público) ? p.público : (p.público ? [p.público] : []),
       estilo: Array.isArray(p.estilo) ? p.estilo : (p.estilo ? [p.estilo] : []),
-      coleção: Array.isArray(p.coleção) ? p.coleção : (p.coleção ? [p.coleção] : []),
       variants: p.variants?.map(v => ({
         id: v.id,
         name: v.name,
@@ -593,7 +591,6 @@ export function Products() {
       ambiente: formData.ambiente.length > 0 ? formData.ambiente : undefined,
       público: formData.público.length > 0 ? formData.público : undefined,
       estilo: formData.estilo.length > 0 ? formData.estilo : undefined,
-      coleção: formData.coleção.length > 0 ? formData.coleção : undefined,
       variants: formData.variants && formData.variants.length > 0 ? formData.variants.map(v => ({
         id: v.id,
         name: v.name,
@@ -844,7 +841,7 @@ export function Products() {
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">Coleção / Categoria (principal)</label>
+                <label className="text-xs font-bold text-slate-500 uppercase">Categoria (principal)</label>
                 <input 
                   list="collection-options"
                   value={formData.collection} 
@@ -853,7 +850,7 @@ export function Products() {
                   placeholder="Digite ou selecione..."
                 />
                 <datalist id="collection-options">
-                  {coleçãoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  {collections.filter(c => c !== 'Todos').map(opt => <option key={opt} value={opt}>{opt}</option>)}
                 </datalist>
               </div>
               <MultiSelect
@@ -890,13 +887,6 @@ export function Products() {
                 onChange={(values) => setFormData(p => ({ ...p, estilo: values }))}
                 availableOptions={estiloOptions}
                 placeholder="Adicionar estilo..."
-              />
-              <MultiSelect
-                label="Coleção"
-                values={formData.coleção}
-                onChange={(values) => setFormData(p => ({ ...p, coleção: values }))}
-                availableOptions={coleçãoOptions}
-                placeholder="Adicionar coleção..."
               />
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Tags (separadas por vírgula)</label>

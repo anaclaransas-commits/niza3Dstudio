@@ -1021,13 +1021,7 @@ export function Catalog() {
                 >
                   Ocasião
                 </button>
-                <button
-                  type="button"
-                  onClick={() => { setSelectedFilterField('coleção'); setShowFilterManagement(false); }}
-                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
-                >
-                  Coleção
-                </button>
+
               </div>
             </div>
           </div>
