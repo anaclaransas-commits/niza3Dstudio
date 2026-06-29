@@ -883,6 +883,7 @@ export function CatalogPublic() {
   const [activePublico, setActivePublico] = useState('Todos');
   const [activeEstilo, setActiveEstilo] = useState('Todos');
   const [activeOcasião, setActiveOcasião] = useState('Todos');
+  const [activeColeção, setActiveColeção] = useState('Todos');
   const [expandedFilter, setExpandedFilter] = useState<string | null>(null);
   const [activeHighlightTab, setActiveHighlightTab] = useState<'destaques' | 'mais_vendidos' | 'novidades'>('destaques');
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'material' | 'collection'>('name');
@@ -975,13 +976,15 @@ export function CatalogPublic() {
         (Array.isArray(product.estilo) ? product.estilo.includes(activeEstilo) : product.estilo === activeEstilo);
       const matchesOcasião = activeOcasião === 'Todos' || 
         (Array.isArray(product.ocasião) ? product.ocasião.includes(activeOcasião) : product.ocasião === activeOcasião);
+      const matchesColeção = activeColeção === 'Todos' || 
+        (Array.isArray(product.coleção) ? product.coleção.includes(activeColeção) : product.coleção === activeColeção);
       
       const haystack = [product.name, product.description, product.tags, product.collection, product.materialType]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
       const matchesSearch = !search || haystack.includes(search.toLowerCase());
-      return matchesCollection && matchesSearch && matchesFavorites && matchesMaterial && matchesAmbiente && matchesPublico && matchesEstilo && matchesOcasião;
+      return matchesCollection && matchesSearch && matchesFavorites && matchesMaterial && matchesAmbiente && matchesPublico && matchesEstilo && matchesOcasião && matchesColeção;
     });
 
     const sorted = [...visible];
@@ -1566,7 +1569,7 @@ export function CatalogPublic() {
                       <option value="collection">Coleção</option>
                       <option value="material">Material</option>
                     </select>
-                    {(search || activeCollection !== 'Todos' || activeMaterial !== 'Todos' || activeTag !== 'Todos' || activeAmbiente !== 'Todos' || activePublico !== 'Todos' || activeEstilo !== 'Todos' || activeOcasião !== 'Todos' || showFavoritesOnly) && (
+                    {(search || activeCollection !== 'Todos' || activeMaterial !== 'Todos' || activeTag !== 'Todos' || activeAmbiente !== 'Todos' || activePublico !== 'Todos' || activeEstilo !== 'Todos' || activeOcasião !== 'Todos' || activeColeção !== 'Todos' || showFavoritesOnly) && (
                       <motion.button
                         type="button"
                         onClick={() => {
@@ -1578,6 +1581,7 @@ export function CatalogPublic() {
                           setActivePublico('Todos');
                           setActiveEstilo('Todos');
                           setActiveOcasião('Todos');
+                          setActiveColeção('Todos');
                           setShowFavoritesOnly(false);
                           setExpandedFilter(null);
                         }}
@@ -1948,6 +1952,73 @@ export function CatalogPublic() {
                             </motion.div>
                           ) : null;
                         })()}
+
+                        {/* Coleção */}
+                        {(() => {
+                          const values = getValuesByCategoryAndField(activeCollection, 'coleção');
+                          const hasValues = values.filter(v => v !== 'Todos').length > 0;
+                          return hasValues ? (
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.35 }}
+                            >
+                              <motion.button
+                                type="button"
+                                onClick={() => setExpandedFilter(expandedFilter === 'coleção' ? null : 'coleção')}
+                                className="w-full rounded-2xl px-5 py-4 text-left shadow-md"
+                                style={{ 
+                                  backgroundColor: expandedFilter === 'coleção' ? primaryColor : palette.cardBg, 
+                                  borderColor: expandedFilter === 'coleção' ? primaryColor : palette.border,
+                                  color: expandedFilter === 'coleção' ? '#fff' : palette.text,
+                                  border: `1px solid ${expandedFilter === 'coleção' ? primaryColor : palette.border}`
+                                }}
+                                whileHover={{ y: -2, boxShadow: '0 8px 20px rgba(0,0,0,0.12)' }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-bold">Coleção</span>
+                                  <ChevronDown className={`h-4 w-4 transition-transform ${expandedFilter === 'coleção' ? 'rotate-180' : ''}`} />
+                                </div>
+                                <span className="mt-2 text-xs" style={{ color: expandedFilter === 'coleção' ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
+                                  {values.filter(v => v !== 'Todos').length} opções
+                                </span>
+                              </motion.button>
+                              
+                              <AnimatePresence>
+                                {expandedFilter === 'coleção' && (
+                                  <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    className="mt-2 space-y-2"
+                                  >
+                                    {values.filter(v => v !== 'Todos').map((tag) => (
+                                      <motion.button
+                                        key={`colecao-${tag}`}
+                                        type="button"
+                                        onClick={() => setActiveColeção(tag)}
+                                        className="w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition-colors"
+                                        style={{ 
+                                          backgroundColor: activeColeção === tag ? `${accent}15` : palette.cardBg, 
+                                          border: `1px solid ${activeColeção === tag ? accent : palette.border}`,
+                                          color: palette.text
+                                        }}
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <span>{tag}</span>
+                                          {activeColeção === tag && <Check className="h-4 w-4" style={{ color: accent }} />}
+                                        </div>
+                                      </motion.button>
+                                    ))}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </motion.div>
+                          ) : null;
+                        })()}
                       </div>
                     </motion.div>
                   )}
@@ -2004,7 +2075,7 @@ export function CatalogPublic() {
             </div>
             <p className="text-2xl font-bold" style={{ color: palette.text }}>Nenhum produto encontrado</p>
             <p className="mt-3 text-lg" style={{ color: palette.textMuted }}>Tente outro filtro ou termo de busca</p>
-            {(search || activeCollection !== 'Todos' || activeMaterial !== 'Todos' || activeTag !== 'Todos' || activeAmbiente !== 'Todos' || activePublico !== 'Todos' || activeEstilo !== 'Todos' || activeOcasião !== 'Todos') && (
+            {(search || activeCollection !== 'Todos' || activeMaterial !== 'Todos' || activeTag !== 'Todos' || activeAmbiente !== 'Todos' || activePublico !== 'Todos' || activeEstilo !== 'Todos' || activeOcasião !== 'Todos' || activeColeção !== 'Todos') && (
               <motion.button
                 type="button"
                 onClick={() => {
@@ -2016,6 +2087,7 @@ export function CatalogPublic() {
                   setActivePublico('Todos');
                   setActiveEstilo('Todos');
                   setActiveOcasião('Todos');
+                  setActiveColeção('Todos');
                   setShowFavoritesOnly(false);
                   setExpandedFilter(null);
                 }}

@@ -76,6 +76,7 @@ export interface Product {
   público?: string | string[];
   estilo?: string | string[];
   ocasião?: string | string[];
+  coleção?: string | string[];
 }
 
 export interface CatalogSettings {
