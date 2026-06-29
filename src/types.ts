@@ -70,13 +70,13 @@ export interface Product {
   discountCodes?: string[];
   dimensions?: string; // Tamanho do produto (ex: "4cm x 4cm")
   /** Campos específicos para filtros do catálogo */
-  tipo?: string;
-  ambiente?: string;
-  material?: string;
-  público?: string;
-  estilo?: string;
-  ocasião?: string;
-  coleção?: string;
+  tipo?: string | string[];
+  ambiente?: string | string[];
+  material?: string | string[];
+  público?: string | string[];
+  estilo?: string | string[];
+  ocasião?: string | string[];
+  coleção?: string | string[];
 }
 
 export interface CatalogSettings {

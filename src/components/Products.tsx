@@ -55,12 +55,13 @@ const EMPTY_FORM = {
   dimensions: '',
   tags: '',
   isPublic: true,
-  ambiente: '',
-  material: '',
-  público: '',
-  estilo: '',
-  ocasião: '',
-  coleção: '',
+  ambiente: [] as string[],
+  material: [] as string[],
+  público: [] as string[],
+  estilo: [] as string[],
+  ocasião: [] as string[],
+  coleção: [] as string[],
+  tipo: [] as string[],
   variants: [] as Array<{ id: string; name: string; size: string; color: string; material: string; priceAdjustment: number; defaultWeightG: string }>,
 };
 
@@ -86,6 +87,100 @@ function readBlobAsDataUrl(blob: Blob, fileLabel = 'arquivo') {
     reader.onerror = () => reject(new Error(`Falha ao carregar ${fileLabel}.`));
     reader.readAsDataURL(blob);
   });
+}
+
+// MultiSelect component for tags/categories
+function MultiSelect({ 
+  label, 
+  values, 
+  onChange, 
+  availableOptions, 
+  placeholder 
+}: { 
+  label: string;
+  values: string[];
+  onChange: (values: string[]) => void;
+  availableOptions: string[];
+  placeholder: string;
+}) {
+  const [inputValue, setInputValue] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const handleAddTag = (tag: string) => {
+    if (tag && !values.includes(tag)) {
+      onChange([...values, tag]);
+    }
+    setInputValue('');
+    setShowDropdown(false);
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    onChange(values.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && inputValue.trim()) {
+      e.preventDefault();
+      handleAddTag(inputValue.trim());
+    }
+  };
+
+  const filteredOptions = availableOptions.filter(opt => 
+    !values.includes(opt) && opt.toLowerCase().includes(inputValue.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-1">
+      <label className="text-xs font-bold text-slate-500 uppercase">{label}</label>
+      <div className="relative">
+        <div className="flex flex-wrap gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl min-h-[42px]">
+          {values.map(tag => (
+            <span 
+              key={tag}
+              className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium"
+            >
+              {tag}
+              <button
+                type="button"
+                onClick={() => handleRemoveTag(tag)}
+                className="hover:bg-blue-200 rounded p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => {
+              setInputValue(e.target.value);
+              setShowDropdown(true);
+            }}
+            onKeyDown={handleKeyDown}
+            onFocus={() => setShowDropdown(true)}
+            onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+            placeholder={values.length === 0 ? placeholder : ''}
+            className="flex-1 min-w-[120px] bg-transparent outline-none text-sm"
+          />
+        </div>
+        
+        {showDropdown && filteredOptions.length > 0 && (
+          <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-40 overflow-y-auto">
+            {filteredOptions.map(option => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => handleAddTag(option)}
+                className="w-full px-3 py-2 text-left text-sm hover:bg-slate-100 transition-colors"
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function readFileAsDataUrl(file: File) {
@@ -352,12 +447,12 @@ export function Products() {
       dimensions: p.dimensions || '',
       tags: p.tags || '',
       isPublic: p.isPublic !== false,
-      tipo: p.tipo || '',
-      ocasião: p.ocasião || '',
-      ambiente: p.ambiente || '',
-      público: p.público || '',
-      estilo: p.estilo || '',
-      coleção: p.coleção || '',
+      tipo: Array.isArray(p.tipo) ? p.tipo : (p.tipo ? [p.tipo] : []),
+      ocasião: Array.isArray(p.ocasião) ? p.ocasião : (p.ocasião ? [p.ocasião] : []),
+      ambiente: Array.isArray(p.ambiente) ? p.ambiente : (p.ambiente ? [p.ambiente] : []),
+      público: Array.isArray(p.público) ? p.público : (p.público ? [p.público] : []),
+      estilo: Array.isArray(p.estilo) ? p.estilo : (p.estilo ? [p.estilo] : []),
+      coleção: Array.isArray(p.coleção) ? p.coleção : (p.coleção ? [p.coleção] : []),
       variants: p.variants?.map(v => ({
         id: v.id,
         name: v.name,
@@ -493,12 +588,12 @@ export function Products() {
       dimensions: formData.dimensions.trim() || undefined,
       tags: formData.tags.trim() || undefined,
       isPublic: formData.isPublic,
-      tipo: formData.tipo.trim() || undefined,
-      ocasião: formData.ocasião.trim() || undefined,
-      ambiente: formData.ambiente.trim() || undefined,
-      público: formData.público.trim() || undefined,
-      estilo: formData.estilo.trim() || undefined,
-      coleção: formData.coleção.trim() || undefined,
+      tipo: formData.tipo.length > 0 ? formData.tipo : undefined,
+      ocasião: formData.ocasião.length > 0 ? formData.ocasião : undefined,
+      ambiente: formData.ambiente.length > 0 ? formData.ambiente : undefined,
+      público: formData.público.length > 0 ? formData.público : undefined,
+      estilo: formData.estilo.length > 0 ? formData.estilo : undefined,
+      coleção: formData.coleção.length > 0 ? formData.coleção : undefined,
       variants: formData.variants && formData.variants.length > 0 ? formData.variants.map(v => ({
         id: v.id,
         name: v.name,
@@ -749,7 +844,7 @@ export function Products() {
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">Coleção / Categoria</label>
+                <label className="text-xs font-bold text-slate-500 uppercase">Coleção / Categoria (principal)</label>
                 <input 
                   list="collection-options"
                   value={formData.collection} 
@@ -761,84 +856,48 @@ export function Products() {
                   {coleçãoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                 </datalist>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">Tipo</label>
-                <input 
-                  list="tipo-options"
-                  value={formData.tipo} 
-                  onChange={e => setFormData(p => ({ ...p, tipo: e.target.value }))}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                  placeholder="Digite ou selecione..."
-                />
-                <datalist id="tipo-options">
-                  {tipoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </datalist>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">Ocasião</label>
-                <input 
-                  list="ocasiao-options"
-                  value={formData.ocasião} 
-                  onChange={e => setFormData(p => ({ ...p, ocasião: e.target.value }))}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                  placeholder="Digite ou selecione..."
-                />
-                <datalist id="ocasiao-options">
-                  {ocasiãoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </datalist>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">Ambiente</label>
-                <input 
-                  list="ambiente-options"
-                  value={formData.ambiente} 
-                  onChange={e => setFormData(p => ({ ...p, ambiente: e.target.value }))}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                  placeholder="Digite ou selecione..."
-                />
-                <datalist id="ambiente-options">
-                  {ambienteOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </datalist>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">Público</label>
-                <input 
-                  list="publico-options"
-                  value={formData.público} 
-                  onChange={e => setFormData(p => ({ ...p, público: e.target.value }))}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                  placeholder="Digite ou selecione..."
-                />
-                <datalist id="publico-options">
-                  {públicoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </datalist>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">Estilo</label>
-                <input 
-                  list="estilo-options"
-                  value={formData.estilo} 
-                  onChange={e => setFormData(p => ({ ...p, estilo: e.target.value }))}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                  placeholder="Digite ou selecione..."
-                />
-                <datalist id="estilo-options">
-                  {estiloOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </datalist>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">Coleção</label>
-                <input 
-                  list="colecao-options"
-                  value={formData.coleção} 
-                  onChange={e => setFormData(p => ({ ...p, coleção: e.target.value }))}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                  placeholder="Digite ou selecione..."
-                />
-                <datalist id="colecao-options">
-                  {coleçãoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </datalist>
-              </div>
+              <MultiSelect
+                label="Tipo"
+                values={formData.tipo}
+                onChange={(values) => setFormData(p => ({ ...p, tipo: values }))}
+                availableOptions={tipoOptions}
+                placeholder="Adicionar tipo..."
+              />
+              <MultiSelect
+                label="Ocasião"
+                values={formData.ocasião}
+                onChange={(values) => setFormData(p => ({ ...p, ocasião: values }))}
+                availableOptions={ocasiãoOptions}
+                placeholder="Adicionar ocasião..."
+              />
+              <MultiSelect
+                label="Ambiente"
+                values={formData.ambiente}
+                onChange={(values) => setFormData(p => ({ ...p, ambiente: values }))}
+                availableOptions={ambienteOptions}
+                placeholder="Adicionar ambiente..."
+              />
+              <MultiSelect
+                label="Público"
+                values={formData.público}
+                onChange={(values) => setFormData(p => ({ ...p, público: values }))}
+                availableOptions={públicoOptions}
+                placeholder="Adicionar público..."
+              />
+              <MultiSelect
+                label="Estilo"
+                values={formData.estilo}
+                onChange={(values) => setFormData(p => ({ ...p, estilo: values }))}
+                availableOptions={estiloOptions}
+                placeholder="Adicionar estilo..."
+              />
+              <MultiSelect
+                label="Coleção"
+                values={formData.coleção}
+                onChange={(values) => setFormData(p => ({ ...p, coleção: values }))}
+                availableOptions={coleçãoOptions}
+                placeholder="Adicionar coleção..."
+              />
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Tags (separadas por vírgula)</label>
                 <input value={formData.tags} onChange={e => setFormData(p => ({ ...p, tags: e.target.value }))}

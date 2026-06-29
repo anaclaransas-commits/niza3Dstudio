@@ -943,7 +943,15 @@ export function CatalogPublic() {
   const getValuesByCategoryAndField = (category: string, field: string) => {
     if (category === 'Todos') return ['Todos'];
     const categoryProducts = publicProducts.filter(p => p.collection === category);
-    const values = Array.from(new Set(categoryProducts.map(p => p[field as keyof Product]).filter(Boolean)));
+    const values = Array.from(new Set(
+      categoryProducts.flatMap(p => {
+        const fieldValue = p[field as keyof Product];
+        if (Array.isArray(fieldValue)) {
+          return fieldValue.filter(Boolean);
+        }
+        return fieldValue ? [fieldValue] : [];
+      })
+    ));
     return values.length > 0 ? ['Todos', ...values] : ['Todos'];
   };
 
@@ -959,11 +967,18 @@ export function CatalogPublic() {
       const matchesCollection = activeCollection === 'Todos' || collection === activeCollection;
       const matchesFavorites = !showFavoritesOnly || favorites.includes(product.id);
       const matchesMaterial = activeMaterial === 'Todos' || product.materialType === activeMaterial;
-      const matchesAmbiente = activeAmbiente === 'Todos' || product.ambiente === activeAmbiente;
-      const matchesPublico = activePublico === 'Todos' || product.público === activePublico;
-      const matchesEstilo = activeEstilo === 'Todos' || product.estilo === activeEstilo;
-      const matchesOcasião = activeOcasião === 'Todos' || product.ocasião === activeOcasião;
-      const matchesColeção = activeColeção === 'Todos' || product.coleção === activeColeção;
+      
+      const matchesAmbiente = activeAmbiente === 'Todos' || 
+        (Array.isArray(product.ambiente) ? product.ambiente.includes(activeAmbiente) : product.ambiente === activeAmbiente);
+      const matchesPublico = activePublico === 'Todos' || 
+        (Array.isArray(product.público) ? product.público.includes(activePublico) : product.público === activePublico);
+      const matchesEstilo = activeEstilo === 'Todos' || 
+        (Array.isArray(product.estilo) ? product.estilo.includes(activeEstilo) : product.estilo === activeEstilo);
+      const matchesOcasião = activeOcasião === 'Todos' || 
+        (Array.isArray(product.ocasião) ? product.ocasião.includes(activeOcasião) : product.ocasião === activeOcasião);
+      const matchesColeção = activeColeção === 'Todos' || 
+        (Array.isArray(product.coleção) ? product.coleção.includes(activeColeção) : product.coleção === activeColeção);
+      
       const haystack = [product.name, product.description, product.tags, product.collection, product.materialType]
         .filter(Boolean)
         .join(' ')
