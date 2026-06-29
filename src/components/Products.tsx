@@ -750,66 +750,94 @@ export function Products() {
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Coleção / Categoria</label>
-                <select value={formData.collection} onChange={e => setFormData(p => ({ ...p, collection: e.target.value }))}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm">
-                  <option value="">Selecione...</option>
+                <input 
+                  list="collection-options"
+                  value={formData.collection} 
+                  onChange={e => setFormData(p => ({ ...p, collection: e.target.value }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                  placeholder="Digite ou selecione..."
+                />
+                <datalist id="collection-options">
                   {coleçãoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
+                </datalist>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Tipo</label>
-                <select 
+                <input 
+                  list="tipo-options"
                   value={formData.tipo} 
                   onChange={e => setFormData(p => ({ ...p, tipo: e.target.value }))}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                >
-                  <option value="">Selecione...</option>
+                  placeholder="Digite ou selecione..."
+                />
+                <datalist id="tipo-options">
                   {tipoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
+                </datalist>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Ocasião</label>
-                <select 
+                <input 
+                  list="ocasiao-options"
                   value={formData.ocasião} 
                   onChange={e => setFormData(p => ({ ...p, ocasião: e.target.value }))}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                >
-                  <option value="">Selecione...</option>
+                  placeholder="Digite ou selecione..."
+                />
+                <datalist id="ocasiao-options">
                   {ocasiãoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
+                </datalist>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Ambiente</label>
-                <select 
+                <input 
+                  list="ambiente-options"
                   value={formData.ambiente} 
                   onChange={e => setFormData(p => ({ ...p, ambiente: e.target.value }))}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                >
-                  <option value="">Selecione...</option>
+                  placeholder="Digite ou selecione..."
+                />
+                <datalist id="ambiente-options">
                   {ambienteOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
+                </datalist>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Público</label>
-                <select 
+                <input 
+                  list="publico-options"
                   value={formData.público} 
                   onChange={e => setFormData(p => ({ ...p, público: e.target.value }))}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                >
-                  <option value="">Selecione...</option>
+                  placeholder="Digite ou selecione..."
+                />
+                <datalist id="publico-options">
                   {públicoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
+                </datalist>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Estilo</label>
-                <select 
+                <input 
+                  list="estilo-options"
                   value={formData.estilo} 
                   onChange={e => setFormData(p => ({ ...p, estilo: e.target.value }))}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                >
-                  <option value="">Selecione...</option>
+                  placeholder="Digite ou selecione..."
+                />
+                <datalist id="estilo-options">
                   {estiloOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
+                </datalist>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Coleção</label>
+                <input 
+                  list="colecao-options"
+                  value={formData.coleção} 
+                  onChange={e => setFormData(p => ({ ...p, coleção: e.target.value }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                  placeholder="Digite ou selecione..."
+                />
+                <datalist id="colecao-options">
+                  {coleçãoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </datalist>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Tags (separadas por vírgula)</label>
