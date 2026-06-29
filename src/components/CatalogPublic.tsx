@@ -1493,7 +1493,7 @@ export function CatalogPublic() {
       {/* Grid de produtos */}
       <main id="produtos" className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         {isLoading ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {Array.from({ length: 8 }).map((_, index) => (
               <div key={index} className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
                 <div className="aspect-square animate-pulse bg-slate-100" />
@@ -1506,7 +1506,7 @@ export function CatalogPublic() {
             ))}
           </div>
         ) : filtered.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {filtered.map((p) => (
               <ProductCard
                 key={p.id}

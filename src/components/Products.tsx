@@ -9,6 +9,8 @@ import {
   Clock,
   Edit2,
   ExternalLink,
+  Eye,
+  EyeOff,
   FileText,
   Image as ImageIcon,
   Link,
@@ -18,9 +20,8 @@ import {
   Trash2,
   Upload,
   X,
-  Eye,
-  EyeOff,
 } from 'lucide-react';
+import { useToast } from '../hooks/useToast';
 import { useStore } from '../store';
 import { uploadCatalogAsset } from '../lib/catalogApi';
 import { coerceProductImageUrls } from '../lib/catalogUtils';
@@ -259,6 +260,7 @@ function slugifySegment(value: string) {
 
 export function Products() {
   const { products, addProduct, updateProduct, removeProduct, budgets, calculatorDefaults, filaments, printers } = useStore();
+  const { success, error } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
@@ -501,8 +503,10 @@ export function Products() {
     };
     if (editingId) {
       updateProduct(editingId, payload);
+      success('Produto atualizado com sucesso!');
     } else {
       addProduct(payload);
+      success('Produto cadastrado com sucesso!');
     }
     setShowForm(false);
     setEditingId(null);
@@ -512,11 +516,12 @@ export function Products() {
   const handleDelete = (id: string, name: string) => {
     const linked = budgets.filter(b => b.productId === id).length;
     if (linked > 0) {
-      alert(`"${name}" está ligado a ${linked} orçamento(s) e não pode ser removido.`);
+      error(`"${name}" está ligado a ${linked} orçamento(s) e não pode ser removido.`);
       return;
     }
     if (!window.confirm(`Excluir "${name}"?`)) return;
     removeProduct(id);
+    success('Produto excluído com sucesso!');
   };
 
   const handleFolderImport = async () => {
@@ -991,7 +996,7 @@ export function Products() {
       )}
 
       {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
         {filtered.map(product => {
           const linked = budgets.filter(b => b.productId === product.id).length;
           const matColor = MATERIAL_COLORS[product.materialType] || MATERIAL_COLORS.Other;

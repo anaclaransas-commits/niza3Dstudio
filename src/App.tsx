@@ -7,6 +7,9 @@ import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { Sidebar, type PageId } from './components/Sidebar';
 import { GlobalSearch } from './components/GlobalSearch';
 import { KeyboardShortcuts } from './components/KeyboardShortcuts';
+import { ToastContainer } from './components/ToastContainer';
+import { Breadcrumbs } from './components/Breadcrumbs';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { motion, AnimatePresence } from 'motion/react';
 
 // Lazy loading para componentes pesados
@@ -291,58 +294,66 @@ export default function App() {
     );
   }
   return (
-    <div className="flex h-screen overflow-hidden font-sans" style={{ background: 'var(--color-background)' }}>
-      <Sidebar activePage={activePage} onPageChange={setActivePage} />
-      <GlobalSearch onNavigate={setActivePage} />
-      <KeyboardShortcuts shortcuts={keyboardShortcuts} />
+    <ThemeProvider>
+      <div className="flex h-screen overflow-hidden font-sans" style={{ background: 'var(--color-background)' }}>
+        <Sidebar activePage={activePage} onPageChange={setActivePage} />
+        <GlobalSearch onNavigate={setActivePage} />
+        <KeyboardShortcuts shortcuts={keyboardShortcuts} />
+        <ToastContainer />
 
-      <main className="flex-1 overflow-y-auto no-print">
-        <div className="max-w-[1400px] mx-auto p-4 md:p-8 lg:p-10">
-          <div className="mb-5 flex justify-end">
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-full border backdrop-blur-sm px-4 py-2 text-xs font-bold transition-all flex items-center gap-2"
-              style={{
-                borderColor: 'var(--color-border)',
-                backgroundColor: 'var(--color-surface)',
-                color: 'var(--color-text-primary)'
-              }}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Sair
-            </button>
+        <main className="flex-1 overflow-y-auto no-print">
+          <div className="max-w-[1400px] mx-auto p-4 md:p-8 lg:p-10">
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <Breadcrumbs currentPage={activePage} onNavigate={setActivePage} />
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-full border backdrop-blur-sm px-4 py-2 text-xs font-bold transition-all flex items-center gap-2"
+                style={{
+                  borderColor: 'var(--color-border)',
+                  backgroundColor: 'var(--color-surface)',
+                  color: 'var(--color-text-primary)'
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Sair
+              </button>
+            </div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activePage}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                transition={{ 
+                  duration: 0.3, 
+                  ease: [0.4, 0, 0.2, 1],
+                  opacity: { duration: 0.2 }
+                }}
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  {renderPage()}
+                </Suspense>
+              </motion.div>
+            </AnimatePresence>
           </div>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activePage}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <Suspense fallback={<LoadingFallback />}>
-                {renderPage()}
-              </Suspense>
-            </motion.div>
-          </AnimatePresence>
+        </main>
+
+        {/* Styled Printable Area - Only visible during printing */}
+        <div className="hidden print:block print:relative print:z-50 bg-white">
+          {activePage === 'budgets' && renderPage()}
         </div>
-      </main>
 
-      {/* Styled Printable Area - Only visible during printing */}
-      <div className="hidden print:block print:relative print:z-50 bg-white">
-        {activePage === 'budgets' && renderPage()}
+        <style>{`
+          @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            main { overflow: visible !important; height: auto !important; }
+          }
+        `}</style>
       </div>
-
-      <style>{`
-        @media print {
-          .no-print { display: none !important; }
-          body { background: white !important; }
-          main { overflow: visible !important; height: auto !important; }
-        }
-      `}</style>
-    </div>
+    </ThemeProvider>
   );
 }
