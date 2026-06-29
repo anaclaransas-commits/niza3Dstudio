@@ -1287,6 +1287,29 @@ export function CatalogPublic() {
               </span>
             </div>
             <div className="flex flex-wrap gap-3 md:grid md:grid-cols-4 lg:grid-cols-5">
+              {/* Card "Todos" */}
+              <button
+                key="Todos"
+                type="button"
+                onClick={() => {
+                  setActiveCollection('Todos');
+                  setActiveMaterial('Todos');
+                  setActiveTag('Todos');
+                  setActiveTipo('Todos');
+                  setActiveOcasião('Todos');
+                  setActiveAmbiente('Todos');
+                  setActivePublico('Todos');
+                }}
+                className={`flex flex-col items-start rounded-2xl px-4 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md flex-1 min-w-[80px] max-w-[120px] ${
+                  activeCollection === 'Todos' ? 'border-slate-900' : 'border-slate-100'
+                }`}
+                style={{ backgroundColor: palette.cardBg, borderColor: activeCollection === 'Todos' ? primaryColor : palette.border }}
+              >
+                <span className="text-xs font-bold" style={{ color: palette.text }}>Todos</span>
+                <span className="mt-1 text-[11px]" style={{ color: palette.textMuted }}>
+                  {publicProducts.length} produto{publicProducts.length === 1 ? '' : 's'}
+                </span>
+              </button>
               {categorySummaries.map((category) => (
                 <button
                   key={category.name}
@@ -1303,10 +1326,14 @@ export function CatalogPublic() {
                   className={`flex flex-col items-start rounded-2xl px-4 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md flex-1 min-w-[80px] max-w-[120px] ${
                     activeCollection === category.name ? 'border-slate-900' : 'border-slate-100'
                   }`}
-                  style={{ backgroundColor: palette.cardBg, borderColor: activeCollection === category.name ? primaryColor : palette.border }}
+                  style={{ 
+                    backgroundColor: activeCollection === category.name ? primaryColor : palette.cardBg, 
+                    borderColor: activeCollection === category.name ? primaryColor : palette.border,
+                    color: activeCollection === category.name ? '#fff' : palette.text
+                  }}
                 >
-                  <span className="text-xs font-bold" style={{ color: palette.text }}>{category.name}</span>
-                  <span className="mt-1 text-[11px]" style={{ color: palette.textMuted }}>
+                  <span className="text-xs font-bold">{category.name}</span>
+                  <span className="mt-1 text-[11px]" style={{ color: activeCollection === category.name ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
                     {category.count} produto{category.count === 1 ? '' : 's'}
                   </span>
                 </button>
