@@ -302,6 +302,165 @@ function SettingsPanel({ settings, onSave, onClose }: {
 }
 
 /* ── Category Management Panel ─────────────────────────── */
+function FilterValuesManagementPanel({ 
+  products, 
+  field, 
+  fieldName, 
+  onUpdateValues, 
+  onClose 
+}: { 
+  products: any[]; 
+  field: string;
+  fieldName: string;
+  onUpdateValues: (values: string[]) => void;
+  onClose: () => void;
+}) {
+  const [values, setValues] = useState<string[]>([]);
+  const [newValue, setNewValue] = useState('');
+  const [editingValue, setEditingValue] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+
+  useEffect(() => {
+    const uniqueValues = Array.from(new Set(products.map((p) => p[field]).filter(Boolean)));
+    setValues(uniqueValues);
+  }, [products, field]);
+
+  const handleAddValue = () => {
+    if (newValue.trim()) {
+      setValues([...values, newValue.trim()]);
+      setNewValue('');
+      onUpdateValues([...values, newValue.trim()]);
+    }
+  };
+
+  const handleDeleteValue = (value: string) => {
+    const updated = values.filter(v => v !== value);
+    setValues(updated);
+    onUpdateValues(updated);
+  };
+
+  const handleEditValue = (value: string) => {
+    setEditingValue(value);
+    setEditValue(value);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingValue && editValue.trim()) {
+      const updated = values.map(v => v === editingValue ? editValue.trim() : v);
+      setValues(updated);
+      onUpdateValues(updated);
+      setEditingValue(null);
+      setEditValue('');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingValue(null);
+    setEditValue('');
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-slate-100">
+          <h3 className="font-black text-slate-800 text-lg flex items-center gap-2">
+            <Edit2 className="w-5 h-5 text-blue-500" /> Gerenciar {fieldName}
+          </h3>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-6 space-y-6">
+          {/* Add new value */}
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-slate-500 uppercase">Adicionar novo valor</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+                placeholder={`Nome do ${fieldName.toLowerCase()}...`}
+                className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm focus:ring-2"
+                style={{ '--tw-ring-color': '#3b82f640' } as any}
+              />
+              <button
+                type="button"
+                onClick={handleAddValue}
+                className="px-4 py-2.5 bg-blue-500 rounded-xl text-sm font-bold text-white hover:bg-blue-600 transition-colors flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" /> Adicionar
+              </button>
+            </div>
+          </div>
+
+          {/* Existing values */}
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-slate-500 uppercase">Valores existentes ({values.length})</label>
+            <div className="space-y-2">
+              {values.map((value) => (
+                <div
+                  key={value}
+                  className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200"
+                >
+                  {editingValue === value ? (
+                    <>
+                      <input
+                        type="text"
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-lg outline-none text-sm focus:ring-2"
+                        style={{ '--tw-ring-color': '#3b82f640' } as any}
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={handleSaveEdit}
+                        className="px-3 py-2 bg-green-500 rounded-lg text-sm font-bold text-white hover:bg-green-600 transition-colors"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelEdit}
+                        className="px-3 py-2 bg-slate-400 rounded-lg text-sm font-bold text-white hover:bg-slate-500 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="flex-1 font-medium text-slate-700">{value}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleEditValue(value)}
+                        className="p-2 hover:bg-slate-200 rounded-lg transition-colors text-slate-500 hover:text-slate-700"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteValue(value)}
+                        className="p-2 hover:bg-red-100 rounded-lg transition-colors text-slate-500 hover:text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              ))}
+              {values.length === 0 && (
+                <div className="text-center py-8 text-slate-400 text-sm">
+                  Nenhum valor cadastrado ainda
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CategoryManagementPanel({ 
   products, 
   onUpdateCategories, 
@@ -572,6 +731,8 @@ export function Catalog() {
   const { products, catalogSettings, updateCatalogSettings } = useStore();
   const [showSettings, setShowSettings] = useState(false);
   const [showCategoryManagement, setShowCategoryManagement] = useState(false);
+  const [showFilterManagement, setShowFilterManagement] = useState(false);
+  const [selectedFilterField, setSelectedFilterField] = useState<string | null>(null);
   const [activeCollection, setActiveCollection] = useState('Todos');
   const [search, setSearch] = useState('');
   const [diagnostics, setDiagnostics] = useState<CatalogDiagnostics>({ status: 'idle' });
@@ -685,6 +846,10 @@ export function Catalog() {
           <button onClick={() => setShowCategoryManagement(true)}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-amber-200 text-amber-700 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors">
             <Edit2 className="w-3.5 h-3.5" /> Categorias
+          </button>
+          <button onClick={() => setShowFilterManagement(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-amber-200 text-amber-700 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors">
+            <Palette className="w-3.5 h-3.5" /> Filtros
           </button>
           <button onClick={() => setShowSettings(true)}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-amber-200 text-amber-700 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors">
@@ -811,6 +976,73 @@ export function Catalog() {
             console.log('Categories updated:', updatedCategories);
           }}
           onClose={() => setShowCategoryManagement(false)}
+        />
+      )}
+
+      {showFilterManagement && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+              <h3 className="font-black text-slate-800 text-lg flex items-center gap-2">
+                <Palette className="w-5 h-5 text-blue-500" /> Gerenciar Filtros
+              </h3>
+              <button onClick={() => setShowFilterManagement(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-3">
+              <label className="text-xs font-bold text-slate-500 uppercase">Selecione o campo para gerenciar</label>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => { setSelectedFilterField('ambiente'); setShowFilterManagement(false); }}
+                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                >
+                  Ambiente
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedFilterField('público'); setShowFilterManagement(false); }}
+                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                >
+                  Público
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedFilterField('estilo'); setShowFilterManagement(false); }}
+                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                >
+                  Estilo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedFilterField('ocasião'); setShowFilterManagement(false); }}
+                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                >
+                  Ocasião
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedFilterField('coleção'); setShowFilterManagement(false); }}
+                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                >
+                  Coleção
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedFilterField && (
+        <FilterValuesManagementPanel
+          products={publicProducts}
+          field={selectedFilterField}
+          fieldName={selectedFilterField.charAt(0).toUpperCase() + selectedFilterField.slice(1)}
+          onUpdateValues={(updatedValues) => {
+            console.log(`${selectedFilterField} values updated:`, updatedValues);
+          }}
+          onClose={() => setSelectedFilterField(null)}
         />
       )}
 

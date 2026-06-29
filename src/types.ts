@@ -71,9 +71,12 @@ export interface Product {
   dimensions?: string; // Tamanho do produto (ex: "4cm x 4cm")
   /** Campos específicos para filtros do catálogo */
   tipo?: string;
-  ocasião?: string;
   ambiente?: string;
+  material?: string;
   público?: string;
+  estilo?: string;
+  ocasião?: string;
+  coleção?: string;
 }
 
 export interface CatalogSettings {

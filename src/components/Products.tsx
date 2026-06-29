@@ -55,10 +55,12 @@ const EMPTY_FORM = {
   dimensions: '',
   tags: '',
   isPublic: true,
-  tipo: '',
-  ocasião: '',
   ambiente: '',
+  material: '',
   público: '',
+  estilo: '',
+  ocasião: '',
+  coleção: '',
   variants: [] as Array<{ id: string; name: string; size: string; color: string; material: string; priceAdjustment: number; defaultWeightG: string }>,
 };
 
@@ -312,6 +314,8 @@ export function Products() {
   const ocasiãoOptions = Array.from(new Set(products.map(p => p.ocasião).filter(Boolean)));
   const ambienteOptions = Array.from(new Set(products.map(p => p.ambiente).filter(Boolean)));
   const públicoOptions = Array.from(new Set(products.map(p => p.público).filter(Boolean)));
+  const estiloOptions = Array.from(new Set(products.map(p => p.estilo).filter(Boolean)));
+  const coleçãoOptions = Array.from(new Set(products.map(p => p.coleção).filter(Boolean)));
 
   const filtered = products.filter(p => {
     const matchSearch =
@@ -352,6 +356,8 @@ export function Products() {
       ocasião: p.ocasião || '',
       ambiente: p.ambiente || '',
       público: p.público || '',
+      estilo: p.estilo || '',
+      coleção: p.coleção || '',
       variants: p.variants?.map(v => ({
         id: v.id,
         name: v.name,
@@ -491,6 +497,8 @@ export function Products() {
       ocasião: formData.ocasião.trim() || undefined,
       ambiente: formData.ambiente.trim() || undefined,
       público: formData.público.trim() || undefined,
+      estilo: formData.estilo.trim() || undefined,
+      coleção: formData.coleção.trim() || undefined,
       variants: formData.variants && formData.variants.length > 0 ? formData.variants.map(v => ({
         id: v.id,
         name: v.name,
@@ -742,9 +750,11 @@ export function Products() {
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Coleção / Categoria</label>
-                <input value={formData.collection} onChange={e => setFormData(p => ({ ...p, collection: e.target.value }))}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
-                  placeholder="Ex: Decoração, Geek, Funcional" />
+                <select value={formData.collection} onChange={e => setFormData(p => ({ ...p, collection: e.target.value }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm">
+                  <option value="">Selecione...</option>
+                  {coleçãoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Tipo</label>
@@ -788,6 +798,17 @@ export function Products() {
                 >
                   <option value="">Selecione...</option>
                   {públicoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Estilo</label>
+                <select 
+                  value={formData.estilo} 
+                  onChange={e => setFormData(p => ({ ...p, estilo: e.target.value }))}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm"
+                >
+                  <option value="">Selecione...</option>
+                  {estiloOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
