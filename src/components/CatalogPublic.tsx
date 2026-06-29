@@ -877,6 +877,14 @@ export function CatalogPublic() {
 
   const [search, setSearch] = useState('');
   const [activeCollection, setActiveCollection] = useState('Todos');
+  const [activeMaterial, setActiveMaterial] = useState('Todos');
+  const [activeTag, setActiveTag] = useState('Todos');
+  const [activeAmbiente, setActiveAmbiente] = useState('Todos');
+  const [activePublico, setActivePublico] = useState('Todos');
+  const [activeEstilo, setActiveEstilo] = useState('Todos');
+  const [activeOcasião, setActiveOcasião] = useState('Todos');
+  const [activeColeção, setActiveColeção] = useState('Todos');
+  const [expandedFilter, setExpandedFilter] = useState<string | null>(null);
   const [activeHighlightTab, setActiveHighlightTab] = useState<'destaques' | 'mais_vendidos' | 'novidades'>('destaques');
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'material' | 'collection'>('name');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
@@ -932,18 +940,36 @@ export function CatalogPublic() {
     return publicProducts.slice(0, 8);
   }, [publicProducts]);
 
+  const getValuesByCategoryAndField = (category: string, field: string) => {
+    if (category === 'Todos') return ['Todos'];
+    const categoryProducts = publicProducts.filter(p => p.collection === category);
+    const values = Array.from(new Set(categoryProducts.map(p => p[field as keyof Product]).filter(Boolean)));
+    return values.length > 0 ? ['Todos', ...values] : ['Todos'];
+  };
+
+  const materials = useMemo(() => {
+    const uniqueMaterials = Array.from(new Set(publicProducts.map(p => p.materialType).filter(Boolean)));
+    return uniqueMaterials.length > 0 ? ['Todos', ...uniqueMaterials] : ['Todos'];
+  }, [publicProducts]);
+
   const filtered = useMemo(() => {
     const favorites = readLS<string[]>('catalog-favorites', []);
     const visible = publicProducts.filter((product) => {
       const collection = product.collection || 'Geral';
       const matchesCollection = activeCollection === 'Todos' || collection === activeCollection;
       const matchesFavorites = !showFavoritesOnly || favorites.includes(product.id);
+      const matchesMaterial = activeMaterial === 'Todos' || product.materialType === activeMaterial;
+      const matchesAmbiente = activeAmbiente === 'Todos' || product.ambiente === activeAmbiente;
+      const matchesPublico = activePublico === 'Todos' || product.público === activePublico;
+      const matchesEstilo = activeEstilo === 'Todos' || product.estilo === activeEstilo;
+      const matchesOcasião = activeOcasião === 'Todos' || product.ocasião === activeOcasião;
+      const matchesColeção = activeColeção === 'Todos' || product.coleção === activeColeção;
       const haystack = [product.name, product.description, product.tags, product.collection, product.materialType]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
       const matchesSearch = !search || haystack.includes(search.toLowerCase());
-      return matchesCollection && matchesSearch && matchesFavorites;
+      return matchesCollection && matchesSearch && matchesFavorites && matchesMaterial && matchesAmbiente && matchesPublico && matchesEstilo && matchesOcasião && matchesColeção;
     });
 
     const sorted = [...visible];
