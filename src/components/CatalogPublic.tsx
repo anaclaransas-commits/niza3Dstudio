@@ -68,92 +68,6 @@ const DEFAULT_SETTINGS: CatalogSettings = {
   footerNote: 'Produção sob demanda em impressão 3D.',
 };
 
-/* ─── Skeleton Screen Component ─────────────────────────── */
-function ProductCardSkeleton({ accent }: { accent: string }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="flex flex-col overflow-hidden rounded-3xl shadow-lg"
-      style={{ 
-        border: '1px solid rgba(0,0,0,0.08)', 
-        backgroundColor: 'rgba(255,255,255,0.9)',
-        backdropFilter: 'blur(12px)'
-      }}
-    >
-      <div className="relative aspect-square overflow-hidden">
-        <motion.div 
-          className="absolute inset-0"
-          style={{ backgroundColor: lightenHex(accent) }}
-          animate={{
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <div className="absolute right-3 top-3 h-10 w-10 rounded-full bg-white/80" />
-        <div className="absolute left-3 top-3 h-8 w-20 rounded-xl bg-white/80" />
-        <div className="absolute bottom-3 left-3 h-8 w-24 rounded-xl bg-white/80" />
-      </div>
-      <div className="flex flex-1 flex-col p-6 space-y-4">
-        <motion.div 
-          className="h-6 w-3/4 rounded-xl bg-slate-100"
-          animate={{
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 0.2
-          }}
-        />
-        <motion.div 
-          className="h-4 w-full rounded-xl bg-slate-100"
-          animate={{
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 0.4
-          }}
-        />
-        <motion.div 
-          className="h-4 w-2/3 rounded-xl bg-slate-100"
-          animate={{
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 0.6
-          }}
-        />
-        <div className="mt-auto flex gap-2">
-          <motion.div 
-            className="h-10 flex-1 rounded-xl bg-slate-100"
-            animate={{
-              opacity: [0.3, 0.5, 0.3],
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 0.8
-            }}
-          />
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
 /* ─── Galeria de imagens ─────────────────────────────── */
 function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; accent: string }) {
   const [index, setIndex] = useState(0);
@@ -724,6 +638,12 @@ interface ProductCardProps {
   onOpenDetails: (product: Product) => void;
   onOpenQuote: (product: Product) => void;
   index?: number;
+  palette: {
+    text: string;
+    textMuted: string;
+    cardBg: string;
+    border: string;
+  };
 }
 
 function ProductCard({
@@ -734,6 +654,7 @@ function ProductCard({
   onOpenDetails,
   onOpenQuote,
   index = 0,
+  palette,
 }: ProductCardProps) {
   const images = getProductImages(product);
   const cover = images[0];
@@ -1246,6 +1167,92 @@ export function CatalogPublic() {
       ctaOutline,
     };
   }, [primaryColor, coverImageUrl]);
+
+  /* ─── Skeleton Screen Component ─────────────────────────── */
+  function ProductCardSkeleton() {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex flex-col overflow-hidden rounded-3xl shadow-lg"
+        style={{ 
+          border: '1px solid rgba(0,0,0,0.08)', 
+          backgroundColor: 'rgba(255,255,255,0.9)',
+          backdropFilter: 'blur(12px)'
+        }}
+      >
+        <div className="relative aspect-square overflow-hidden">
+          <motion.div 
+            className="absolute inset-0"
+            style={{ backgroundColor: lightenHex(accent) }}
+            animate={{
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+          <div className="absolute right-3 top-3 h-10 w-10 rounded-full bg-white/80" />
+          <div className="absolute left-3 top-3 h-8 w-20 rounded-xl bg-white/80" />
+          <div className="absolute bottom-3 left-3 h-8 w-24 rounded-xl bg-white/80" />
+        </div>
+        <div className="flex flex-1 flex-col p-6 space-y-4">
+          <motion.div 
+            className="h-6 w-3/4 rounded-xl bg-slate-100"
+            animate={{
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0.2
+            }}
+          />
+          <motion.div 
+            className="h-4 w-full rounded-xl bg-slate-100"
+            animate={{
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0.4
+            }}
+          />
+          <motion.div 
+            className="h-4 w-2/3 rounded-xl bg-slate-100"
+            animate={{
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0.6
+            }}
+          />
+          <div className="mt-auto flex gap-2">
+            <motion.div 
+              className="h-10 flex-1 rounded-xl bg-slate-100"
+              animate={{
+                opacity: [0.3, 0.5, 0.3],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 0.8
+              }}
+            />
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <div
@@ -1881,7 +1888,7 @@ export function CatalogPublic() {
         {isLoading ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {Array.from({ length: 8 }).map((_, index) => (
-              <ProductCardSkeleton key={index} accent={accent} />
+              <ProductCardSkeleton key={index} />
             ))}
           </div>
         ) : filtered.length > 0 ? (
@@ -1899,6 +1906,7 @@ export function CatalogPublic() {
                 primaryColor={primaryColor}
                 ctaLabel={ctaLabel}
                 index={index}
+                palette={palette}
                 onOpenDetails={(product) => {
                   setSelectedProduct(product);
                   setDetailsOpen(true);
