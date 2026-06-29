@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -14,6 +15,9 @@ import {
   Zap,
   Package,
   Filter,
+  SlidersHorizontal,
+  ChevronDown,
+  RotateCcw,
 } from 'lucide-react';
 import { getCatalogPublicData } from '../lib/catalogApi';
 import {
@@ -64,6 +68,92 @@ const DEFAULT_SETTINGS: CatalogSettings = {
   footerNote: 'Produção sob demanda em impressão 3D.',
 };
 
+/* ─── Skeleton Screen Component ─────────────────────────── */
+function ProductCardSkeleton({ accent }: { accent: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex flex-col overflow-hidden rounded-3xl shadow-lg"
+      style={{ 
+        border: '1px solid rgba(0,0,0,0.08)', 
+        backgroundColor: 'rgba(255,255,255,0.9)',
+        backdropFilter: 'blur(12px)'
+      }}
+    >
+      <div className="relative aspect-square overflow-hidden">
+        <motion.div 
+          className="absolute inset-0"
+          style={{ backgroundColor: lightenHex(accent) }}
+          animate={{
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        <div className="absolute right-3 top-3 h-10 w-10 rounded-full bg-white/80" />
+        <div className="absolute left-3 top-3 h-8 w-20 rounded-xl bg-white/80" />
+        <div className="absolute bottom-3 left-3 h-8 w-24 rounded-xl bg-white/80" />
+      </div>
+      <div className="flex flex-1 flex-col p-6 space-y-4">
+        <motion.div 
+          className="h-6 w-3/4 rounded-xl bg-slate-100"
+          animate={{
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 0.2
+          }}
+        />
+        <motion.div 
+          className="h-4 w-full rounded-xl bg-slate-100"
+          animate={{
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 0.4
+          }}
+        />
+        <motion.div 
+          className="h-4 w-2/3 rounded-xl bg-slate-100"
+          animate={{
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 0.6
+          }}
+        />
+        <div className="mt-auto flex gap-2">
+          <motion.div 
+            className="h-10 flex-1 rounded-xl bg-slate-100"
+            animate={{
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0.8
+            }}
+          />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 /* ─── Galeria de imagens ─────────────────────────────── */
 function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; accent: string }) {
   const [index, setIndex] = useState(0);
@@ -103,106 +193,152 @@ function ImageGallery({ images, alt, accent }: { images: string[]; alt: string; 
 
   return (
     <div className="space-y-3">
-      <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl shadow-lg" style={{ background: 'linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%)' }}>
+      <motion.div 
+        className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl shadow-lg" 
+        style={{ background: 'linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%)' }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+      >
         {/* Loading overlay with elegant animation */}
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center z-10" style={{ background: 'linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%)' }}>
-            <div className="w-10 h-10 border-3 rounded-full animate-spin" style={{ borderColor: '#e7e5e4', borderTopColor: '#003247', borderWidth: '3px' }} />
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {isLoading && (
+            <motion.div 
+              className="absolute inset-0 flex items-center justify-center z-10" 
+              style={{ background: 'linear-gradient(135deg, #faf9f5 0%, #f5f2eb 100%)' }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div 
+                className="w-10 h-10 border-3 rounded-full" 
+                style={{ borderColor: '#e7e5e4', borderTopColor: '#003247', borderWidth: '3px' }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
         
         {/* Image with smooth transitions */}
-        <img
-          key={images[safeIndex]} // Force re-mount for animation
-          src={images[safeIndex]}
-          alt={`${alt} — foto ${safeIndex + 1}`}
-          className="max-h-full max-w-full object-contain"
-          style={{
-            opacity: isLoading ? 0 : 1,
-            transform: isLoading 
-              ? (direction > 0 ? 'translateX(-30px) scale(0.95)' : 'translateX(30px) scale(0.95)') 
-              : 'translateX(0) scale(1)',
-            transition: 'opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-            filter: isLoading ? 'blur(4px)' : 'blur(0px)',
-          }}
-          onLoad={handleImageLoad}
-          onError={(e) => {
-            console.error('Erro ao carregar imagem na galeria:', images[safeIndex]);
-            handleImageLoad();
-          }}
-          loading="lazy"
-        />
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={images[safeIndex]}
+            src={images[safeIndex]}
+            alt={`${alt} — foto ${safeIndex + 1}`}
+            className="max-h-full max-w-full object-contain"
+            initial={{ 
+              opacity: 0, 
+              x: direction > 0 ? -30 : 30,
+              scale: 0.95
+            }}
+            animate={{ 
+              opacity: 1, 
+              x: 0,
+              scale: 1
+            }}
+            exit={{ 
+              opacity: 0, 
+              x: direction > 0 ? 30 : -30,
+              scale: 0.95
+            }}
+            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+            onLoad={handleImageLoad}
+            onError={(e) => {
+              console.error('Erro ao carregar imagem na galeria:', images[safeIndex]);
+              handleImageLoad();
+            }}
+            loading="lazy"
+          />
+        </AnimatePresence>
         
         {/* Elegant navigation buttons */}
         {images.length > 1 && (
           <>
-            <button
+            <motion.button
               type="button"
               onClick={() => go(-1)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center text-white backdrop-blur-md transition-all duration-300 hover:scale-110 active:scale-95 shadow-xl"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center text-white backdrop-blur-md shadow-xl"
               style={{ 
                 background: 'linear-gradient(135deg, rgba(0, 50, 71, 0.85) 0%, rgba(0, 50, 71, 0.65) 100%)',
                 boxShadow: '0 8px 32px rgba(0, 50, 71, 0.3)'
               }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
               aria-label="Imagem anterior"
             >
               <ChevronLeft className="h-6 w-6" />
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="button"
               onClick={() => go(1)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center text-white backdrop-blur-md transition-all duration-300 hover:scale-110 active:scale-95 shadow-xl"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center text-white backdrop-blur-md shadow-xl"
               style={{ 
                 background: 'linear-gradient(135deg, rgba(0, 50, 71, 0.85) 0%, rgba(0, 50, 71, 0.65) 100%)',
                 boxShadow: '0 8px 32px rgba(0, 50, 71, 0.3)'
               }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
               aria-label="Próxima imagem"
             >
               <ChevronRight className="h-6 w-6" />
-            </button>
+            </motion.button>
             
             {/* Elegant counter badge */}
-            <div className="absolute bottom-4 right-4 px-4 py-2 rounded-full text-xs font-bold text-white backdrop-blur-md shadow-lg" style={{ 
-              background: 'linear-gradient(135deg, rgba(0, 50, 71, 0.85) 0%, rgba(0, 50, 71, 0.65) 100%)',
-              boxShadow: '0 4px 16px rgba(0, 50, 71, 0.3)'
-            }}>
+            <motion.div 
+              className="absolute bottom-4 right-4 px-4 py-2 rounded-full text-xs font-bold text-white backdrop-blur-md shadow-lg" 
+              style={{ 
+                background: 'linear-gradient(135deg, rgba(0, 50, 71, 0.85) 0%, rgba(0, 50, 71, 0.65) 100%)',
+                boxShadow: '0 4px 16px rgba(0, 50, 71, 0.3)'
+              }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
               {safeIndex + 1} / {images.length}
-            </div>
+            </motion.div>
           </>
         )}
-      </div>
+      </motion.div>
       
       {/* Elegant thumbnails with smooth hover effects */}
       {images.length > 1 && (
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
+        <motion.div 
+          className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
           {images.map((url, i) => (
-            <button
+            <motion.button
               key={url}
               type="button"
               onClick={() => {
                 const dir = i > safeIndex ? 1 : -1;
                 handleImageChange(i, dir);
               }}
-              className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-300 hover:scale-105 active:scale-95 shadow-md"
+              className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border-2 shadow-md"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               style={i === safeIndex ? {
                 borderColor: '#003247',
                 boxShadow: '0 0 0 3px rgba(0, 50, 71, 0.1), 0 12px 24px -8px rgba(0, 50, 71, 0.4)',
-                transform: 'scale(1.08)'
               } : {
                 borderColor: '#e7e5e4',
-                transform: 'scale(1)',
                 opacity: 0.8
               }}
               aria-label={`Ver foto ${i + 1}`}
             >
-              <img 
+              <motion.img 
                 src={url} 
                 alt={`Thumbnail ${i + 1}`} 
-                className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
+                className="h-full w-full object-cover"
+                whileHover={{ scale: 1.1 }}
+                transition={{ duration: 0.2 }}
               />
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   );
@@ -228,37 +364,77 @@ function ModalShell({
   children: React.ReactNode;
   maxWidth?: string;
 }) {
-  if (!isOpen) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div
-        className={`max-h-[95vh] w-full ${maxWidth} overflow-hidden rounded-3xl shadow-2xl ring-1 ring-black/5`}
-        style={{ backgroundColor: 'var(--color-surface)' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start justify-between border-b px-6 py-4" style={{ borderColor: 'var(--color-border)' }}>
-          <div>
-            <h2 className="text-xl font-black sm:text-2xl" style={{ color: 'var(--color-text-primary)' }}>{title}</h2>
-            {subtitle && <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{subtitle}</p>}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-2xl p-3 transition-colors hover:bg-black/5"
-            aria-label="Fechar"
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md"
+          onClick={onClose}
+          role="dialog"
+          aria-modal="true"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            className={`max-h-[95vh] w-full ${maxWidth} overflow-hidden rounded-3xl shadow-2xl ring-1 ring-black/5`}
+            style={{ backgroundColor: 'var(--color-surface)' }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <X className="h-6 w-6" style={{ color: 'var(--color-text-primary)' }} />
-          </button>
-        </div>
-        <div className="max-h-[calc(95vh-5rem)] overflow-y-auto">{children}</div>
-      </div>
-    </div>
+            <div className="flex items-start justify-between border-b px-6 py-4" style={{ borderColor: 'var(--color-border)' }}>
+              <div>
+                <motion.h2 
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="text-xl font-black sm:text-2xl" 
+                  style={{ color: 'var(--color-text-primary)' }}
+                >
+                  {title}
+                </motion.h2>
+                {subtitle && (
+                  <motion.p 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="mt-1 text-sm" 
+                    style={{ color: 'var(--color-text-secondary)' }}
+                  >
+                    {subtitle}
+                  </motion.p>
+                )}
+              </div>
+              <motion.button
+                initial={{ opacity: 0, rotate: -90 }}
+                animate={{ opacity: 1, rotate: 0 }}
+                whileHover={{ rotate: 90, scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ duration: 0.2 }}
+                type="button"
+                onClick={onClose}
+                className="rounded-2xl p-3 transition-colors hover:bg-black/5"
+                aria-label="Fechar"
+              >
+                <X className="h-6 w-6" style={{ color: 'var(--color-text-primary)' }} />
+              </motion.button>
+            </div>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="max-h-[calc(95vh-5rem)] overflow-y-auto"
+            >
+              {children}
+            </motion.div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -547,7 +723,7 @@ interface ProductCardProps {
   ctaLabel: string;
   onOpenDetails: (product: Product) => void;
   onOpenQuote: (product: Product) => void;
-  key?: string;
+  index?: number;
 }
 
 function ProductCard({
@@ -557,6 +733,7 @@ function ProductCard({
   ctaLabel,
   onOpenDetails,
   onOpenQuote,
+  index = 0,
 }: ProductCardProps) {
   const images = getProductImages(product);
   const cover = images[0];
@@ -579,10 +756,21 @@ function ProductCard({
   const tags = product.tags?.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 2) ?? [];
 
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <article
-      className="group flex flex-col overflow-hidden rounded-3xl shadow-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-slate-300/30"
+    <motion.article
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ 
+        duration: 0.5, 
+        ease: [0.4, 0, 0.2, 1],
+        delay: index * 0.05 // Stagger effect
+      }}
+      whileHover={{ y: -8, transition: { duration: 0.3 } }}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+      className="group flex flex-col overflow-hidden rounded-3xl shadow-lg"
       style={{ border: '1px solid rgba(0,0,0,0.08)', backgroundColor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(12px)' }}
     >
       <div
@@ -622,86 +810,158 @@ function ProductCard({
         )}
 
         {extraCount > 0 && (
-          <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-gradient-to-r from-black/70 to-black/50 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-md transition-all duration-300 group-hover:scale-110 group-hover:from-emerald-600/80 group-hover:to-cyan-600/80">
-            <ZoomIn className="h-3 w-3" /> +{extraCount}
-          </span>
+          <motion.span
+            className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-gradient-to-r from-black/70 to-black/50 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-md"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: 1.1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <motion.div
+              animate={{ rotate: isHovered ? [0, 360] : 0 }}
+              transition={{ duration: 0.6, ease: "easeInOut" }}
+            >
+              <ZoomIn className="h-3 w-3" />
+            </motion.div>
+            +{extraCount}
+          </motion.span>
         )}
 
-        <button
+        <motion.button
           type="button"
           onClick={toggleFavorite}
-          className="absolute right-3 bottom-3 rounded-full bg-white/90 p-2 shadow-lg backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-white"
+          className="absolute right-3 bottom-3 rounded-full bg-white/90 p-2 shadow-lg backdrop-blur-sm"
           title={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.95 }}
+          initial={false}
+          animate={{
+            backgroundColor: isFavorite ? 'rgba(251, 113, 133, 0.95)' : 'rgba(255, 255, 255, 0.9)',
+          }}
+          transition={{ duration: 0.2 }}
         >
-          <Heart
-            className={`h-4 w-4 transition-colors ${isFavorite ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}`}
-          />
-        </button>
-
-        <div className="absolute left-3 top-3">
-          <span
-            className="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg backdrop-blur-sm"
-            style={{ 
-              background: `linear-gradient(135deg, ${badgeColor}, ${badgeColor}dd)`,
-              boxShadow: `0 4px 12px ${badgeColor}40`
+          <motion.div
+            initial={false}
+            animate={{
+              scale: isFavorite ? [1, 1.3, 1] : 1,
+              rotate: isFavorite ? [0, -15, 0] : 0,
             }}
+            transition={{ duration: 0.3 }}
           >
+            <Heart
+              className={`h-4 w-4 transition-colors ${isFavorite ? 'fill-white text-white' : 'text-slate-400'}`}
+            />
+          </motion.div>
+        </motion.button>
+
+        <motion.div 
+          className="absolute left-3 top-3"
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <motion.span
+            className="rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-xl backdrop-blur-md flex items-center gap-1.5"
+            style={{ 
+              background: `linear-gradient(135deg, ${badgeColor}, ${badgeColor}ee)`,
+              boxShadow: `0 4px 20px ${badgeColor}60`
+            }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-white/90" />
             {product.materialType}
-          </span>
-        </div>
+          </motion.span>
+        </motion.div>
 
         {product.collection && (
-          <div className="absolute bottom-3 left-3">
-            <span className="rounded-full bg-gradient-to-r from-black/60 to-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md shadow-lg">
+          <motion.div 
+            className="absolute bottom-3 left-3"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <motion.span 
+              className="rounded-xl bg-gradient-to-r from-black/80 to-black/60 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white backdrop-blur-md shadow-xl flex items-center gap-1.5"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-white/90" />
               {product.collection}
-            </span>
-          </div>
+            </motion.span>
+          </motion.div>
         )}
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/50 via-black/20 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
       </div>
 
-      <div className="flex flex-1 flex-col p-5 bg-gradient-to-b from-white/50 to-white/80 backdrop-blur-sm">
-        <h3
-          className="mb-2 cursor-pointer text-base font-black leading-tight text-slate-800 transition-colors group-hover:text-emerald-700"
+      <div className="flex flex-1 flex-col p-6 bg-gradient-to-b from-white/60 to-white/90 backdrop-blur-sm">
+        <motion.h3
+          className="mb-3 cursor-pointer text-lg font-black leading-snug"
+          style={{ color: palette.text }}
           onClick={() => onOpenDetails(product)}
+          whileHover={{ color: accent }}
+          transition={{ duration: 0.2 }}
         >
           {product.name}
-        </h3>
+        </motion.h3>
 
         {product.description && (
-          <p className="mb-3 line-clamp-2 flex-1 text-xs leading-relaxed text-slate-500">{product.description}</p>
+          <p className="mb-4 line-clamp-2 flex-1 text-sm leading-relaxed" style={{ color: palette.textMuted }}>{product.description}</p>
         )}
 
         {tags.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-1">
-            {tags.map((tag) => (
-              <span
+          <div className="mb-4 flex flex-wrap gap-2">
+            {tags.map((tag, index) => (
+              <motion.span
                 key={tag}
-                className="rounded-full px-2 py-0.5 text-[9px] font-bold uppercase"
-                style={{ backgroundColor: `${accent}18`, color: accent }}
+                className="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide"
+                style={{ backgroundColor: `${accent}15`, color: accent }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.4 + index * 0.05 }}
+                whileHover={{ scale: 1.1, backgroundColor: `${accent}25` }}
+                whileTap={{ scale: 0.95 }}
               >
                 {tag}
-              </span>
+              </motion.span>
             ))}
           </div>
         )}
 
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 text-xs text-slate-400">
-            {product.defaultWeightG != null && <span>{product.defaultWeightG}g</span>}
-            {product.dimensions && <span>{product.dimensions}</span>}
-          </div>
+        <div className="mb-5 flex items-center justify-between gap-4">
+          <motion.div 
+            className="flex items-center gap-3 text-sm font-medium"
+            style={{ color: palette.textMuted }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            {product.defaultWeightG != null && (
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: accent }} />
+                {product.defaultWeightG}g
+              </span>
+            )}
+            {product.dimensions && (
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: accent }} />
+                {product.dimensions}
+              </span>
+            )}
+          </motion.div>
         </div>
 
         <div className="mt-auto">
-          <button
+          <motion.button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               onOpenQuote(product);
             }}
-            className={`${BTN_QUOTE} w-full py-3 text-sm font-semibold shadow-lg hover:shadow-xl`}
+            className={`${BTN_QUOTE} w-full py-3.5 text-sm font-bold shadow-lg`}
+            whileHover={{ y: -2, boxShadow: '0 12px 30px rgba(0,0,0,0.2)' }}
+            whileTap={{ scale: 0.98 }}
             style={{
               backgroundColor: accent,
               color: primaryColor,
@@ -711,10 +971,10 @@ function ProductCard({
           >
             <MessageCircle className="h-4 w-4" />
             {ctaLabel}
-          </button>
+          </motion.button>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }
 
@@ -956,21 +1216,21 @@ export function CatalogPublic() {
   }, [detailsOpen, quoteOpen, selectedProduct?.id]);
 
   const palette = useMemo(() => {
-    // Nova paleta baseada em azul petróleo e bege pastel
+    // Nova paleta baseada em azul petróleo e bege pastel com melhor contraste
     const pageBg = '#faf9f5';
     const sectionBg = '#f5f2eb';
     const cardBg = '#ffffff';
-    const border = '#e7e5e4';
-    const textMuted = '#78716c';
+    const border = '#d6d3d1';
+    const textMuted = '#57534e';
     const text = '#1c1917';
-    const pill = 'rgba(255,255,255,0.10)';
-    const heroOverlay = `linear-gradient(120deg, ${primaryColor}f2 0%, ${primaryColor}d6 42%, ${primaryColor}f0 100%)`;
+    const pill = 'rgba(255,255,255,0.15)';
+    const heroOverlay = `linear-gradient(120deg, ${primaryColor}e8 0%, ${primaryColor}cc 42%, ${primaryColor}e0 100%)`;
     const heroBg = coverImageUrl
       ? `${heroOverlay}, url(${coverImageUrl}) center/cover`
       : primaryColor;
-    const ctaPrimaryBg = 'rgba(245, 240, 220, 0.95)';
+    const ctaPrimaryBg = 'rgba(245, 240, 220, 0.98)';
     const ctaPrimaryText = primaryColor;
-    const ctaOutline = 'rgba(245, 240, 220, 0.25)';
+    const ctaOutline = 'rgba(245, 240, 220, 0.40)';
 
     return {
       pageBg,
@@ -1020,51 +1280,55 @@ export function CatalogPublic() {
             </div>
           )}
           <div className="flex-1 text-center md:text-left">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-white/80" style={{ backgroundColor: palette.pill }}>
-              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: accent }} />
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em] text-white/90" style={{ backgroundColor: palette.pill }}>
+              <span className="h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: accent }} />
               Impressão 3D personalizada
             </div>
-            <h1 className="text-3xl font-black tracking-tight sm:text-5xl" style={{ color: 'rgba(255,255,255,0.92)' }}>
+            <h1 className="text-4xl font-black tracking-tight sm:text-6xl" style={{ color: 'rgba(255,255,255,0.95)' }}>
               {businessName}
             </h1>
-            {tagline && <p className="mt-2 text-sm text-white/80 sm:text-base">{tagline}</p>}
+            {tagline && <p className="mt-3 text-base text-white/85 sm:text-lg font-medium">{tagline}</p>}
             {heroDescription && (
-              <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/75 md:mx-0">{heroDescription}</p>
+              <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-white/80 md:mx-0">{heroDescription}</p>
             )}
             {highlights.length > 0 && (
-              <div className="mt-4 flex flex-nowrap justify-center gap-1.5 overflow-x-auto md:justify-start md:flex-wrap md:overflow-visible">
+              <div className="mt-6 flex flex-nowrap justify-center gap-2 overflow-x-auto md:justify-start md:flex-wrap md:overflow-visible">
                 {highlights.map((h) => (
                   <span
                     key={h}
-                    className="whitespace-nowrap rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-bold text-white/85 md:px-3 md:py-1.5 md:text-[11px]"
+                    className="whitespace-nowrap rounded-full border border-white/30 bg-white/15 px-4 py-2 text-xs font-semibold text-white/90 md:px-5 md:py-2.5 md:text-sm"
                   >
                     {h}
                   </span>
                 ))}
               </div>
             )}
-            <div className="mt-6 flex flex-wrap justify-center gap-3 md:justify-start">
+            <div className="mt-8 flex flex-wrap justify-center gap-4 md:justify-start">
               {primaryCtaUrl && (
-                <a
+                <motion.a
                   href={primaryCtaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-full px-5 py-2.5 text-xs font-black transition hover:opacity-95"
+                  className="rounded-full px-6 py-3 text-sm font-black transition hover:opacity-95"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   style={{ backgroundColor: palette.ctaPrimaryBg, color: palette.ctaPrimaryText }}
                 >
                   {ctaLabel}
-                </a>
+                </motion.a>
               )}
               {secondaryCtaUrl && (
-                <a
+                <motion.a
                   href={secondaryCtaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-full px-5 py-2.5 text-xs font-bold text-white transition hover:bg-white/15"
+                  className="rounded-full px-6 py-3 text-sm font-bold text-white transition hover:bg-white/20"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   style={{ border: `1px solid ${palette.ctaOutline}` }}
                 >
                   {secondaryCtaLabel || 'Instagram'}
-                </a>
+                </motion.a>
               )}
             </div>
             <div className="mt-4 flex flex-wrap justify-center gap-2 md:justify-start">
@@ -1102,57 +1366,75 @@ export function CatalogPublic() {
       </header>
 
       {/* Faixa de benefícios */}
-      <section className="px-4 py-3 sm:px-6" style={{ backgroundColor: palette.sectionBg, borderBottom: `1px solid ${palette.border}` }}>
-        <div className="mx-auto flex flex-nowrap gap-2 md:flex-wrap md:gap-3" style={{ color: palette.text }}>
-          <div className="flex flex-1 min-w-[140px] items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-xl flex-shrink-0" style={{ backgroundColor: palette.cardBg, color: accent, border: `1px solid ${palette.border}` }}>
-              <Sparkles className="h-3.5 w-3.5" />
+      <section className="px-4 py-4 sm:px-6" style={{ backgroundColor: palette.sectionBg, borderBottom: `1px solid ${palette.border}` }}>
+        <div className="mx-auto max-w-6xl grid grid-cols-2 md:grid-cols-4 gap-4" style={{ color: palette.text }}>
+          <motion.div 
+            className="flex items-center gap-3 p-3 rounded-xl"
+            style={{ backgroundColor: palette.cardBg, border: `1px solid ${palette.border}` }}
+            whileHover={{ y: -2, transition: { duration: 0.2 } }}
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl flex-shrink-0" style={{ backgroundColor: `${accent}20`, color: accent }}>
+              <Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: palette.textMuted }}>Personalizado</p>
-              <p className="text-[10px]" style={{ color: palette.textMuted }}>Projetos exclusivos criados sob medidas</p>
+              <p className="text-xs font-bold uppercase tracking-wider" style={{ color: palette.text }}>Personalizado</p>
+              <p className="text-[11px] leading-tight" style={{ color: palette.textMuted }}>Projetos exclusivos sob medida</p>
             </div>
-          </div>
-          <div className="flex flex-1 min-w-[140px] items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-xl flex-shrink-0" style={{ backgroundColor: palette.cardBg, color: accent, border: `1px solid ${palette.border}` }}>
-              <Shield className="h-3.5 w-3.5" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: palette.textMuted }}>Qualidade</p>
-              <p className="text-[10px]" style={{ color: palette.textMuted }}>Acabamento premium e durável</p>
-            </div>
-          </div>
-          <div className="flex flex-1 min-w-[140px] items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-xl flex-shrink-0" style={{ backgroundColor: palette.cardBg, color: accent, border: `1px solid ${palette.border}` }}>
-              <Zap className="h-3.5 w-3.5" />
+          </motion.div>
+          <motion.div 
+            className="flex items-center gap-3 p-3 rounded-xl"
+            style={{ backgroundColor: palette.cardBg, border: `1px solid ${palette.border}` }}
+            whileHover={{ y: -2, transition: { duration: 0.2 } }}
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl flex-shrink-0" style={{ backgroundColor: `${accent}20`, color: accent }}>
+              <Shield className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: palette.textMuted }}>Rápido</p>
-              <p className="text-[10px]" style={{ color: palette.textMuted }}>Atendimento ágil e direto</p>
+              <p className="text-xs font-bold uppercase tracking-wider" style={{ color: palette.text }}>Qualidade</p>
+              <p className="text-[11px] leading-tight" style={{ color: palette.textMuted }}>Acabamento premium e durável</p>
             </div>
-          </div>
-          <div className="flex flex-1 min-w-[140px] items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-xl flex-shrink-0" style={{ backgroundColor: palette.cardBg, color: accent, border: `1px solid ${palette.border}` }}>
-              <Package className="h-3.5 w-3.5" />
+          </motion.div>
+          <motion.div 
+            className="flex items-center gap-3 p-3 rounded-xl"
+            style={{ backgroundColor: palette.cardBg, border: `1px solid ${palette.border}` }}
+            whileHover={{ y: -2, transition: { duration: 0.2 } }}
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl flex-shrink-0" style={{ backgroundColor: `${accent}20`, color: accent }}>
+              <Zap className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: palette.textMuted }}>Cuidado</p>
-              <p className="text-[10px]" style={{ color: palette.textMuted }}>Embalagem segura e protegida</p>
+              <p className="text-xs font-bold uppercase tracking-wider" style={{ color: palette.text }}>Rápido</p>
+              <p className="text-[11px] leading-tight" style={{ color: palette.textMuted }}>Atendimento ágil e direto</p>
             </div>
-          </div>
+          </motion.div>
+          <motion.div 
+            className="flex items-center gap-3 p-3 rounded-xl"
+            style={{ backgroundColor: palette.cardBg, border: `1px solid ${palette.border}` }}
+            whileHover={{ y: -2, transition: { duration: 0.2 } }}
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl flex-shrink-0" style={{ backgroundColor: `${accent}20`, color: accent }}>
+              <Package className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider" style={{ color: palette.text }}>Cuidado</p>
+              <p className="text-[11px] leading-tight" style={{ color: palette.textMuted }}>Embalagem segura e protegida</p>
+            </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Destaques unificados - Cards menores com abas */}
       {!isLoading && featuredProducts.length > 0 && (
-        <section className="px-4 py-6 sm:px-6" style={{ backgroundColor: palette.pageBg }}>
+        <section className="px-4 py-8 sm:px-6" style={{ backgroundColor: palette.pageBg }}>
           <div className="mx-auto max-w-6xl">
-            <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="mb-6 flex items-center justify-between gap-4">
               <div className="flex gap-2">
-                <button
+                <motion.button
                   type="button"
                   onClick={() => setActiveHighlightTab('destaques')}
-                  className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition-all"
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   style={{
                     backgroundColor: activeHighlightTab === 'destaques' ? accent : 'transparent',
                     color: activeHighlightTab === 'destaques' ? palette.text : palette.textMuted,
@@ -1160,11 +1442,13 @@ export function CatalogPublic() {
                   }}
                 >
                   Destaques
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   type="button"
                   onClick={() => setActiveHighlightTab('mais_vendidos')}
-                  className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition-all"
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   style={{
                     backgroundColor: activeHighlightTab === 'mais_vendidos' ? accent : 'transparent',
                     color: activeHighlightTab === 'mais_vendidos' ? palette.text : palette.textMuted,
@@ -1172,11 +1456,13 @@ export function CatalogPublic() {
                   }}
                 >
                   Mais vendidos
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   type="button"
                   onClick={() => setActiveHighlightTab('novidades')}
-                  className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition-all"
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   style={{
                     backgroundColor: activeHighlightTab === 'novidades' ? accent : 'transparent',
                     color: activeHighlightTab === 'novidades' ? palette.text : palette.textMuted,
@@ -1184,10 +1470,10 @@ export function CatalogPublic() {
                   }}
                 >
                   Novidades
-                </button>
+                </motion.button>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+            <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
               {featuredProducts.slice(0, 8).map((product) => {
                 const images = getProductImages(product);
                 const cover = images[0];
@@ -1229,66 +1515,111 @@ export function CatalogPublic() {
       )}
 
       {/* Filtros + visão geral */}
-      <section className="px-4 py-6 sm:px-6" style={{ backgroundColor: palette.pageBg, borderBottom: `1px solid ${palette.border}` }}>
+      <section className="px-4 py-8 sm:px-6" style={{ backgroundColor: palette.pageBg, borderBottom: `1px solid ${palette.border}` }}>
         <div className="mx-auto max-w-6xl">
-          <div>
-            <h2 className="text-xl font-black sm:text-2xl" style={{ color: palette.text }}>
+          <div className="mb-6">
+            <h2 className="text-2xl font-black sm:text-3xl" style={{ color: palette.text }}>
               {catalogHeadline || 'Nossos produtos'}
             </h2>
-            {catalogSubheadline && <p className="mt-1 text-sm" style={{ color: palette.textMuted }}>{catalogSubheadline}</p>}
+            {catalogSubheadline && <p className="mt-2 text-base" style={{ color: palette.textMuted }}>{catalogSubheadline}</p>}
           </div>
 
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2" style={{ color: palette.textMuted }} />
               <input
                 type="search"
                 placeholder="Buscar produto, tag ou coleção..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none focus:ring-2"
+                className="w-full rounded-2xl py-3 pl-12 pr-4 text-base outline-none focus:ring-2"
                 style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, boxShadow: `0 0 0 0 transparent`, outlineColor: accent }}
               />
             </div>
-            <button
-              type="button"
-              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
-                showFavoritesOnly ? 'bg-rose-50 text-rose-600' : ''
-              }`}
-              style={{ backgroundColor: showFavoritesOnly ? undefined : palette.sectionBg, border: `1px solid ${palette.border}`, color: showFavoritesOnly ? undefined : palette.text }}
-            >
-              <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'fill-rose-500' : ''}`} />
-              Favoritos
-            </button>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="rounded-xl px-4 py-2.5 text-sm font-medium outline-none"
-              style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, color: palette.text }}
-              aria-label="Ordenar produtos"
-            >
-              <option value="name">Nome A–Z</option>
-              <option value="collection">Coleção</option>
-              <option value="material">Material</option>
-            </select>
+            <div className="flex flex-wrap gap-3">
+              <motion.button
+                type="button"
+                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                className={`flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold transition-colors ${
+                  showFavoritesOnly ? 'bg-rose-50 text-rose-600' : ''
+                }`}
+                style={{ backgroundColor: showFavoritesOnly ? undefined : palette.sectionBg, border: `1px solid ${palette.border}`, color: showFavoritesOnly ? undefined : palette.text }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <motion.div
+                  animate={{ rotate: showFavoritesOnly ? [0, -15, 0] : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'fill-rose-500' : ''}`} />
+                </motion.div>
+                Favoritos
+              </motion.button>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="rounded-2xl px-5 py-3 text-sm font-semibold outline-none"
+                style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, color: palette.text }}
+                aria-label="Ordenar produtos"
+              >
+                <option value="name">Nome A–Z</option>
+                <option value="collection">Coleção</option>
+                <option value="material">Material</option>
+              </select>
+              {(search || activeCollection !== 'Todos' || activeMaterial !== 'Todos' || activeTag !== 'Todos' || activeTipo !== 'Todos' || activeOcasião !== 'Todos' || activeAmbiente !== 'Todos' || activePublico !== 'Todos' || showFavoritesOnly) && (
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setSearch('');
+                    setActiveCollection('Todos');
+                    setActiveMaterial('Todos');
+                    setActiveTag('Todos');
+                    setActiveTipo('Todos');
+                    setActiveOcasião('Todos');
+                    setActiveAmbiente('Todos');
+                    setActivePublico('Todos');
+                    setShowFavoritesOnly(false);
+                  }}
+                  className="flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold"
+                  style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, color: palette.text }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  title="Limpar filtros"
+                >
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </motion.div>
+                  Limpar
+                </motion.button>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
       {/* Categorias */}
       {categorySummaries.length > 0 && (
-        <section className="px-4 py-10 sm:px-6" style={{ backgroundColor: palette.pageBg }}>
+        <section className="px-4 py-8 sm:px-6" style={{ backgroundColor: palette.pageBg }}>
           <div className="mx-auto max-w-6xl">
-            <div className="mb-4 flex items-center justify-between gap-4">
+            <div className="mb-6 flex items-center justify-between gap-4">
               <h3 className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: palette.textMuted }}>Categorias</h3>
-              <span className="text-xs" style={{ color: palette.textMuted }}>
-                {publicProducts.length} modelo{publicProducts.length === 1 ? '' : 's'} disponível(eis)
-              </span>
+              <motion.span 
+                className="text-sm font-semibold" 
+                style={{ color: palette.textMuted }}
+                key={filtered.length}
+                initial={{ scale: 1.2, opacity: 0.5 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                {filtered.length} de {publicProducts.length} modelo{publicProducts.length === 1 ? '' : 's'}
+              </motion.span>
             </div>
-            <div className="flex flex-wrap gap-3 md:grid md:grid-cols-4 lg:grid-cols-5">
+            <div className="flex flex-wrap gap-4 md:grid md:grid-cols-4 lg:grid-cols-5">
               {/* Card "Todos" */}
-              <button
+              <motion.button
                 key="Todos"
                 type="button"
                 onClick={() => {
@@ -1300,18 +1631,21 @@ export function CatalogPublic() {
                   setActiveAmbiente('Todos');
                   setActivePublico('Todos');
                 }}
-                className={`flex flex-col items-start rounded-2xl px-4 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md flex-1 min-w-[80px] max-w-[120px] ${
+                className={`flex flex-col items-start rounded-2xl px-5 py-4 text-left shadow-md flex-1 min-w-[100px] max-w-[140px] ${
                   activeCollection === 'Todos' ? 'border-slate-900' : 'border-slate-100'
                 }`}
                 style={{ backgroundColor: palette.cardBg, borderColor: activeCollection === 'Todos' ? primaryColor : palette.border }}
+                whileHover={{ y: -4, boxShadow: '0 12px 30px rgba(0,0,0,0.15)' }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.2 }}
               >
-                <span className="text-xs font-bold" style={{ color: palette.text }}>Todos</span>
-                <span className="mt-1 text-[11px]" style={{ color: palette.textMuted }}>
+                <span className="text-sm font-bold" style={{ color: palette.text }}>Todos</span>
+                <span className="mt-2 text-xs" style={{ color: palette.textMuted }}>
                   {publicProducts.length} produto{publicProducts.length === 1 ? '' : 's'}
                 </span>
-              </button>
-              {categorySummaries.map((category) => (
-                <button
+              </motion.button>
+              {categorySummaries.map((category, index) => (
+                <motion.button
                   key={category.name}
                   type="button"
                   onClick={() => {
@@ -1323,7 +1657,7 @@ export function CatalogPublic() {
                     setActiveAmbiente('Todos');
                     setActivePublico('Todos');
                   }}
-                  className={`flex flex-col items-start rounded-2xl px-4 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md flex-1 min-w-[80px] max-w-[120px] ${
+                  className={`flex flex-col items-start rounded-2xl px-5 py-4 text-left shadow-md flex-1 min-w-[100px] max-w-[140px] ${
                     activeCollection === category.name ? 'border-slate-900' : 'border-slate-100'
                   }`}
                   style={{ 
@@ -1331,12 +1665,17 @@ export function CatalogPublic() {
                     borderColor: activeCollection === category.name ? primaryColor : palette.border,
                     color: activeCollection === category.name ? '#fff' : palette.text
                   }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05, duration: 0.3 }}
+                  whileHover={{ y: -4, boxShadow: '0 12px 30px rgba(0,0,0,0.15)' }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <span className="text-xs font-bold">{category.name}</span>
-                  <span className="mt-1 text-[11px]" style={{ color: activeCollection === category.name ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
+                  <span className="text-sm font-bold">{category.name}</span>
+                  <span className="mt-2 text-xs" style={{ color: activeCollection === category.name ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
                     {category.count} produto{category.count === 1 ? '' : 's'}
                   </span>
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>
@@ -1344,65 +1683,93 @@ export function CatalogPublic() {
       )}
 
       {/* Filtros de tags específicos - aparecem ao selecionar categoria */}
-      {activeCollection !== 'Todos' && (
-        <section className="px-4 py-6 sm:px-6" style={{ backgroundColor: palette.pageBg, borderBottom: `1px solid ${palette.border}` }}>
-          <div className="mx-auto max-w-6xl">
-            <h3 className="mb-4 text-sm font-black uppercase tracking-[0.2em]" style={{ color: palette.textMuted }}>Filtrar por</h3>
-            
-            <div className="flex flex-wrap gap-6">
-              {/* Tipo */}
-              {(() => {
-                const values = getValuesByCategoryAndField(activeCollection, 'tipo');
-                const hasValues = values.filter(v => v !== 'Todos').length > 0;
-                return hasValues ? (
-                  <div>
-                    <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Tipo</label>
-                    <div className="flex flex-wrap gap-2">
-                      {values.map((tag) => (
-                        <button
-                          key={`tipo-${tag}`}
-                          type="button"
-                          onClick={() => setActiveTipo(tag)}
-                          className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
-                          style={
-                            activeTipo === tag
-                              ? { backgroundColor: accent, color: palette.text, borderColor: accent }
-                              : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
-                          }
-                        >
-                          {tag}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : null;
-              })()}
+      <AnimatePresence>
+        {activeCollection !== 'Todos' && (
+          <motion.section 
+            className="px-4 py-8 sm:px-6" 
+            style={{ backgroundColor: palette.pageBg, borderBottom: `1px solid ${palette.border}` }}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="mx-auto max-w-6xl">
+              <motion.h3 
+                className="mb-6 text-sm font-black uppercase tracking-[0.2em]" 
+                style={{ color: palette.textMuted }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                Filtrar por
+              </motion.h3>
+              
+              <div className="flex flex-wrap gap-8">
+                {/* Tipo */}
+                {(() => {
+                  const values = getValuesByCategoryAndField(activeCollection, 'tipo');
+                  const hasValues = values.filter(v => v !== 'Todos').length > 0;
+                  return hasValues ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <label className="mb-3 block text-xs font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Tipo</label>
+                      <div className="flex flex-wrap gap-2">
+                        {values.map((tag) => (
+                          <motion.button
+                            key={`tipo-${tag}`}
+                            type="button"
+                            onClick={() => setActiveTipo(tag)}
+                            className="rounded-xl border px-4 py-2 text-xs font-semibold uppercase tracking-wide"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            style={
+                              activeTipo === tag
+                                ? { backgroundColor: accent, color: palette.text, borderColor: accent, boxShadow: `0 4px 12px ${accent}30` }
+                                : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
+                            }
+                          >
+                            {tag}
+                          </motion.button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  ) : null;
+                })()}
 
               {/* Ocasião */}
               {(() => {
                 const values = getValuesByCategoryAndField(activeCollection, 'ocasião');
                 const hasValues = values.filter(v => v !== 'Todos').length > 0;
                 return hasValues ? (
-                  <div>
-                    <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Ocasião</label>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25 }}
+                  >
+                    <label className="mb-3 block text-xs font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Ocasião</label>
                     <div className="flex flex-wrap gap-2">
                       {values.map((tag) => (
-                        <button
+                        <motion.button
                           key={`ocasiao-${tag}`}
                           type="button"
                           onClick={() => setActiveOcasião(tag)}
-                          className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
+                          className="rounded-xl border px-4 py-2 text-xs font-semibold uppercase tracking-wide"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           style={
                             activeOcasião === tag
-                              ? { backgroundColor: accent, color: palette.text, borderColor: accent }
+                              ? { backgroundColor: accent, color: palette.text, borderColor: accent, boxShadow: `0 4px 12px ${accent}30` }
                               : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
                           }
                         >
                           {tag}
-                        </button>
+                        </motion.button>
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
                 ) : null;
               })()}
 
@@ -1411,26 +1778,32 @@ export function CatalogPublic() {
                 const values = getValuesByCategoryAndField(activeCollection, 'ambiente');
                 const hasValues = values.filter(v => v !== 'Todos').length > 0;
                 return hasValues ? (
-                  <div>
-                    <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Ambiente</label>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <label className="mb-3 block text-xs font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Ambiente</label>
                     <div className="flex flex-wrap gap-2">
                       {values.map((tag) => (
-                        <button
+                        <motion.button
                           key={`ambiente-${tag}`}
                           type="button"
                           onClick={() => setActiveAmbiente(tag)}
-                          className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
+                          className="rounded-xl border px-4 py-2 text-xs font-semibold uppercase tracking-wide"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           style={
                             activeAmbiente === tag
-                              ? { backgroundColor: accent, color: palette.text, borderColor: accent }
+                              ? { backgroundColor: accent, color: palette.text, borderColor: accent, boxShadow: `0 4px 12px ${accent}30` }
                               : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
                           }
                         >
                           {tag}
-                        </button>
+                        </motion.button>
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
                 ) : null;
               })()}
 
@@ -1439,81 +1812,93 @@ export function CatalogPublic() {
                 const values = getValuesByCategoryAndField(activeCollection, 'público');
                 const hasValues = values.filter(v => v !== 'Todos').length > 0;
                 return hasValues ? (
-                  <div>
-                    <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Público</label>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.35 }}
+                  >
+                    <label className="mb-3 block text-xs font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Público</label>
                     <div className="flex flex-wrap gap-2">
                       {values.map((tag) => (
-                        <button
+                        <motion.button
                           key={`publico-${tag}`}
                           type="button"
                           onClick={() => setActivePublico(tag)}
-                          className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
+                          className="rounded-xl border px-4 py-2 text-xs font-semibold uppercase tracking-wide"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           style={
                             activePublico === tag
-                              ? { backgroundColor: accent, color: palette.text, borderColor: accent }
+                              ? { backgroundColor: accent, color: palette.text, borderColor: accent, boxShadow: `0 4px 12px ${accent}30` }
                               : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
                           }
                         >
                           {tag}
-                        </button>
+                        </motion.button>
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
                 ) : null;
               })()}
 
               {/* Material */}
               {materials.length > 1 && (
-                <div>
-                  <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Material</label>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <label className="mb-3 block text-xs font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Material</label>
                   <div className="flex flex-wrap gap-2">
                     {materials.map((mat) => (
-                      <button
+                      <motion.button
                         key={`material-${mat}`}
                         type="button"
                         onClick={() => setActiveMaterial(mat)}
-                        className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide transition-all"
+                        className="rounded-xl border px-4 py-2 text-xs font-semibold uppercase tracking-wide"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         style={
                           activeMaterial === mat
-                            ? { backgroundColor: accent, color: palette.text, borderColor: accent }
+                            ? { backgroundColor: accent, color: palette.text, borderColor: accent, boxShadow: `0 4px 12px ${accent}30` }
                             : { backgroundColor: palette.cardBg, color: palette.textMuted, borderColor: palette.border }
                         }
                       >
                         {mat}
-                      </button>
+                      </motion.button>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               )}
             </div>
           </div>
-        </section>
+        </motion.section>
       )}
+    </AnimatePresence>
 
       {/* Grid de produtos */}
-      <main id="produtos" className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <main id="produtos" className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         {isLoading ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {Array.from({ length: 8 }).map((_, index) => (
-              <div key={index} className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
-                <div className="aspect-square animate-pulse bg-slate-100" />
-                <div className="space-y-3 p-5">
-                  <div className="h-4 w-2/3 animate-pulse rounded bg-slate-100" />
-                  <div className="h-3 w-full animate-pulse rounded bg-slate-100" />
-                  <div className="h-10 w-full animate-pulse rounded-2xl bg-slate-100" />
-                </div>
-              </div>
+              <ProductCardSkeleton key={index} accent={accent} />
             ))}
           </div>
         ) : filtered.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-            {filtered.map((p) => (
+          <motion.div 
+            className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            {filtered.map((p, index) => (
               <ProductCard
                 key={p.id}
                 product={p}
                 accent={accent}
                 primaryColor={primaryColor}
                 ctaLabel={ctaLabel}
+                index={index}
                 onOpenDetails={(product) => {
                   setSelectedProduct(product);
                   setDetailsOpen(true);
@@ -1524,13 +1909,20 @@ export function CatalogPublic() {
                 }}
               />
             ))}
-          </div>
+          </motion.div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-24 text-slate-400">
-            <p className="text-lg font-bold text-slate-500">Nenhum produto encontrado</p>
-            <p className="mt-1 text-sm">Tente outro filtro ou termo de busca</p>
+          <motion.div 
+            className="flex flex-col items-center justify-center py-24"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full" style={{ backgroundColor: `${accent}20` }}>
+              <Filter className="h-10 w-10" style={{ color: accent }} />
+            </div>
+            <p className="text-2xl font-bold" style={{ color: palette.text }}>Nenhum produto encontrado</p>
+            <p className="mt-3 text-lg" style={{ color: palette.textMuted }}>Tente outro filtro ou termo de busca</p>
             {(search || activeCollection !== 'Todos' || activeMaterial !== 'Todos' || activeTag !== 'Todos' || activeTipo !== 'Todos' || activeOcasião !== 'Todos' || activeAmbiente !== 'Todos' || activePublico !== 'Todos') && (
-              <button
+              <motion.button
                 type="button"
                 onClick={() => {
                   setSearch('');
@@ -1542,52 +1934,60 @@ export function CatalogPublic() {
                   setActiveAmbiente('Todos');
                   setActivePublico('Todos');
                 }}
-                className="mt-4 rounded-full px-4 py-2 text-sm font-bold text-white"
+                className="mt-6 rounded-full px-6 py-3 text-sm font-bold text-white"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 style={{ backgroundColor: accent }}
               >
                 Limpar filtros
-              </button>
+              </motion.button>
             )}
-          </div>
+          </motion.div>
         )}
       </main>
 
       {/* Sobre + contato */}
       {(aboutTitle || aboutText || contactHeadline || contactText) && (
-        <section className="border-t border-slate-200 bg-white px-4 py-14 sm:px-6">
-          <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-2">
+        <section className="border-t border-slate-200 bg-white px-4 py-16 sm:px-6">
+          <div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-2">
             {(aboutTitle || aboutText) && (
               <div>
-                {aboutTitle && <h3 className="text-xl font-black text-slate-900">{aboutTitle}</h3>}
-                {aboutText && <p className="mt-3 leading-relaxed text-slate-600">{aboutText}</p>}
+                {aboutTitle && <h3 className="text-2xl font-black text-slate-900">{aboutTitle}</h3>}
+                {aboutText && <p className="mt-4 text-base leading-relaxed text-slate-600">{aboutText}</p>}
               </div>
             )}
             {(contactHeadline || contactText) && (
-              <div className="rounded-3xl p-6 text-white" style={{ backgroundColor: primaryColor }}>
-                {contactHeadline && <h3 className="text-lg font-black">{contactHeadline}</h3>}
-                {contactText && <p className="mt-2 text-sm leading-relaxed text-white/85">{contactText}</p>}
+              <motion.div 
+                className="rounded-3xl p-8 text-white"
+                style={{ backgroundColor: primaryColor }}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+              >
+                {contactHeadline && <h3 className="text-xl font-black">{contactHeadline}</h3>}
+                {contactText && <p className="mt-3 text-base leading-relaxed text-white/90">{contactText}</p>}
                 {primaryCtaUrl && (
-                  <a
+                  <motion.a
                     href={primaryCtaUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-xs font-black text-slate-900"
+                    className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-black text-slate-900"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
                     <MessageCircle className="h-4 w-4" />
                     {ctaLabel}
-                  </a>
+                  </motion.a>
                 )}
-              </div>
+              </motion.div>
             )}
           </div>
         </section>
       )}
 
       {/* Rodapé */}
-      <footer className="px-6 py-8 text-center text-white" style={{ backgroundColor: primaryColor }}>
-        <p className="text-sm font-bold">{businessName}</p>
-        {footerNote && <p className="mt-1 text-xs text-white/70">{footerNote}</p>}
-        <p className="mt-3 text-[10px] uppercase tracking-widest text-white/40">Catálogo digital</p>
+      <footer className="px-6 py-10 text-center text-white" style={{ backgroundColor: primaryColor }}>
+        <p className="text-base font-bold">{businessName}</p>
+        {footerNote && <p className="mt-2 text-sm text-white/80">{footerNote}</p>}
+        <p className="mt-4 text-xs uppercase tracking-widest text-white/50">Catálogo digital</p>
       </footer>
 
       <ProductDetailsModal
