@@ -18,6 +18,8 @@ import {
   SlidersHorizontal,
   ChevronDown,
   RotateCcw,
+  Check,
+  ChevronUp,
 } from 'lucide-react';
 import { getCatalogPublicData } from '../lib/catalogApi';
 import {
@@ -411,21 +413,6 @@ function ProductDetailsModal({
               ))}
             </div>
           )}
-
-          <div className="mb-6 grid grid-cols-2 gap-4 rounded-2xl p-4" style={{ backgroundColor: 'var(--color-surface-elevated)' }}>
-            {product.defaultWeightG != null && (
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>Peso estimado</p>
-                <p className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{product.defaultWeightG}g</p>
-              </div>
-            )}
-            {product.dimensions && (
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>Tamanho</p>
-                <p className="font-bold" style={{ color: 'var(--color-text-primary)' }}>{product.dimensions}</p>
-              </div>
-            )}
-          </div>
 
           {/* Size change notice */}
           <div className="mb-6 rounded-2xl p-4 text-center" style={{ backgroundColor: `${accent}15`, border: `1px solid ${accent}30` }}>
@@ -850,29 +837,6 @@ function ProductCard({
           </div>
         )}
 
-        <div className="mb-5 flex items-center justify-between gap-4">
-          <motion.div 
-            className="flex items-center gap-3 text-sm font-medium"
-            style={{ color: palette.textMuted }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-          >
-            {product.defaultWeightG != null && (
-              <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: accent }} />
-                {product.defaultWeightG}g
-              </span>
-            )}
-            {product.dimensions && (
-              <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: accent }} />
-                {product.dimensions}
-              </span>
-            )}
-          </motion.div>
-        </div>
-
         <div className="mt-auto">
           <motion.button
             type="button"
@@ -924,8 +888,7 @@ export function CatalogPublic() {
   const [activeHighlightTab, setActiveHighlightTab] = useState<'destaques' | 'mais_vendidos' | 'novidades'>('destaques');
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'material' | 'collection'>('name');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
-  const [weightRange, setWeightRange] = useState<[number, number]>([0, 500]);
+  const [showFilterSidebar, setShowFilterSidebar] = useState(false);
 
   const {
     primaryColor,
@@ -1023,14 +986,12 @@ export function CatalogPublic() {
       const matchesPublico = activePublico === 'Todos' || product.público === activePublico;
       
       const matchesFavorites = !showFavoritesOnly || favorites.includes(product.id);
-      const matchesPrice = !product.basePrice || (product.basePrice >= priceRange[0] && product.basePrice <= priceRange[1]);
-      const matchesWeight = !product.defaultWeightG || (product.defaultWeightG >= weightRange[0] && product.defaultWeightG <= weightRange[1]);
       const haystack = [product.name, product.description, product.tags, product.collection, product.materialType]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
       const matchesSearch = !search || haystack.includes(search.toLowerCase());
-      return matchesCollection && matchesMaterial && matchesTag && matchesTipo && matchesOcasião && matchesAmbiente && matchesPublico && matchesSearch && matchesFavorites && matchesPrice && matchesWeight;
+      return matchesCollection && matchesMaterial && matchesTag && matchesTipo && matchesOcasião && matchesAmbiente && matchesPublico && matchesSearch && matchesFavorites;
     });
 
     const sorted = [...visible];
@@ -1045,7 +1006,31 @@ export function CatalogPublic() {
       }
     });
     return sorted;
-  }, [publicProducts, activeCollection, activeMaterial, activeTag, activeTipo, activeOcasião, activeAmbiente, activePublico, search, sortBy, showFavoritesOnly, priceRange, weightRange]);
+  }, [publicProducts, activeCollection, activeMaterial, activeTag, activeTipo, activeOcasião, activeAmbiente, activePublico, search, sortBy, showFavoritesOnly]);
+
+  // Contadores de produtos para cada filtro
+  const getFilterCount = (filterType: string, value: string) => {
+    return publicProducts.filter((product) => {
+      switch (filterType) {
+        case 'collection':
+          return (product.collection || 'Geral') === value;
+        case 'material':
+          return product.materialType === value;
+        case 'tag':
+          return product.tags?.toLowerCase().includes(value.toLowerCase());
+        case 'tipo':
+          return product.tipo === value;
+        case 'ocasião':
+          return product.ocasião === value;
+        case 'ambiente':
+          return product.ambiente === value;
+        case 'público':
+          return product.público === value;
+        default:
+          return false;
+      }
+    }).length;
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -1544,6 +1529,89 @@ export function CatalogPublic() {
               />
             </div>
             <div className="flex flex-wrap gap-3">
+              {/* Quick Filters */}
+              <div className="flex flex-wrap gap-2">
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setActiveMaterial('PLA');
+                    setActiveCollection('Todos');
+                    setActiveTag('Todos');
+                    setActiveTipo('Todos');
+                    setActiveOcasião('Todos');
+                    setActiveAmbiente('Todos');
+                    setActivePublico('Todos');
+                  }}
+                  className={`rounded-2xl px-4 py-2 text-xs font-semibold transition-colors ${
+                    activeMaterial === 'PLA' ? 'bg-green-50 text-green-600' : ''
+                  }`}
+                  style={{ backgroundColor: activeMaterial === 'PLA' ? undefined : palette.sectionBg, border: `1px solid ${palette.border}`, color: activeMaterial === 'PLA' ? undefined : palette.text }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  PLA
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setActiveMaterial('PETG');
+                    setActiveCollection('Todos');
+                    setActiveTag('Todos');
+                    setActiveTipo('Todos');
+                    setActiveOcasião('Todos');
+                    setActiveAmbiente('Todos');
+                    setActivePublico('Todos');
+                  }}
+                  className={`rounded-2xl px-4 py-2 text-xs font-semibold transition-colors ${
+                    activeMaterial === 'PETG' ? 'bg-blue-50 text-blue-600' : ''
+                  }`}
+                  style={{ backgroundColor: activeMaterial === 'PETG' ? undefined : palette.sectionBg, border: `1px solid ${palette.border}`, color: activeMaterial === 'PETG' ? undefined : palette.text }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  PETG
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setActiveAmbiente('Sala');
+                    setActiveCollection('Todos');
+                    setActiveMaterial('Todos');
+                    setActiveTag('Todos');
+                    setActiveTipo('Todos');
+                    setActiveOcasião('Todos');
+                    setActivePublico('Todos');
+                  }}
+                  className={`rounded-2xl px-4 py-2 text-xs font-semibold transition-colors ${
+                    activeAmbiente === 'Sala' ? 'bg-purple-50 text-purple-600' : ''
+                  }`}
+                  style={{ backgroundColor: activeAmbiente === 'Sala' ? undefined : palette.sectionBg, border: `1px solid ${palette.border}`, color: activeAmbiente === 'Sala' ? undefined : palette.text }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Sala
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setActiveOcasião('Presente');
+                    setActiveCollection('Todos');
+                    setActiveMaterial('Todos');
+                    setActiveTag('Todos');
+                    setActiveTipo('Todos');
+                    setActiveAmbiente('Todos');
+                    setActivePublico('Todos');
+                  }}
+                  className={`rounded-2xl px-4 py-2 text-xs font-semibold transition-colors ${
+                    activeOcasião === 'Presente' ? 'bg-yellow-50 text-yellow-600' : ''
+                  }`}
+                  style={{ backgroundColor: activeOcasião === 'Presente' ? undefined : palette.sectionBg, border: `1px solid ${palette.border}`, color: activeOcasião === 'Presente' ? undefined : palette.text }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Presente
+                </motion.button>
+              </div>
               <motion.button
                 type="button"
                 onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
@@ -1573,6 +1641,20 @@ export function CatalogPublic() {
                 <option value="collection">Coleção</option>
                 <option value="material">Material</option>
               </select>
+              <motion.button
+                type="button"
+                onClick={() => setShowFilterSidebar(!showFilterSidebar)}
+                className={`flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold transition-colors ${
+                  showFilterSidebar ? 'bg-blue-50 text-blue-600' : ''
+                }`}
+                style={{ backgroundColor: showFilterSidebar ? undefined : palette.sectionBg, border: `1px solid ${palette.border}`, color: showFilterSidebar ? undefined : palette.text }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title="Filtros avançados"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Filtros
+              </motion.button>
               {(search || activeCollection !== 'Todos' || activeMaterial !== 'Todos' || activeTag !== 'Todos' || activeTipo !== 'Todos' || activeOcasião !== 'Todos' || activeAmbiente !== 'Todos' || activePublico !== 'Todos' || showFavoritesOnly) && (
                 <motion.button
                   type="button"
@@ -1606,6 +1688,278 @@ export function CatalogPublic() {
           </div>
         </div>
       </section>
+
+      {/* Sidebar de Filtros Avançados */}
+      <AnimatePresence>
+        {showFilterSidebar && (
+          <>
+            {/* Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowFilterSidebar(false)}
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+            />
+            
+            {/* Sidebar */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 h-full w-full max-w-md z-50 overflow-y-auto"
+              style={{ backgroundColor: palette.pageBg }}
+            >
+              <div className="sticky top-0 z-10 px-6 py-4 flex items-center justify-between" style={{ backgroundColor: palette.pageBg, borderBottom: `1px solid ${palette.border}` }}>
+                <h2 className="text-lg font-black uppercase tracking-wider" style={{ color: palette.text }}>Filtros Avançados</h2>
+                <button
+                  type="button"
+                  onClick={() => setShowFilterSidebar(false)}
+                  className="p-2 rounded-xl hover:bg-slate-100 transition-colors"
+                >
+                  <X className="h-5 w-5" style={{ color: palette.text }} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-8">
+                {/* Coleção */}
+                <div>
+                  <label className="mb-3 block text-xs font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Coleção</label>
+                  <div className="space-y-2">
+                    {collections.map((col) => (
+                      <motion.button
+                        key={col}
+                        type="button"
+                        onClick={() => setActiveCollection(col)}
+                        className="flex items-center justify-between w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition-colors"
+                        style={{ 
+                          backgroundColor: activeCollection === col ? `${accent}15` : palette.cardBg, 
+                          border: `1px solid ${activeCollection === col ? accent : palette.border}`,
+                          color: palette.text
+                        }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span>{col}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-normal" style={{ color: palette.textMuted }}>
+                            {getFilterCount('collection', col)}
+                          </span>
+                          {activeCollection === col && <Check className="h-4 w-4" style={{ color: accent }} />}
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Material */}
+                <div>
+                  <label className="mb-3 block text-xs font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Material</label>
+                  <div className="space-y-2">
+                    {materials.map((mat) => (
+                      <motion.button
+                        key={mat}
+                        type="button"
+                        onClick={() => setActiveMaterial(mat)}
+                        className="flex items-center justify-between w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition-colors"
+                        style={{ 
+                          backgroundColor: activeMaterial === mat ? `${accent}15` : palette.cardBg, 
+                          border: `1px solid ${activeMaterial === mat ? accent : palette.border}`,
+                          color: palette.text
+                        }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span>{mat}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-normal" style={{ color: palette.textMuted }}>
+                            {getFilterCount('material', mat)}
+                          </span>
+                          {activeMaterial === mat && <Check className="h-4 w-4" style={{ color: accent }} />}
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tags */}
+                <div>
+                  <label className="mb-3 block text-xs font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Tags</label>
+                  <div className="space-y-2">
+                    {tags.map((tag) => (
+                      <motion.button
+                        key={tag}
+                        type="button"
+                        onClick={() => setActiveTag(tag)}
+                        className="flex items-center justify-between w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition-colors"
+                        style={{ 
+                          backgroundColor: activeTag === tag ? `${accent}15` : palette.cardBg, 
+                          border: `1px solid ${activeTag === tag ? accent : palette.border}`,
+                          color: palette.text
+                        }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span>{tag}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-normal" style={{ color: palette.textMuted }}>
+                            {getFilterCount('tag', tag)}
+                          </span>
+                          {activeTag === tag && <Check className="h-4 w-4" style={{ color: accent }} />}
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tipo */}
+                <div>
+                  <label className="mb-3 block text-xs font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Tipo</label>
+                  <div className="space-y-2">
+                    {tipos.map((tipo) => (
+                      <motion.button
+                        key={tipo}
+                        type="button"
+                        onClick={() => setActiveTipo(tipo)}
+                        className="flex items-center justify-between w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition-colors"
+                        style={{ 
+                          backgroundColor: activeTipo === tipo ? `${accent}15` : palette.cardBg, 
+                          border: `1px solid ${activeTipo === tipo ? accent : palette.border}`,
+                          color: palette.text
+                        }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span>{tipo}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-normal" style={{ color: palette.textMuted }}>
+                            {getFilterCount('tipo', tipo)}
+                          </span>
+                          {activeTipo === tipo && <Check className="h-4 w-4" style={{ color: accent }} />}
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Ocasião */}
+                <div>
+                  <label className="mb-3 block text-xs font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Ocasião</label>
+                  <div className="space-y-2">
+                    {ocasiões.map((oc) => (
+                      <motion.button
+                        key={oc}
+                        type="button"
+                        onClick={() => setActiveOcasião(oc)}
+                        className="flex items-center justify-between w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition-colors"
+                        style={{ 
+                          backgroundColor: activeOcasião === oc ? `${accent}15` : palette.cardBg, 
+                          border: `1px solid ${activeOcasião === oc ? accent : palette.border}`,
+                          color: palette.text
+                        }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span>{oc}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-normal" style={{ color: palette.textMuted }}>
+                            {getFilterCount('ocasião', oc)}
+                          </span>
+                          {activeOcasião === oc && <Check className="h-4 w-4" style={{ color: accent }} />}
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Ambiente */}
+                <div>
+                  <label className="mb-3 block text-xs font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Ambiente</label>
+                  <div className="space-y-2">
+                    {ambientes.map((amb) => (
+                      <motion.button
+                        key={amb}
+                        type="button"
+                        onClick={() => setActiveAmbiente(amb)}
+                        className="flex items-center justify-between w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition-colors"
+                        style={{ 
+                          backgroundColor: activeAmbiente === amb ? `${accent}15` : palette.cardBg, 
+                          border: `1px solid ${activeAmbiente === amb ? accent : palette.border}`,
+                          color: palette.text
+                        }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span>{amb}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-normal" style={{ color: palette.textMuted }}>
+                            {getFilterCount('ambiente', amb)}
+                          </span>
+                          {activeAmbiente === amb && <Check className="h-4 w-4" style={{ color: accent }} />}
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Público */}
+                <div>
+                  <label className="mb-3 block text-xs font-bold uppercase tracking-widest" style={{ color: palette.textMuted }}>Público</label>
+                  <div className="space-y-2">
+                    {públicos.map((pub) => (
+                      <motion.button
+                        key={pub}
+                        type="button"
+                        onClick={() => setActivePublico(pub)}
+                        className="flex items-center justify-between w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition-colors"
+                        style={{ 
+                          backgroundColor: activePublico === pub ? `${accent}15` : palette.cardBg, 
+                          border: `1px solid ${activePublico === pub ? accent : palette.border}`,
+                          color: palette.text
+                        }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span>{pub}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-normal" style={{ color: palette.textMuted }}>
+                            {getFilterCount('público', pub)}
+                          </span>
+                          {activePublico === pub && <Check className="h-4 w-4" style={{ color: accent }} />}
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Botão de limpar */}
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setSearch('');
+                    setActiveCollection('Todos');
+                    setActiveMaterial('Todos');
+                    setActiveTag('Todos');
+                    setActiveTipo('Todos');
+                    setActiveOcasião('Todos');
+                    setActiveAmbiente('Todos');
+                    setActivePublico('Todos');
+                    setShowFavoritesOnly(false);
+                  }}
+                  className="w-full rounded-2xl px-5 py-4 text-sm font-semibold flex items-center justify-center gap-2"
+                  style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, color: palette.text }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Limpar todos os filtros
+                </motion.button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Categorias */}
       {categorySummaries.length > 0 && (

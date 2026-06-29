@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useMemo, useState } from 'react';
-import { AlertTriangle, Box, CheckCircle2, Copy, ExternalLink, Instagram, Mail, MessageCircle, Palette, RefreshCw, Save, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { AlertTriangle, Box, CheckCircle2, Copy, ExternalLink, Instagram, Mail, MessageCircle, Palette, RefreshCw, Save, X, ChevronLeft, ChevronRight, Plus, Edit2, Trash2 } from 'lucide-react';
 import { useStore } from '../store';
 import { getCatalogAdminData, getCatalogBackendDebugInfo, getCatalogPublicData, uploadCatalogAsset } from '../lib/catalogApi';
 import { getProductImages } from '../lib/catalogUtils';
@@ -301,6 +301,170 @@ function SettingsPanel({ settings, onSave, onClose }: {
   );
 }
 
+/* ── Category Management Panel ─────────────────────────── */
+function CategoryManagementPanel({ 
+  products, 
+  onUpdateCategories, 
+  onClose 
+}: { 
+  products: any[]; 
+  onUpdateCategories: (categories: string[]) => void;
+  onClose: () => void;
+}) {
+  const [categories, setCategories] = useState<string[]>([]);
+  const [newCategory, setNewCategory] = useState('');
+  const [editingCategory, setEditingCategory] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+
+  useEffect(() => {
+    const uniqueCategories = Array.from(new Set(products.map((p) => p.collection || 'Geral').filter(Boolean)));
+    setCategories(uniqueCategories);
+  }, [products]);
+
+  const handleAddCategory = () => {
+    if (newCategory.trim()) {
+      setCategories([...categories, newCategory.trim()]);
+      setNewCategory('');
+      onUpdateCategories([...categories, newCategory.trim()]);
+    }
+  };
+
+  const handleDeleteCategory = (category: string) => {
+    const updated = categories.filter(c => c !== category);
+    setCategories(updated);
+    onUpdateCategories(updated);
+  };
+
+  const handleEditCategory = (category: string) => {
+    setEditingCategory(category);
+    setEditValue(category);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingCategory && editValue.trim()) {
+      const updated = categories.map(c => c === editingCategory ? editValue.trim() : c);
+      setCategories(updated);
+      onUpdateCategories(updated);
+      setEditingCategory(null);
+      setEditValue('');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCategory(null);
+    setEditValue('');
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-slate-100">
+          <h3 className="font-black text-slate-800 text-lg flex items-center gap-2">
+            <Edit2 className="w-5 h-5 text-blue-500" /> Gerenciar Categorias
+          </h3>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-6 space-y-6">
+          {/* Add new category */}
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-slate-500 uppercase">Adicionar nova categoria</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                placeholder="Nome da categoria..."
+                className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm focus:ring-2"
+                style={{ '--tw-ring-color': '#3b82f640' } as any}
+              />
+              <button
+                type="button"
+                onClick={handleAddCategory}
+                className="px-4 py-2.5 bg-blue-500 rounded-xl text-sm font-bold text-white hover:bg-blue-600 transition-colors flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" /> Adicionar
+              </button>
+            </div>
+          </div>
+
+          {/* Existing categories */}
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-slate-500 uppercase">Categorias existentes ({categories.length})</label>
+            <div className="space-y-2">
+              {categories.map((category) => (
+                <div
+                  key={category}
+                  className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200"
+                >
+                  {editingCategory === category ? (
+                    <>
+                      <input
+                        type="text"
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-lg outline-none text-sm focus:ring-2"
+                        style={{ '--tw-ring-color': '#3b82f640' } as any}
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={handleSaveEdit}
+                        className="px-3 py-2 bg-green-500 rounded-lg text-sm font-bold text-white hover:bg-green-600 transition-colors"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelEdit}
+                        className="px-3 py-2 bg-slate-400 rounded-lg text-sm font-bold text-white hover:bg-slate-500 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="flex-1 font-medium text-slate-700">{category}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleEditCategory(category)}
+                        className="p-2 hover:bg-slate-200 rounded-lg transition-colors text-slate-500 hover:text-slate-700"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCategory(category)}
+                        className="p-2 hover:bg-red-100 rounded-lg transition-colors text-slate-500 hover:text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              ))}
+              {categories.length === 0 && (
+                <div className="text-center py-8 text-slate-400 text-sm">
+                  Nenhuma categoria cadastrada ainda
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Info */}
+          <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+            <p className="text-xs text-blue-800">
+              💡 As categorias são usadas para organizar seus produtos no catálogo público. 
+              Edite os produtos para atribuir categorias diferentes.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 type CatalogDiagnostics = {
   status: 'idle' | 'loading' | 'success' | 'error';
   message?: string;
@@ -407,6 +571,7 @@ function ProductCard({ product, accentColor, primaryColor, primaryCtaLabel, what
 export function Catalog() {
   const { products, catalogSettings, updateCatalogSettings } = useStore();
   const [showSettings, setShowSettings] = useState(false);
+  const [showCategoryManagement, setShowCategoryManagement] = useState(false);
   const [activeCollection, setActiveCollection] = useState('Todos');
   const [search, setSearch] = useState('');
   const [diagnostics, setDiagnostics] = useState<CatalogDiagnostics>({ status: 'idle' });
@@ -517,6 +682,10 @@ export function Catalog() {
           <span className="text-xs text-amber-500">• Preços ocultos • {publicProducts.length} produto(s) visível(is)</span>
         </div>
         <div className="flex items-center gap-2">
+          <button onClick={() => setShowCategoryManagement(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-amber-200 text-amber-700 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors">
+            <Edit2 className="w-3.5 h-3.5" /> Categorias
+          </button>
           <button onClick={() => setShowSettings(true)}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-amber-200 text-amber-700 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors">
             <Palette className="w-3.5 h-3.5" /> Personalizar
@@ -630,6 +799,18 @@ export function Catalog() {
           settings={catalogSettings}
           onSave={updateCatalogSettings}
           onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {showCategoryManagement && (
+        <CategoryManagementPanel
+          products={publicProducts}
+          onUpdateCategories={(updatedCategories) => {
+            // Update products with new categories
+            // This is a simplified version - in a real implementation, you'd need to update the actual product data
+            console.log('Categories updated:', updatedCategories);
+          }}
+          onClose={() => setShowCategoryManagement(false)}
         />
       )}
 
