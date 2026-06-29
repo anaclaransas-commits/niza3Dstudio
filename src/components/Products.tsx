@@ -492,8 +492,9 @@ export function Products() {
     try {
       for (const file of files) {
         try {
-          console.log('Processando arquivo:', file.name, file.type, file.size);
-          const asset = await uploadProductImage(file as File);
+          const fileObj = file as File;
+          console.log('Processando arquivo:', fileObj.name, fileObj.type, fileObj.size);
+          const asset = await uploadProductImage(fileObj);
           console.log('Upload realizado com sucesso:', asset.url);
           // Valida se a URL é válida antes de adicionar
           if (asset.url && typeof asset.url === 'string' && asset.url.trim().length > 0) {
@@ -503,7 +504,8 @@ export function Products() {
             failed++;
           }
         } catch (error) {
-          console.error('Erro ao fazer upload do arquivo:', file.name, error);
+          const fileObj = file as File;
+          console.error('Erro ao fazer upload do arquivo:', fileObj.name, error);
           failed++;
         }
       }
@@ -860,42 +862,42 @@ export function Products() {
                 label="Tipo"
                 values={formData.tipo}
                 onChange={(values) => setFormData(p => ({ ...p, tipo: values }))}
-                availableOptions={tipoOptions}
+                availableOptions={tipoOptions as string[]}
                 placeholder="Adicionar tipo..."
               />
               <MultiSelect
                 label="Ocasião"
                 values={formData.ocasião}
                 onChange={(values) => setFormData(p => ({ ...p, ocasião: values }))}
-                availableOptions={ocasiãoOptions}
+                availableOptions={ocasiãoOptions as string[]}
                 placeholder="Adicionar ocasião..."
               />
               <MultiSelect
                 label="Ambiente"
                 values={formData.ambiente}
                 onChange={(values) => setFormData(p => ({ ...p, ambiente: values }))}
-                availableOptions={ambienteOptions}
+                availableOptions={ambienteOptions as string[]}
                 placeholder="Adicionar ambiente..."
               />
               <MultiSelect
                 label="Público"
                 values={formData.público}
                 onChange={(values) => setFormData(p => ({ ...p, público: values }))}
-                availableOptions={públicoOptions}
+                availableOptions={públicoOptions as string[]}
                 placeholder="Adicionar público..."
               />
               <MultiSelect
                 label="Estilo"
                 values={formData.estilo}
                 onChange={(values) => setFormData(p => ({ ...p, estilo: values }))}
-                availableOptions={estiloOptions}
+                availableOptions={estiloOptions as string[]}
                 placeholder="Adicionar estilo..."
               />
               <MultiSelect
                 label="Coleção"
                 values={formData.coleção}
                 onChange={(values) => setFormData(p => ({ ...p, coleção: values }))}
-                availableOptions={coleçãoOptions}
+                availableOptions={coleçãoOptions as string[]}
                 placeholder="Adicionar coleção..."
               />
               <div className="space-y-1">
