@@ -1471,22 +1471,21 @@ export function CatalogPublic() {
               >
                 <h3 className="text-xs font-black uppercase tracking-[0.15em] mb-3 sm:text-sm sm:mb-4 lg:mb-6" style={{ color: palette.textMuted }}>Categorias</h3>
                 
-                {/* Mobile: Horizontal scroll - uma linha só */}
+                {/* Mobile: Auto-sizing grid - ocupa toda lateral em uma linha */}
                 <div className="lg:hidden">
-                  <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                  <div className="grid grid-cols-2 gap-2 -mx-4 px-4">
                     <motion.button
                       key="Todos-mobile"
                       type="button"
                       onClick={() => {
                         setActiveCollection('Todos');
                       }}
-                      className="flex-shrink-0 flex flex-col items-center rounded-lg px-5 py-4 text-center shadow-sm"
+                      className="flex flex-col items-center rounded-lg px-4 py-5 text-center shadow-sm"
                       style={{ 
                         backgroundColor: activeCollection === 'Todos' ? primaryColor : palette.cardBg, 
                         borderColor: activeCollection === 'Todos' ? primaryColor : palette.border,
                         color: activeCollection === 'Todos' ? '#fff' : palette.text,
-                        border: `1px solid ${activeCollection === 'Todos' ? primaryColor : palette.border}`,
-                        minWidth: '120px'
+                        border: `1px solid ${activeCollection === 'Todos' ? primaryColor : palette.border}`
                       }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -1503,13 +1502,12 @@ export function CatalogPublic() {
                         onClick={() => {
                           setActiveCollection(category.name);
                         }}
-                        className="flex-shrink-0 flex flex-col items-center rounded-lg px-5 py-4 text-center shadow-sm"
+                        className="flex flex-col items-center rounded-lg px-4 py-5 text-center shadow-sm"
                         style={{ 
                           backgroundColor: activeCollection === category.name ? primaryColor : palette.cardBg, 
                           borderColor: activeCollection === category.name ? primaryColor : palette.border,
                           color: activeCollection === category.name ? '#fff' : palette.text,
-                          border: `1px solid ${activeCollection === category.name ? primaryColor : palette.border}`,
-                          minWidth: '120px'
+                          border: `1px solid ${activeCollection === category.name ? primaryColor : palette.border}`
                         }}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
