@@ -1471,16 +1471,16 @@ export function CatalogPublic() {
               >
                 <h3 className="text-xs font-black uppercase tracking-[0.15em] mb-3 sm:text-sm sm:mb-4 lg:mb-6" style={{ color: palette.textMuted }}>Categorias</h3>
                 
-                {/* Mobile: Auto-sizing grid - ocupa toda lateral em uma linha */}
+                {/* Mobile: Flex auto-sizing - 1 linha ocupando toda lateral */}
                 <div className="lg:hidden">
-                  <div className="grid grid-cols-2 gap-2 -mx-4 px-4">
+                  <div className="flex gap-2 -mx-4 px-4">
                     <motion.button
                       key="Todos-mobile"
                       type="button"
                       onClick={() => {
                         setActiveCollection('Todos');
                       }}
-                      className="flex flex-col items-center rounded-lg px-4 py-5 text-center shadow-sm"
+                      className="flex-1 flex flex-col items-center rounded-lg px-3 py-5 text-center shadow-sm"
                       style={{ 
                         backgroundColor: activeCollection === 'Todos' ? primaryColor : palette.cardBg, 
                         borderColor: activeCollection === 'Todos' ? primaryColor : palette.border,
@@ -1502,7 +1502,7 @@ export function CatalogPublic() {
                         onClick={() => {
                           setActiveCollection(category.name);
                         }}
-                        className="flex flex-col items-center rounded-lg px-4 py-5 text-center shadow-sm"
+                        className="flex-1 flex flex-col items-center rounded-lg px-3 py-5 text-center shadow-sm"
                         style={{ 
                           backgroundColor: activeCollection === category.name ? primaryColor : palette.cardBg, 
                           borderColor: activeCollection === category.name ? primaryColor : palette.border,
