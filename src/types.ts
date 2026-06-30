@@ -98,6 +98,16 @@ export interface CatalogSettings {
   contactHeadline?: string;
   contactText?: string;
   primaryCtaLabel?: string;
+  /** Valores de filtros disponíveis para uso em produtos e catálogo */
+  filterValues?: {
+    tipo?: string[];
+    ambiente?: string[];
+    público?: string[];
+    estilo?: string[];
+    ocasião?: string[];
+    coleção?: string[];
+    material?: string[];
+  };
   primaryCtaUrl?: string;
   secondaryCtaLabel?: string;
   secondaryCtaUrl?: string;

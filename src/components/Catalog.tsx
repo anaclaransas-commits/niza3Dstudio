@@ -6,7 +6,7 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, Box, CheckCircle2, Copy, ExternalLink, Instagram, Mail, MessageCircle, Palette, RefreshCw, Save, X, ChevronLeft, ChevronRight, Plus, Edit2, Trash2 } from 'lucide-react';
 import { useStore } from '../store';
-import { getCatalogAdminData, getCatalogBackendDebugInfo, getCatalogPublicData, uploadCatalogAsset } from '../lib/catalogApi';
+import { getCatalogAdminData, getCatalogBackendDebugInfo, getCatalogPublicData, uploadCatalogAsset, saveCatalogSettings } from '../lib/catalogApi';
 import { getProductImages } from '../lib/catalogUtils';
 import type { CatalogSettings, Product } from '../types';
 
@@ -307,13 +307,15 @@ function FilterValuesManagementPanel({
   field, 
   fieldName, 
   onUpdateValues, 
-  onClose 
+  onClose,
+  catalogSettings 
 }: { 
   products: Product[]; 
   field: string;
   fieldName: string;
   onUpdateValues: (values: string[]) => void;
   onClose: () => void;
+  catalogSettings: CatalogSettings;
 }) {
   const [values, setValues] = useState<string[]>([]);
   const [newValue, setNewValue] = useState('');
@@ -321,26 +323,18 @@ function FilterValuesManagementPanel({
   const [editValue, setEditValue] = useState('');
 
   useEffect(() => {
-    const uniqueValues = Array.from(new Set(
-      products
-        .map((p) => {
-          const fieldValue = p[field as keyof Product];
-          if (Array.isArray(fieldValue)) {
-            return fieldValue.flat();
-          }
-          return fieldValue;
-        })
-        .flat()
-        .filter(Boolean)
-    ));
-    setValues(uniqueValues);
-  }, [products, field]);
+    // Load values from catalogSettings.filterValues
+    const fieldKey = field as keyof NonNullable<CatalogSettings['filterValues']>;
+    const savedValues = catalogSettings.filterValues?.[fieldKey] || [];
+    setValues(savedValues);
+  }, [catalogSettings, field]);
 
   const handleAddValue = () => {
     if (newValue.trim()) {
-      setValues([...values, newValue.trim()]);
+      const updated = [...values, newValue.trim()];
+      setValues(updated);
       setNewValue('');
-      onUpdateValues([...values, newValue.trim()]);
+      onUpdateValues(updated);
     }
   };
 
@@ -740,7 +734,7 @@ function ProductCard({ product, accentColor, primaryColor, primaryCtaLabel, what
 
 /* ── Main Catalog page ────────────────────────────── */
 export function Catalog() {
-  const { products, catalogSettings, updateCatalogSettings } = useStore();
+  const { products, catalogSettings, updateCatalogSettings, setCatalogSettings } = useStore();
   const [showSettings, setShowSettings] = useState(false);
   const [showCategoryManagement, setShowCategoryManagement] = useState(false);
   const [showFilterManagement, setShowFilterManagement] = useState(false);
@@ -1057,9 +1051,22 @@ export function Catalog() {
           products={publicProducts}
           field={selectedFilterField}
           fieldName={selectedFilterField.charAt(0).toUpperCase() + selectedFilterField.slice(1)}
+          catalogSettings={catalogSettings}
           onUpdateValues={(updatedValues) => {
-            // Filter values are managed via product updates - this panel is for reference only
-            console.log(`${selectedFilterField} values updated:`, updatedValues);
+            // Save to catalogSettings.filterValues
+            const fieldKey = selectedFilterField as keyof NonNullable<CatalogSettings['filterValues']>;
+            const updatedSettings = {
+              ...catalogSettings,
+              filterValues: {
+                ...catalogSettings.filterValues,
+                [fieldKey]: updatedValues,
+              },
+            };
+            setCatalogSettings(updatedSettings);
+            // Also save to backend if configured
+            if (backendInfo.supabase.configured) {
+              saveCatalogSettings(updatedSettings);
+            }
           }}
           onClose={() => setSelectedFilterField(null)}
         />

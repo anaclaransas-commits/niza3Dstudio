@@ -23,10 +23,10 @@ import {
 } from 'lucide-react';
 import { useToast } from '../hooks/useToast';
 import { useStore } from '../store';
-import { uploadCatalogAsset } from '../lib/catalogApi';
+import { uploadCatalogAsset, saveCatalogSettings } from '../lib/catalogApi';
 import { coerceProductImageUrls } from '../lib/catalogUtils';
 import { cn, calculate3DPrintCost, parseLocalizedNumber, formatCurrency } from '../lib/utils';
-import type { Product } from '../types';
+import type { Product, CatalogSettings } from '../types';
 import JSZip from 'jszip';
 import { ProductGallery } from './ProductGallery';
 
@@ -404,13 +404,16 @@ export function Products() {
   // Collections list
   const collections = ['Todos', ...Array.from(new Set(products.map(p => p.collection || 'Sem Coleção')))];
 
-  // Extract unique values for filter fields
-  const tipoOptions = Array.from(new Set(products.map(p => p.tipo).filter(Boolean)));
-  const ocasiãoOptions = Array.from(new Set(products.map(p => p.ocasião).filter(Boolean)));
-  const ambienteOptions = Array.from(new Set(products.map(p => p.ambiente).filter(Boolean)));
-  const públicoOptions = Array.from(new Set(products.map(p => p.público).filter(Boolean)));
-  const estiloOptions = Array.from(new Set(products.map(p => p.estilo).filter(Boolean)));
-  const coleçãoOptions = Array.from(new Set(products.map(p => p.coleção).filter(Boolean)));
+  // Extract unique values for filter fields from catalogSettings
+  const store = useStore();
+  const catalogSettings = store.catalogSettings;
+  const tipoOptions = catalogSettings.filterValues?.tipo || [];
+  const ocasiãoOptions = catalogSettings.filterValues?.ocasião || [];
+  const ambienteOptions = catalogSettings.filterValues?.ambiente || [];
+  const públicoOptions = catalogSettings.filterValues?.público || [];
+  const estiloOptions = catalogSettings.filterValues?.estilo || [];
+  const coleçãoOptions = catalogSettings.filterValues?.coleção || [];
+  const materialOptions = catalogSettings.filterValues?.material || [];
 
   const filtered = products.filter(p => {
     const matchSearch =
@@ -899,6 +902,13 @@ export function Products() {
                 onChange={(values) => setFormData(p => ({ ...p, coleção: values }))}
                 availableOptions={coleçãoOptions as string[]}
                 placeholder="Adicionar coleção..."
+              />
+              <MultiSelect
+                label="Material"
+                values={formData.material}
+                onChange={(values) => setFormData(p => ({ ...p, material: values }))}
+                availableOptions={materialOptions as string[]}
+                placeholder="Adicionar material..."
               />
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Tags (separadas por vírgula)</label>

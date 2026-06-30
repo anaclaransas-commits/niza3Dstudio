@@ -88,6 +88,15 @@ const defaultCatalogSettings: CatalogSettings = {
   instagram: '',
   email: '',
   footerNote: 'Produção sob demanda em impressão 3D.',
+  filterValues: {
+    tipo: [],
+    ambiente: [],
+    público: [],
+    estilo: [],
+    ocasião: [],
+    coleção: [],
+    material: [],
+  },
 };
 
 const defaultPrinters: Printer[] = [
