@@ -236,6 +236,7 @@ type StoreContextValue = {
   calculatorDefaults: CalculatorDefaults;
   channels: SalesChannel[];
   catalogSettings: CatalogSettings;
+  setCatalogSettings: (settings: CatalogSettings) => void;
   calculatorTemplates: CalculatorTemplate[];
   discountCodes: DiscountCode[];
   printQueue: PrintQueueItem[];
@@ -616,6 +617,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       calculatorDefaults,
       channels,
       catalogSettings,
+      setCatalogSettings,
       calculatorTemplates,
       discountCodes,
       printQueue,
