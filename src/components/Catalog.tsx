@@ -324,9 +324,14 @@ function FilterValuesManagementPanel({
 
   useEffect(() => {
     // Load values from catalogSettings.filterValues
-    const fieldKey = field as keyof NonNullable<CatalogSettings['filterValues']>;
-    const savedValues = catalogSettings.filterValues?.[fieldKey] || [];
-    setValues(savedValues);
+    try {
+      const fieldKey = field as keyof NonNullable<CatalogSettings['filterValues']>;
+      const savedValues = catalogSettings.filterValues?.[fieldKey] || [];
+      setValues(savedValues);
+    } catch (err) {
+      console.error('Error loading filter values:', err);
+      setValues([]);
+    }
   }, [catalogSettings, field]);
 
   const handleAddValue = () => {
@@ -1058,14 +1063,16 @@ export function Catalog() {
             const updatedSettings = {
               ...catalogSettings,
               filterValues: {
-                ...catalogSettings.filterValues,
+                ...(catalogSettings.filterValues || {}),
                 [fieldKey]: updatedValues,
               },
             };
             setCatalogSettings(updatedSettings);
             // Also save to backend if configured
             if (backendInfo.supabase.configured) {
-              saveCatalogSettings(updatedSettings);
+              saveCatalogSettings(updatedSettings).catch(err => {
+                console.error('Error saving catalog settings:', err);
+              });
             }
           }}
           onClose={() => setSelectedFilterField(null)}
