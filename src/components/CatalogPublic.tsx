@@ -1480,13 +1480,13 @@ export function CatalogPublic() {
                       onClick={() => {
                         setActiveCollection('Todos');
                       }}
-                      className="flex-shrink-0 flex flex-col items-center rounded-lg px-4 py-3 text-center shadow-sm"
+                      className="flex-shrink-0 flex flex-col items-center rounded-lg px-5 py-4 text-center shadow-sm"
                       style={{ 
                         backgroundColor: activeCollection === 'Todos' ? primaryColor : palette.cardBg, 
                         borderColor: activeCollection === 'Todos' ? primaryColor : palette.border,
                         color: activeCollection === 'Todos' ? '#fff' : palette.text,
                         border: `1px solid ${activeCollection === 'Todos' ? primaryColor : palette.border}`,
-                        minWidth: '100px'
+                        minWidth: '120px'
                       }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -1503,13 +1503,13 @@ export function CatalogPublic() {
                         onClick={() => {
                           setActiveCollection(category.name);
                         }}
-                        className="flex-shrink-0 flex flex-col items-center rounded-lg px-4 py-3 text-center shadow-sm"
+                        className="flex-shrink-0 flex flex-col items-center rounded-lg px-5 py-4 text-center shadow-sm"
                         style={{ 
                           backgroundColor: activeCollection === category.name ? primaryColor : palette.cardBg, 
                           borderColor: activeCollection === category.name ? primaryColor : palette.border,
                           color: activeCollection === category.name ? '#fff' : palette.text,
                           border: `1px solid ${activeCollection === category.name ? primaryColor : palette.border}`,
-                          minWidth: '100px'
+                          minWidth: '120px'
                         }}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -1628,7 +1628,7 @@ export function CatalogPublic() {
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="absolute z-[100000] mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
+                                    className="fixed z-[999999] bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
                                     style={{ borderColor: palette.border }}
                                   >
                                     {values.filter(v => v !== 'Todos').map((tag) => (
@@ -1689,7 +1689,7 @@ export function CatalogPublic() {
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="absolute z-[100000] mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
+                                    className="fixed z-[999999] bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
                                     style={{ borderColor: palette.border }}
                                   >
                                     {values.filter(v => v !== 'Todos').map((tag) => (
@@ -1750,7 +1750,7 @@ export function CatalogPublic() {
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="absolute z-[100000] mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
+                                    className="fixed z-[999999] bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
                                     style={{ borderColor: palette.border }}
                                   >
                                     {values.filter(v => v !== 'Todos').map((tag) => (
@@ -1811,7 +1811,7 @@ export function CatalogPublic() {
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="absolute z-[100000] mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
+                                    className="fixed z-[999999] bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
                                     style={{ borderColor: palette.border }}
                                   >
                                     {values.filter(v => v !== 'Todos').map((tag) => (
@@ -1872,7 +1872,7 @@ export function CatalogPublic() {
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="absolute z-[100000] mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
+                                    className="fixed z-[999999] bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
                                     style={{ borderColor: palette.border }}
                                   >
                                     {values.filter(v => v !== 'Todos').map((tag) => (
@@ -1933,7 +1933,7 @@ export function CatalogPublic() {
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="absolute z-[100000] mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
+                                    className="fixed z-[999999] bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
                                     style={{ borderColor: palette.border }}
                                   >
                                     {values.filter(v => v !== 'Todos').map((tag) => (
