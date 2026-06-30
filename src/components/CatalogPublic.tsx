@@ -1458,27 +1458,82 @@ export function CatalogPublic() {
       )}
 
       {/* Layout com Sidebar de Categorias e Conteúdo Principal */}
-      <section className="px-4 py-8 sm:px-6" style={{ backgroundColor: palette.pageBg }}>
+      <section className="px-4 py-6 sm:px-6 sm:py-8" style={{ backgroundColor: palette.pageBg }}>
         <div className="mx-auto max-w-6xl">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar de Categorias */}
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            {/* Sidebar de Categorias - Mobile horizontal, Desktop vertical */}
             <aside className="lg:w-64 flex-shrink-0">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
-                className="sticky top-8"
+                className="sticky top-4 lg:top-8"
               >
-                <h3 className="text-sm font-black uppercase tracking-[0.2em] mb-4 sm:mb-6" style={{ color: palette.textMuted }}>Categorias</h3>
-                <div className="space-y-2">
-                  {/* Card "Todos" */}
+                <h3 className="text-xs font-black uppercase tracking-[0.15em] mb-3 sm:text-sm sm:mb-4 lg:mb-6" style={{ color: palette.textMuted }}>Categorias</h3>
+                
+                {/* Mobile: Horizontal scroll */}
+                <div className="lg:hidden">
+                  <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                    <motion.button
+                      key="Todos-mobile"
+                      type="button"
+                      onClick={() => {
+                        setActiveCollection('Todos');
+                      }}
+                      className="flex-shrink-0 flex flex-col items-center rounded-lg px-3 py-2 text-center shadow-sm"
+                      style={{ 
+                        backgroundColor: activeCollection === 'Todos' ? primaryColor : palette.cardBg, 
+                        borderColor: activeCollection === 'Todos' ? primaryColor : palette.border,
+                        color: activeCollection === 'Todos' ? '#fff' : palette.text,
+                        border: `1px solid ${activeCollection === 'Todos' ? primaryColor : palette.border}`,
+                        minWidth: '70px'
+                      }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <span className="text-[10px] font-bold">Todos</span>
+                      <span className="text-[8px] mt-0.5" style={{ color: activeCollection === 'Todos' ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
+                        {publicProducts.length}
+                      </span>
+                    </motion.button>
+                    
+                    {categorySummaries.map((category, index) => (
+                      <motion.button
+                        key={category.name}
+                        type="button"
+                        onClick={() => {
+                          setActiveCollection(category.name);
+                        }}
+                        className="flex-shrink-0 flex flex-col items-center rounded-lg px-3 py-2 text-center shadow-sm"
+                        style={{ 
+                          backgroundColor: activeCollection === category.name ? primaryColor : palette.cardBg, 
+                          borderColor: activeCollection === category.name ? primaryColor : palette.border,
+                          color: activeCollection === category.name ? '#fff' : palette.text,
+                          border: `1px solid ${activeCollection === category.name ? primaryColor : palette.border}`,
+                          minWidth: '70px'
+                        }}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.03, duration: 0.2 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <span className="text-[10px] font-bold truncate max-w-[60px]">{category.name}</span>
+                        <span className="text-[8px] mt-0.5" style={{ color: activeCollection === category.name ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
+                          {category.count}
+                        </span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Desktop: Vertical cards */}
+                <div className="hidden lg:block space-y-2">
                   <motion.button
                     key="Todos"
                     type="button"
                     onClick={() => {
                       setActiveCollection('Todos');
                     }}
-                    className="w-full flex flex-col items-start rounded-xl px-3 py-2.5 text-left shadow-md sm:rounded-2xl sm:px-5 sm:py-4"
+                    className="w-full flex flex-col items-start rounded-xl px-4 py-3 text-left shadow-md"
                     style={{ 
                       backgroundColor: activeCollection === 'Todos' ? primaryColor : palette.cardBg, 
                       borderColor: activeCollection === 'Todos' ? primaryColor : palette.border,
@@ -1488,8 +1543,8 @@ export function CatalogPublic() {
                     whileHover={{ y: -2, boxShadow: '0 8px 20px rgba(0,0,0,0.12)' }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <span className="text-xs font-bold sm:text-sm">Todos</span>
-                    <span className="mt-1 text-[10px] sm:mt-2 sm:text-xs" style={{ color: activeCollection === 'Todos' ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
+                    <span className="text-sm font-bold">Todos</span>
+                    <span className="mt-2 text-xs" style={{ color: activeCollection === 'Todos' ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
                       {publicProducts.length} produto{publicProducts.length === 1 ? '' : 's'}
                     </span>
                   </motion.button>
@@ -1501,7 +1556,7 @@ export function CatalogPublic() {
                       onClick={() => {
                         setActiveCollection(category.name);
                       }}
-                      className="w-full flex flex-col items-start rounded-xl px-3 py-2.5 text-left shadow-md sm:rounded-2xl sm:px-5 sm:py-4"
+                      className="w-full flex flex-col items-start rounded-xl px-4 py-3 text-left shadow-md"
                       style={{ 
                         backgroundColor: activeCollection === category.name ? primaryColor : palette.cardBg, 
                         borderColor: activeCollection === category.name ? primaryColor : palette.border,
@@ -1514,8 +1569,8 @@ export function CatalogPublic() {
                       whileHover={{ y: -2, boxShadow: '0 8px 20px rgba(0,0,0,0.12)' }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <span className="text-xs font-bold sm:text-sm">{category.name}</span>
-                      <span className="mt-1 text-[10px] sm:mt-2 sm:text-xs" style={{ color: activeCollection === category.name ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
+                      <span className="text-sm font-bold">{category.name}</span>
+                      <span className="mt-2 text-xs" style={{ color: activeCollection === category.name ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
                         {category.count} produto{category.count === 1 ? '' : 's'}
                       </span>
                     </motion.button>
@@ -1526,24 +1581,24 @@ export function CatalogPublic() {
 
             {/* Conteúdo Principal */}
             <div className="flex-1">
-              <div className="mb-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="mb-4 sm:mb-6">
+                <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center">
                   <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2" style={{ color: palette.textMuted }} />
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 sm:left-4 sm:h-5 sm:w-5" style={{ color: palette.textMuted }} />
                     <input
                       type="search"
                       placeholder="Buscar produto..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      className="w-full rounded-2xl py-3 pl-12 pr-4 text-base outline-none focus:ring-2"
+                      className="w-full rounded-xl py-2.5 pl-10 pr-3 text-sm outline-none focus:ring-2 sm:rounded-2xl sm:py-3 sm:pl-12 sm:pr-4 sm:text-base"
                       style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, boxShadow: `0 0 0 0 transparent`, outlineColor: accent }}
                     />
                   </div>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-2 sm:gap-3">
                     <motion.button
                       type="button"
                       onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                      className={`flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold transition-colors ${
+                      className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors sm:rounded-2xl sm:px-5 sm:py-3 sm:text-sm sm:gap-2 ${
                         showFavoritesOnly ? 'bg-rose-50 text-rose-600' : ''
                       }`}
                       style={{ backgroundColor: showFavoritesOnly ? undefined : palette.sectionBg, border: `1px solid ${palette.border}`, color: showFavoritesOnly ? undefined : palette.text }}
@@ -1554,14 +1609,14 @@ export function CatalogPublic() {
                         animate={{ rotate: showFavoritesOnly ? [0, -15, 0] : 0 }}
                         transition={{ duration: 0.3 }}
                       >
-                        <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'fill-rose-500' : ''}`} />
+                        <Heart className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${showFavoritesOnly ? 'fill-rose-500' : ''}`} />
                       </motion.div>
-                      Favoritos
+                      <span className="hidden sm:inline">Favoritos</span>
                     </motion.button>
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                      className="rounded-2xl px-5 py-3 text-sm font-semibold outline-none"
+                      className="rounded-xl px-3 py-2 text-xs font-semibold outline-none sm:rounded-2xl sm:px-5 sm:py-3 sm:text-sm"
                       style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, color: palette.text }}
                       aria-label="Ordenar produtos"
                     >
@@ -1585,7 +1640,7 @@ export function CatalogPublic() {
                           setShowFavoritesOnly(false);
                           setExpandedFilter(null);
                         }}
-                        className="flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold"
+                        className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold sm:rounded-2xl sm:px-5 sm:py-3 sm:text-sm sm:gap-2"
                         style={{ backgroundColor: palette.sectionBg, border: `1px solid ${palette.border}`, color: palette.text }}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -1595,9 +1650,9 @@ export function CatalogPublic() {
                           animate={{ rotate: 360 }}
                           transition={{ duration: 0.5 }}
                         >
-                          <RotateCcw className="h-4 w-4" />
+                          <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </motion.div>
-                        Limpar
+                        <span className="hidden sm:inline">Limpar</span>
                       </motion.button>
                     )}
                   </div>
@@ -1611,13 +1666,385 @@ export function CatalogPublic() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ duration: 0.3 }}
-                      className="mt-8"
+                      className="mt-4 sm:mt-8"
                     >
-                      <h3 className="text-sm font-black uppercase tracking-[0.2em] mb-6" style={{ color: palette.textMuted }}>
+                      <h3 className="text-xs font-black uppercase tracking-[0.15em] mb-3 sm:text-sm sm:mb-6" style={{ color: palette.textMuted }}>
                         Filtrar por
                       </h3>
                       
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                      {/* Mobile: Horizontal scroll filters */}
+                      <div className="lg:hidden">
+                        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                          {/* Ambiente */}
+                          {(() => {
+                            const values = getValuesByCategoryAndField(activeCollection, 'ambiente');
+                            const hasValues = values.filter(v => v !== 'Todos').length > 0;
+                            return hasValues ? (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                                className="flex-shrink-0"
+                              >
+                                <motion.button
+                                  type="button"
+                                  onClick={() => setExpandedFilter(expandedFilter === 'ambiente' ? null : 'ambiente')}
+                                  className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-left shadow-sm"
+                                  style={{ 
+                                    backgroundColor: expandedFilter === 'ambiente' ? primaryColor : palette.cardBg, 
+                                    borderColor: expandedFilter === 'ambiente' ? primaryColor : palette.border,
+                                    color: expandedFilter === 'ambiente' ? '#fff' : palette.text,
+                                    border: `1px solid ${expandedFilter === 'ambiente' ? primaryColor : palette.border}`
+                                  }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <span className="text-[10px] font-bold">Ambiente</span>
+                                  <ChevronDown className={`h-3 w-3 transition-transform ${expandedFilter === 'ambiente' ? 'rotate-180' : ''}`} />
+                                </motion.button>
+                                
+                                <AnimatePresence>
+                                  {expandedFilter === 'ambiente' && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: -10 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0, y: -10 }}
+                                      className="absolute z-10 mt-1 bg-white rounded-lg shadow-lg border p-1 space-y-1 min-w-[120px]"
+                                      style={{ borderColor: palette.border }}
+                                    >
+                                      {values.filter(v => v !== 'Todos').map((tag) => (
+                                        <motion.button
+                                          key={`ambiente-${tag}`}
+                                          type="button"
+                                          onClick={() => setActiveAmbiente(tag)}
+                                          className="w-full rounded px-2 py-1 text-left text-[10px] font-semibold transition-colors"
+                                          style={{ 
+                                            backgroundColor: activeAmbiente === tag ? `${accent}15` : 'transparent',
+                                            color: palette.text
+                                          }}
+                                          whileTap={{ scale: 0.98 }}
+                                        >
+                                          <div className="flex items-center justify-between">
+                                            <span>{tag}</span>
+                                            {activeAmbiente === tag && <Check className="h-3 w-3" style={{ color: accent }} />}
+                                          </div>
+                                        </motion.button>
+                                      ))}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </motion.div>
+                            ) : null;
+                          })()}
+
+                          {/* Material */}
+                          {(() => {
+                            const values = materials;
+                            const hasValues = values.filter(v => v !== 'Todos').length > 0;
+                            return hasValues ? (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.15 }}
+                                className="flex-shrink-0"
+                              >
+                                <motion.button
+                                  type="button"
+                                  onClick={() => setExpandedFilter(expandedFilter === 'material' ? null : 'material')}
+                                  className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-left shadow-sm"
+                                  style={{ 
+                                    backgroundColor: expandedFilter === 'material' ? primaryColor : palette.cardBg, 
+                                    borderColor: expandedFilter === 'material' ? primaryColor : palette.border,
+                                    color: expandedFilter === 'material' ? '#fff' : palette.text,
+                                    border: `1px solid ${expandedFilter === 'material' ? primaryColor : palette.border}`
+                                  }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <span className="text-[10px] font-bold">Material</span>
+                                  <ChevronDown className={`h-3 w-3 transition-transform ${expandedFilter === 'material' ? 'rotate-180' : ''}`} />
+                                </motion.button>
+                                
+                                <AnimatePresence>
+                                  {expandedFilter === 'material' && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: -10 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0, y: -10 }}
+                                      className="absolute z-10 mt-1 bg-white rounded-lg shadow-lg border p-1 space-y-1 min-w-[120px]"
+                                      style={{ borderColor: palette.border }}
+                                    >
+                                      {values.filter(v => v !== 'Todos').map((tag) => (
+                                        <motion.button
+                                          key={`material-${tag}`}
+                                          type="button"
+                                          onClick={() => setActiveMaterial(tag)}
+                                          className="w-full rounded px-2 py-1 text-left text-[10px] font-semibold transition-colors"
+                                          style={{ 
+                                            backgroundColor: activeMaterial === tag ? `${accent}15` : 'transparent',
+                                            color: palette.text
+                                          }}
+                                          whileTap={{ scale: 0.98 }}
+                                        >
+                                          <div className="flex items-center justify-between">
+                                            <span>{tag}</span>
+                                            {activeMaterial === tag && <Check className="h-3 w-3" style={{ color: accent }} />}
+                                          </div>
+                                        </motion.button>
+                                      ))}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </motion.div>
+                            ) : null;
+                          })()}
+
+                          {/* Público */}
+                          {(() => {
+                            const values = getValuesByCategoryAndField(activeCollection, 'público');
+                            const hasValues = values.filter(v => v !== 'Todos').length > 0;
+                            return hasValues ? (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                                className="flex-shrink-0"
+                              >
+                                <motion.button
+                                  type="button"
+                                  onClick={() => setExpandedFilter(expandedFilter === 'público' ? null : 'público')}
+                                  className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-left shadow-sm"
+                                  style={{ 
+                                    backgroundColor: expandedFilter === 'público' ? primaryColor : palette.cardBg, 
+                                    borderColor: expandedFilter === 'público' ? primaryColor : palette.border,
+                                    color: expandedFilter === 'público' ? '#fff' : palette.text,
+                                    border: `1px solid ${expandedFilter === 'público' ? primaryColor : palette.border}`
+                                  }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <span className="text-[10px] font-bold">Público</span>
+                                  <ChevronDown className={`h-3 w-3 transition-transform ${expandedFilter === 'público' ? 'rotate-180' : ''}`} />
+                                </motion.button>
+                                
+                                <AnimatePresence>
+                                  {expandedFilter === 'público' && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: -10 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0, y: -10 }}
+                                      className="absolute z-10 mt-1 bg-white rounded-lg shadow-lg border p-1 space-y-1 min-w-[120px]"
+                                      style={{ borderColor: palette.border }}
+                                    >
+                                      {values.filter(v => v !== 'Todos').map((tag) => (
+                                        <motion.button
+                                          key={`publico-${tag}`}
+                                          type="button"
+                                          onClick={() => setActivePublico(tag)}
+                                          className="w-full rounded px-2 py-1 text-left text-[10px] font-semibold transition-colors"
+                                          style={{ 
+                                            backgroundColor: activePublico === tag ? `${accent}15` : 'transparent',
+                                            color: palette.text
+                                          }}
+                                          whileTap={{ scale: 0.98 }}
+                                        >
+                                          <div className="flex items-center justify-between">
+                                            <span>{tag}</span>
+                                            {activePublico === tag && <Check className="h-3 w-3" style={{ color: accent }} />}
+                                          </div>
+                                        </motion.button>
+                                      ))}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </motion.div>
+                            ) : null;
+                          })()}
+
+                          {/* Estilo */}
+                          {(() => {
+                            const values = getValuesByCategoryAndField(activeCollection, 'estilo');
+                            const hasValues = values.filter(v => v !== 'Todos').length > 0;
+                            return hasValues ? (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.25 }}
+                                className="flex-shrink-0"
+                              >
+                                <motion.button
+                                  type="button"
+                                  onClick={() => setExpandedFilter(expandedFilter === 'estilo' ? null : 'estilo')}
+                                  className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-left shadow-sm"
+                                  style={{ 
+                                    backgroundColor: expandedFilter === 'estilo' ? primaryColor : palette.cardBg, 
+                                    borderColor: expandedFilter === 'estilo' ? primaryColor : palette.border,
+                                    color: expandedFilter === 'estilo' ? '#fff' : palette.text,
+                                    border: `1px solid ${expandedFilter === 'estilo' ? primaryColor : palette.border}`
+                                  }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <span className="text-[10px] font-bold">Estilo</span>
+                                  <ChevronDown className={`h-3 w-3 transition-transform ${expandedFilter === 'estilo' ? 'rotate-180' : ''}`} />
+                                </motion.button>
+                                
+                                <AnimatePresence>
+                                  {expandedFilter === 'estilo' && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: -10 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0, y: -10 }}
+                                      className="absolute z-10 mt-1 bg-white rounded-lg shadow-lg border p-1 space-y-1 min-w-[120px]"
+                                      style={{ borderColor: palette.border }}
+                                    >
+                                      {values.filter(v => v !== 'Todos').map((tag) => (
+                                        <motion.button
+                                          key={`estilo-${tag}`}
+                                          type="button"
+                                          onClick={() => setActiveEstilo(tag)}
+                                          className="w-full rounded px-2 py-1 text-left text-[10px] font-semibold transition-colors"
+                                          style={{ 
+                                            backgroundColor: activeEstilo === tag ? `${accent}15` : 'transparent',
+                                            color: palette.text
+                                          }}
+                                          whileTap={{ scale: 0.98 }}
+                                        >
+                                          <div className="flex items-center justify-between">
+                                            <span>{tag}</span>
+                                            {activeEstilo === tag && <Check className="h-3 w-3" style={{ color: accent }} />}
+                                          </div>
+                                        </motion.button>
+                                      ))}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </motion.div>
+                            ) : null;
+                          })()}
+
+                          {/* Ocasião */}
+                          {(() => {
+                            const values = getValuesByCategoryAndField(activeCollection, 'ocasião');
+                            const hasValues = values.filter(v => v !== 'Todos').length > 0;
+                            return hasValues ? (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                                className="flex-shrink-0"
+                              >
+                                <motion.button
+                                  type="button"
+                                  onClick={() => setExpandedFilter(expandedFilter === 'ocasião' ? null : 'ocasião')}
+                                  className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-left shadow-sm"
+                                  style={{ 
+                                    backgroundColor: expandedFilter === 'ocasião' ? primaryColor : palette.cardBg, 
+                                    borderColor: expandedFilter === 'ocasião' ? primaryColor : palette.border,
+                                    color: expandedFilter === 'ocasião' ? '#fff' : palette.text,
+                                    border: `1px solid ${expandedFilter === 'ocasião' ? primaryColor : palette.border}`
+                                  }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <span className="text-[10px] font-bold">Ocasião</span>
+                                  <ChevronDown className={`h-3 w-3 transition-transform ${expandedFilter === 'ocasião' ? 'rotate-180' : ''}`} />
+                                </motion.button>
+                                
+                                <AnimatePresence>
+                                  {expandedFilter === 'ocasião' && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: -10 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0, y: -10 }}
+                                      className="absolute z-10 mt-1 bg-white rounded-lg shadow-lg border p-1 space-y-1 min-w-[120px]"
+                                      style={{ borderColor: palette.border }}
+                                    >
+                                      {values.filter(v => v !== 'Todos').map((tag) => (
+                                        <motion.button
+                                          key={`ocasiao-${tag}`}
+                                          type="button"
+                                          onClick={() => setActiveOcasião(tag)}
+                                          className="w-full rounded px-2 py-1 text-left text-[10px] font-semibold transition-colors"
+                                          style={{ 
+                                            backgroundColor: activeOcasião === tag ? `${accent}15` : 'transparent',
+                                            color: palette.text
+                                          }}
+                                          whileTap={{ scale: 0.98 }}
+                                        >
+                                          <div className="flex items-center justify-between">
+                                            <span>{tag}</span>
+                                            {activeOcasião === tag && <Check className="h-3 w-3" style={{ color: accent }} />}
+                                          </div>
+                                        </motion.button>
+                                      ))}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </motion.div>
+                            ) : null;
+                          })()}
+
+                          {/* Coleção */}
+                          {(() => {
+                            const values = getValuesByCategoryAndField(activeCollection, 'coleção');
+                            const hasValues = values.filter(v => v !== 'Todos').length > 0;
+                            return hasValues ? (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.35 }}
+                                className="flex-shrink-0"
+                              >
+                                <motion.button
+                                  type="button"
+                                  onClick={() => setExpandedFilter(expandedFilter === 'coleção' ? null : 'coleção')}
+                                  className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-left shadow-sm"
+                                  style={{ 
+                                    backgroundColor: expandedFilter === 'coleção' ? primaryColor : palette.cardBg, 
+                                    borderColor: expandedFilter === 'coleção' ? primaryColor : palette.border,
+                                    color: expandedFilter === 'coleção' ? '#fff' : palette.text,
+                                    border: `1px solid ${expandedFilter === 'coleção' ? primaryColor : palette.border}`
+                                  }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <span className="text-[10px] font-bold">Coleção</span>
+                                  <ChevronDown className={`h-3 w-3 transition-transform ${expandedFilter === 'coleção' ? 'rotate-180' : ''}`} />
+                                </motion.button>
+                                
+                                <AnimatePresence>
+                                  {expandedFilter === 'coleção' && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: -10 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0, y: -10 }}
+                                      className="absolute z-10 mt-1 bg-white rounded-lg shadow-lg border p-1 space-y-1 min-w-[120px]"
+                                      style={{ borderColor: palette.border }}
+                                    >
+                                      {values.filter(v => v !== 'Todos').map((tag) => (
+                                        <motion.button
+                                          key={`colecao-${tag}`}
+                                          type="button"
+                                          onClick={() => setActiveColeção(tag)}
+                                          className="w-full rounded px-2 py-1 text-left text-[10px] font-semibold transition-colors"
+                                          style={{ 
+                                            backgroundColor: activeColeção === tag ? `${accent}15` : 'transparent',
+                                            color: palette.text
+                                          }}
+                                          whileTap={{ scale: 0.98 }}
+                                        >
+                                          <div className="flex items-center justify-between">
+                                            <span>{tag}</span>
+                                            {activeColeção === tag && <Check className="h-3 w-3" style={{ color: accent }} />}
+                                          </div>
+                                        </motion.button>
+                                      ))}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </motion.div>
+                            ) : null;
+                          })()}
+                        </div>
+                      </div>
+
+                      {/* Desktop: Grid layout filters */}
+                      <div className="hidden lg:grid lg:grid-cols-5 gap-4">
                         {/* Ambiente */}
                         {(() => {
                           const values = getValuesByCategoryAndField(activeCollection, 'ambiente');
@@ -1631,7 +2058,7 @@ export function CatalogPublic() {
                               <motion.button
                                 type="button"
                                 onClick={() => setExpandedFilter(expandedFilter === 'ambiente' ? null : 'ambiente')}
-                                className="w-full rounded-xl px-3 py-2.5 text-left shadow-md sm:rounded-2xl sm:px-5 sm:py-4"
+                                className="w-full rounded-xl px-4 py-3 text-left shadow-md"
                                 style={{ 
                                   backgroundColor: expandedFilter === 'ambiente' ? primaryColor : palette.cardBg, 
                                   borderColor: expandedFilter === 'ambiente' ? primaryColor : palette.border,
@@ -1642,10 +2069,10 @@ export function CatalogPublic() {
                                 whileTap={{ scale: 0.98 }}
                               >
                                 <div className="flex items-center justify-between">
-                                  <span className="text-xs font-bold sm:text-sm">Ambiente</span>
-                                  <ChevronDown className={`h-3 w-3 sm:h-4 sm:w-4 transition-transform ${expandedFilter === 'ambiente' ? 'rotate-180' : ''}`} />
+                                  <span className="text-sm font-bold">Ambiente</span>
+                                  <ChevronDown className={`h-4 w-4 transition-transform ${expandedFilter === 'ambiente' ? 'rotate-180' : ''}`} />
                                 </div>
-                                <span className="mt-1 text-[10px] sm:mt-2 sm:text-xs" style={{ color: expandedFilter === 'ambiente' ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
+                                <span className="mt-2 text-xs" style={{ color: expandedFilter === 'ambiente' ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
                                   {values.filter(v => v !== 'Todos').length} opções
                                 </span>
                               </motion.button>
@@ -1663,7 +2090,7 @@ export function CatalogPublic() {
                                         key={`ambiente-${tag}`}
                                         type="button"
                                         onClick={() => setActiveAmbiente(tag)}
-                                        className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold transition-colors sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
+                                        className="w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition-colors"
                                         style={{ 
                                           backgroundColor: activeAmbiente === tag ? `${accent}15` : palette.cardBg, 
                                           border: `1px solid ${activeAmbiente === tag ? accent : palette.border}`,
@@ -1674,7 +2101,7 @@ export function CatalogPublic() {
                                       >
                                         <div className="flex items-center justify-between">
                                           <span>{tag}</span>
-                                          {activeAmbiente === tag && <Check className="h-3 w-3 sm:h-4 sm:w-4" style={{ color: accent }} />}
+                                          {activeAmbiente === tag && <Check className="h-4 w-4" style={{ color: accent }} />}
                                         </div>
                                       </motion.button>
                                     ))}
@@ -1685,7 +2112,7 @@ export function CatalogPublic() {
                           ) : null;
                         })()}
 
-                        {/* Material */}
+                        {/* Material - Desktop */}
                         {(() => {
                           const values = materials;
                           const hasValues = values.filter(v => v !== 'Todos').length > 0;
@@ -1698,7 +2125,7 @@ export function CatalogPublic() {
                               <motion.button
                                 type="button"
                                 onClick={() => setExpandedFilter(expandedFilter === 'material' ? null : 'material')}
-                                className="w-full rounded-xl px-3 py-2.5 text-left shadow-md sm:rounded-2xl sm:px-5 sm:py-4"
+                                className="w-full rounded-xl px-4 py-3 text-left shadow-md"
                                 style={{ 
                                   backgroundColor: expandedFilter === 'material' ? primaryColor : palette.cardBg, 
                                   borderColor: expandedFilter === 'material' ? primaryColor : palette.border,
@@ -1709,10 +2136,10 @@ export function CatalogPublic() {
                                 whileTap={{ scale: 0.98 }}
                               >
                                 <div className="flex items-center justify-between">
-                                  <span className="text-xs font-bold sm:text-sm">Material</span>
-                                  <ChevronDown className={`h-3 w-3 sm:h-4 sm:w-4 transition-transform ${expandedFilter === 'material' ? 'rotate-180' : ''}`} />
+                                  <span className="text-sm font-bold">Material</span>
+                                  <ChevronDown className={`h-4 w-4 transition-transform ${expandedFilter === 'material' ? 'rotate-180' : ''}`} />
                                 </div>
-                                <span className="mt-1 text-[10px] sm:mt-2 sm:text-xs" style={{ color: expandedFilter === 'material' ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
+                                <span className="mt-2 text-xs" style={{ color: expandedFilter === 'material' ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
                                   {values.filter(v => v !== 'Todos').length} opções
                                 </span>
                               </motion.button>
@@ -1730,7 +2157,7 @@ export function CatalogPublic() {
                                         key={`material-${tag}`}
                                         type="button"
                                         onClick={() => setActiveMaterial(tag)}
-                                        className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold transition-colors sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
+                                        className="w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition-colors"
                                         style={{ 
                                           backgroundColor: activeMaterial === tag ? `${accent}15` : palette.cardBg, 
                                           border: `1px solid ${activeMaterial === tag ? accent : palette.border}`,
@@ -1741,7 +2168,7 @@ export function CatalogPublic() {
                                       >
                                         <div className="flex items-center justify-between">
                                           <span>{tag}</span>
-                                          {activeMaterial === tag && <Check className="h-3 w-3 sm:h-4 sm:w-4" style={{ color: accent }} />}
+                                          {activeMaterial === tag && <Check className="h-4 w-4" style={{ color: accent }} />}
                                         </div>
                                       </motion.button>
                                     ))}
@@ -1752,7 +2179,7 @@ export function CatalogPublic() {
                           ) : null;
                         })()}
 
-                        {/* Público */}
+                        {/* Público - Desktop */}
                         {(() => {
                           const values = getValuesByCategoryAndField(activeCollection, 'público');
                           const hasValues = values.filter(v => v !== 'Todos').length > 0;
@@ -1765,7 +2192,7 @@ export function CatalogPublic() {
                               <motion.button
                                 type="button"
                                 onClick={() => setExpandedFilter(expandedFilter === 'público' ? null : 'público')}
-                                className="w-full rounded-xl px-3 py-2.5 text-left shadow-md sm:rounded-2xl sm:px-5 sm:py-4"
+                                className="w-full rounded-xl px-4 py-3 text-left shadow-md"
                                 style={{ 
                                   backgroundColor: expandedFilter === 'público' ? primaryColor : palette.cardBg, 
                                   borderColor: expandedFilter === 'público' ? primaryColor : palette.border,
@@ -1776,10 +2203,10 @@ export function CatalogPublic() {
                                 whileTap={{ scale: 0.98 }}
                               >
                                 <div className="flex items-center justify-between">
-                                  <span className="text-xs font-bold sm:text-sm">Público</span>
-                                  <ChevronDown className={`h-3 w-3 sm:h-4 sm:w-4 transition-transform ${expandedFilter === 'público' ? 'rotate-180' : ''}`} />
+                                  <span className="text-sm font-bold">Público</span>
+                                  <ChevronDown className={`h-4 w-4 transition-transform ${expandedFilter === 'público' ? 'rotate-180' : ''}`} />
                                 </div>
-                                <span className="mt-1 text-[10px] sm:mt-2 sm:text-xs" style={{ color: expandedFilter === 'público' ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
+                                <span className="mt-2 text-xs" style={{ color: expandedFilter === 'público' ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
                                   {values.filter(v => v !== 'Todos').length} opções
                                 </span>
                               </motion.button>
@@ -1797,7 +2224,7 @@ export function CatalogPublic() {
                                         key={`publico-${tag}`}
                                         type="button"
                                         onClick={() => setActivePublico(tag)}
-                                        className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold transition-colors sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
+                                        className="w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition-colors"
                                         style={{ 
                                           backgroundColor: activePublico === tag ? `${accent}15` : palette.cardBg, 
                                           border: `1px solid ${activePublico === tag ? accent : palette.border}`,
@@ -1808,7 +2235,7 @@ export function CatalogPublic() {
                                       >
                                         <div className="flex items-center justify-between">
                                           <span>{tag}</span>
-                                          {activePublico === tag && <Check className="h-3 w-3 sm:h-4 sm:w-4" style={{ color: accent }} />}
+                                          {activePublico === tag && <Check className="h-4 w-4" style={{ color: accent }} />}
                                         </div>
                                       </motion.button>
                                     ))}
@@ -1819,7 +2246,7 @@ export function CatalogPublic() {
                           ) : null;
                         })()}
 
-                        {/* Estilo */}
+                        {/* Estilo - Desktop */}
                         {(() => {
                           const values = getValuesByCategoryAndField(activeCollection, 'estilo');
                           const hasValues = values.filter(v => v !== 'Todos').length > 0;
@@ -1832,7 +2259,7 @@ export function CatalogPublic() {
                               <motion.button
                                 type="button"
                                 onClick={() => setExpandedFilter(expandedFilter === 'estilo' ? null : 'estilo')}
-                                className="w-full rounded-xl px-3 py-2.5 text-left shadow-md sm:rounded-2xl sm:px-5 sm:py-4"
+                                className="w-full rounded-xl px-4 py-3 text-left shadow-md"
                                 style={{ 
                                   backgroundColor: expandedFilter === 'estilo' ? primaryColor : palette.cardBg, 
                                   borderColor: expandedFilter === 'estilo' ? primaryColor : palette.border,
@@ -1843,10 +2270,10 @@ export function CatalogPublic() {
                                 whileTap={{ scale: 0.98 }}
                               >
                                 <div className="flex items-center justify-between">
-                                  <span className="text-xs font-bold sm:text-sm">Estilo</span>
-                                  <ChevronDown className={`h-3 w-3 sm:h-4 sm:w-4 transition-transform ${expandedFilter === 'estilo' ? 'rotate-180' : ''}`} />
+                                  <span className="text-sm font-bold">Estilo</span>
+                                  <ChevronDown className={`h-4 w-4 transition-transform ${expandedFilter === 'estilo' ? 'rotate-180' : ''}`} />
                                 </div>
-                                <span className="mt-1 text-[10px] sm:mt-2 sm:text-xs" style={{ color: expandedFilter === 'estilo' ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
+                                <span className="mt-2 text-xs" style={{ color: expandedFilter === 'estilo' ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
                                   {values.filter(v => v !== 'Todos').length} opções
                                 </span>
                               </motion.button>
@@ -1864,7 +2291,7 @@ export function CatalogPublic() {
                                         key={`estilo-${tag}`}
                                         type="button"
                                         onClick={() => setActiveEstilo(tag)}
-                                        className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold transition-colors sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
+                                        className="w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition-colors"
                                         style={{ 
                                           backgroundColor: activeEstilo === tag ? `${accent}15` : palette.cardBg, 
                                           border: `1px solid ${activeEstilo === tag ? accent : palette.border}`,
@@ -1875,7 +2302,7 @@ export function CatalogPublic() {
                                       >
                                         <div className="flex items-center justify-between">
                                           <span>{tag}</span>
-                                          {activeEstilo === tag && <Check className="h-3 w-3 sm:h-4 sm:w-4" style={{ color: accent }} />}
+                                          {activeEstilo === tag && <Check className="h-4 w-4" style={{ color: accent }} />}
                                         </div>
                                       </motion.button>
                                     ))}
@@ -1886,7 +2313,7 @@ export function CatalogPublic() {
                           ) : null;
                         })()}
 
-                        {/* Ocasião */}
+                        {/* Ocasião - Desktop */}
                         {(() => {
                           const values = getValuesByCategoryAndField(activeCollection, 'ocasião');
                           const hasValues = values.filter(v => v !== 'Todos').length > 0;
@@ -1899,7 +2326,7 @@ export function CatalogPublic() {
                               <motion.button
                                 type="button"
                                 onClick={() => setExpandedFilter(expandedFilter === 'ocasião' ? null : 'ocasião')}
-                                className="w-full rounded-xl px-3 py-2.5 text-left shadow-md sm:rounded-2xl sm:px-5 sm:py-4"
+                                className="w-full rounded-xl px-4 py-3 text-left shadow-md"
                                 style={{ 
                                   backgroundColor: expandedFilter === 'ocasião' ? primaryColor : palette.cardBg, 
                                   borderColor: expandedFilter === 'ocasião' ? primaryColor : palette.border,
@@ -1910,10 +2337,10 @@ export function CatalogPublic() {
                                 whileTap={{ scale: 0.98 }}
                               >
                                 <div className="flex items-center justify-between">
-                                  <span className="text-xs font-bold sm:text-sm">Ocasião</span>
-                                  <ChevronDown className={`h-3 w-3 sm:h-4 sm:w-4 transition-transform ${expandedFilter === 'ocasião' ? 'rotate-180' : ''}`} />
+                                  <span className="text-sm font-bold">Ocasião</span>
+                                  <ChevronDown className={`h-4 w-4 transition-transform ${expandedFilter === 'ocasião' ? 'rotate-180' : ''}`} />
                                 </div>
-                                <span className="mt-1 text-[10px] sm:mt-2 sm:text-xs" style={{ color: expandedFilter === 'ocasião' ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
+                                <span className="mt-2 text-xs" style={{ color: expandedFilter === 'ocasião' ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
                                   {values.filter(v => v !== 'Todos').length} opções
                                 </span>
                               </motion.button>
@@ -1931,7 +2358,7 @@ export function CatalogPublic() {
                                         key={`ocasiao-${tag}`}
                                         type="button"
                                         onClick={() => setActiveOcasião(tag)}
-                                        className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold transition-colors sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
+                                        className="w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition-colors"
                                         style={{ 
                                           backgroundColor: activeOcasião === tag ? `${accent}15` : palette.cardBg, 
                                           border: `1px solid ${activeOcasião === tag ? accent : palette.border}`,
@@ -1942,7 +2369,7 @@ export function CatalogPublic() {
                                       >
                                         <div className="flex items-center justify-between">
                                           <span>{tag}</span>
-                                          {activeOcasião === tag && <Check className="h-3 w-3 sm:h-4 sm:w-4" style={{ color: accent }} />}
+                                          {activeOcasião === tag && <Check className="h-4 w-4" style={{ color: accent }} />}
                                         </div>
                                       </motion.button>
                                     ))}
@@ -1953,7 +2380,7 @@ export function CatalogPublic() {
                           ) : null;
                         })()}
 
-                        {/* Coleção */}
+                        {/* Coleção - Desktop */}
                         {(() => {
                           const values = getValuesByCategoryAndField(activeCollection, 'coleção');
                           const hasValues = values.filter(v => v !== 'Todos').length > 0;
@@ -1966,7 +2393,7 @@ export function CatalogPublic() {
                               <motion.button
                                 type="button"
                                 onClick={() => setExpandedFilter(expandedFilter === 'coleção' ? null : 'coleção')}
-                                className="w-full rounded-xl px-3 py-2.5 text-left shadow-md sm:rounded-2xl sm:px-5 sm:py-4"
+                                className="w-full rounded-xl px-4 py-3 text-left shadow-md"
                                 style={{ 
                                   backgroundColor: expandedFilter === 'coleção' ? primaryColor : palette.cardBg, 
                                   borderColor: expandedFilter === 'coleção' ? primaryColor : palette.border,
@@ -1977,10 +2404,10 @@ export function CatalogPublic() {
                                 whileTap={{ scale: 0.98 }}
                               >
                                 <div className="flex items-center justify-between">
-                                  <span className="text-xs font-bold sm:text-sm">Coleção</span>
-                                  <ChevronDown className={`h-3 w-3 sm:h-4 sm:w-4 transition-transform ${expandedFilter === 'coleção' ? 'rotate-180' : ''}`} />
+                                  <span className="text-sm font-bold">Coleção</span>
+                                  <ChevronDown className={`h-4 w-4 transition-transform ${expandedFilter === 'coleção' ? 'rotate-180' : ''}`} />
                                 </div>
-                                <span className="mt-1 text-[10px] sm:mt-2 sm:text-xs" style={{ color: expandedFilter === 'coleção' ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
+                                <span className="mt-2 text-xs" style={{ color: expandedFilter === 'coleção' ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
                                   {values.filter(v => v !== 'Todos').length} opções
                                 </span>
                               </motion.button>
@@ -1998,7 +2425,7 @@ export function CatalogPublic() {
                                         key={`colecao-${tag}`}
                                         type="button"
                                         onClick={() => setActiveColeção(tag)}
-                                        className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold transition-colors sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
+                                        className="w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition-colors"
                                         style={{ 
                                           backgroundColor: activeColeção === tag ? `${accent}15` : palette.cardBg, 
                                           border: `1px solid ${activeColeção === tag ? accent : palette.border}`,
@@ -2009,7 +2436,7 @@ export function CatalogPublic() {
                                       >
                                         <div className="flex items-center justify-between">
                                           <span>{tag}</span>
-                                          {activeColeção === tag && <Check className="h-3 w-3 sm:h-4 sm:w-4" style={{ color: accent }} />}
+                                          {activeColeção === tag && <Check className="h-4 w-4" style={{ color: accent }} />}
                                         </div>
                                       </motion.button>
                                     ))}
