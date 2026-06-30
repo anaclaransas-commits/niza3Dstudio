@@ -73,9 +73,9 @@ function SettingsPanel({ settings, onSave, onClose }: {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[85vh] overflow-y-auto my-4">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
           <h3 className="font-black text-slate-800 text-base sm:text-lg flex items-center gap-2">
             <Palette className="w-5 h-5 text-blue-500" /> Personalizar Catálogo
           </h3>
@@ -371,9 +371,9 @@ function FilterValuesManagementPanel({
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto my-4">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
           <h3 className="font-black text-slate-800 text-base sm:text-lg flex items-center gap-2">
             <Edit2 className="w-5 h-5 text-blue-500" /> Gerenciar {fieldName}
           </h3>
@@ -526,9 +526,9 @@ function CategoryManagementPanel({
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto my-4">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
           <h3 className="font-black text-slate-800 text-base sm:text-lg flex items-center gap-2">
             <Edit2 className="w-5 h-5 text-blue-500" /> Gerenciar Categorias
           </h3>
@@ -991,9 +991,9 @@ export function Catalog() {
       )}
 
       {showFilterManagement && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto my-4">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
               <h3 className="font-black text-slate-800 text-base sm:text-lg flex items-center gap-2">
                 <Palette className="w-5 h-5 text-blue-500" /> Gerenciar Filtros
               </h3>
@@ -1162,13 +1162,13 @@ export function Catalog() {
               style={{ '--tw-ring-color': accentColor + '40' } as any} />
           </div>
           
-          {/* Categories */}
+          {/* Categories - Always horizontal */}
           {collections.length > 1 && (
             <div className="max-w-4xl mx-auto">
-              <div className="flex gap-2 flex-wrap items-center justify-center sm:justify-start">
+              <div className="flex gap-2 flex-wrap items-center justify-center sm:justify-start overflow-x-auto pb-2 scrollbar-hide">
                 {collections.map(col => (
                   <button key={col} onClick={() => setActiveCollection(col)}
-                    className="px-3 sm:px-4 py-2 sm:py-1.5 rounded-full text-xs sm:text-xs font-bold transition-all border min-w-fit"
+                    className="px-4 sm:px-5 py-2.5 sm:py-2 rounded-full text-xs sm:text-xs font-bold transition-all border whitespace-nowrap flex-shrink-0"
                     style={activeCollection === col
                       ? { backgroundColor: accentColor, color: '#fff', borderColor: accentColor }
                       : { backgroundColor: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0' }}>
@@ -1216,6 +1216,15 @@ export function Catalog() {
           .no-print { display: none !important; }
           .catalog-print-area { border-radius: 0 !important; }
           body { background: white !important; }
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
       `}</style>
     </div>
