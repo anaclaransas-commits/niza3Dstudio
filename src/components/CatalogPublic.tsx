@@ -1473,20 +1473,20 @@ export function CatalogPublic() {
                 
                 {/* Mobile: Horizontal scroll */}
                 <div className="lg:hidden">
-                  <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                  <div className="grid grid-cols-2 gap-2 -mx-4 px-4">
                     <motion.button
                       key="Todos-mobile"
                       type="button"
                       onClick={() => {
                         setActiveCollection('Todos');
                       }}
-                      className="flex-shrink-0 flex flex-col items-center rounded-lg px-4 py-3 text-center shadow-sm"
+                      className="flex flex-col items-center rounded-lg px-3 py-4 text-center shadow-sm"
                       style={{ 
                         backgroundColor: activeCollection === 'Todos' ? primaryColor : palette.cardBg, 
                         borderColor: activeCollection === 'Todos' ? primaryColor : palette.border,
                         color: activeCollection === 'Todos' ? '#fff' : palette.text,
                         border: `1px solid ${activeCollection === 'Todos' ? primaryColor : palette.border}`,
-                        minWidth: '85px'
+                        minHeight: '70px'
                       }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -1503,20 +1503,20 @@ export function CatalogPublic() {
                         onClick={() => {
                           setActiveCollection(category.name);
                         }}
-                        className="flex-shrink-0 flex flex-col items-center rounded-lg px-4 py-3 text-center shadow-sm"
+                        className="flex flex-col items-center rounded-lg px-3 py-4 text-center shadow-sm"
                         style={{ 
                           backgroundColor: activeCollection === category.name ? primaryColor : palette.cardBg, 
                           borderColor: activeCollection === category.name ? primaryColor : palette.border,
                           color: activeCollection === category.name ? '#fff' : palette.text,
                           border: `1px solid ${activeCollection === category.name ? primaryColor : palette.border}`,
-                          minWidth: '85px'
+                          minHeight: '70px'
                         }}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.03, duration: 0.2 }}
                         whileTap={{ scale: 0.95 }}
                       >
-                        <span className="text-xs font-bold truncate max-w-[75px]">{category.name}</span>
+                        <span className="text-xs font-bold truncate">{category.name}</span>
                         <span className="text-[10px] mt-1" style={{ color: activeCollection === category.name ? 'rgba(255,255,255,0.8)' : palette.textMuted }}>
                           {category.count}
                         </span>
@@ -1592,9 +1592,9 @@ export function CatalogPublic() {
                       Filtrar por
                     </h3>
                     
-                    {/* Mobile: Horizontal scroll filters */}
+                    {/* Mobile: Grid filters */}
                     <div className="lg:hidden">
-                      <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                      <div className="grid grid-cols-2 gap-2 -mx-4 px-4">
                         {/* Ambiente */}
                         {(() => {
                           const values = getValuesByCategoryAndField(activeCollection, 'ambiente');
@@ -1604,12 +1604,12 @@ export function CatalogPublic() {
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: 0.1 }}
-                              className="flex-shrink-0 relative"
+                              className="relative"
                             >
                               <motion.button
                                 type="button"
                                 onClick={() => setExpandedFilter(expandedFilter === 'ambiente' ? null : 'ambiente')}
-                                className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-left shadow-sm"
+                                className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-left shadow-sm"
                                 style={{ 
                                   backgroundColor: expandedFilter === 'ambiente' ? primaryColor : palette.cardBg, 
                                   borderColor: expandedFilter === 'ambiente' ? primaryColor : palette.border,
@@ -1628,7 +1628,7 @@ export function CatalogPublic() {
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="absolute z-20 mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
+                                    className="absolute z-[100000] mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
                                     style={{ borderColor: palette.border }}
                                   >
                                     {values.filter(v => v !== 'Todos').map((tag) => (
@@ -1665,7 +1665,7 @@ export function CatalogPublic() {
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: 0.15 }}
-                              className="flex-shrink-0 relative"
+                              className="relative"
                             >
                               <motion.button
                                 type="button"
@@ -1689,7 +1689,7 @@ export function CatalogPublic() {
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="absolute z-20 mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
+                                    className="absolute z-[100000] mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
                                     style={{ borderColor: palette.border }}
                                   >
                                     {values.filter(v => v !== 'Todos').map((tag) => (
@@ -1726,12 +1726,12 @@ export function CatalogPublic() {
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: 0.2 }}
-                              className="flex-shrink-0 relative"
+                              className="relative"
                             >
                               <motion.button
                                 type="button"
                                 onClick={() => setExpandedFilter(expandedFilter === 'público' ? null : 'público')}
-                                className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-left shadow-sm"
+                                className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-left shadow-sm"
                                 style={{ 
                                   backgroundColor: expandedFilter === 'público' ? primaryColor : palette.cardBg, 
                                   borderColor: expandedFilter === 'público' ? primaryColor : palette.border,
@@ -1750,7 +1750,7 @@ export function CatalogPublic() {
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="absolute z-20 mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
+                                    className="absolute z-[100000] mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
                                     style={{ borderColor: palette.border }}
                                   >
                                     {values.filter(v => v !== 'Todos').map((tag) => (
@@ -1787,7 +1787,7 @@ export function CatalogPublic() {
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: 0.25 }}
-                              className="flex-shrink-0 relative"
+                              className="relative"
                             >
                               <motion.button
                                 type="button"
@@ -1811,7 +1811,7 @@ export function CatalogPublic() {
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="absolute z-20 mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
+                                    className="absolute z-[100000] mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
                                     style={{ borderColor: palette.border }}
                                   >
                                     {values.filter(v => v !== 'Todos').map((tag) => (
@@ -1848,7 +1848,7 @@ export function CatalogPublic() {
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: 0.3 }}
-                              className="flex-shrink-0 relative"
+                              className="relative"
                             >
                               <motion.button
                                 type="button"
@@ -1872,7 +1872,7 @@ export function CatalogPublic() {
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="absolute z-20 mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
+                                    className="absolute z-[100000] mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
                                     style={{ borderColor: palette.border }}
                                   >
                                     {values.filter(v => v !== 'Todos').map((tag) => (
@@ -1909,7 +1909,7 @@ export function CatalogPublic() {
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: 0.35 }}
-                              className="flex-shrink-0 relative"
+                              className="relative"
                             >
                               <motion.button
                                 type="button"
@@ -1933,7 +1933,7 @@ export function CatalogPublic() {
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="absolute z-20 mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
+                                    className="absolute z-[100000] mt-2 bg-white rounded-lg shadow-lg border p-2 space-y-1 min-w-[140px]"
                                     style={{ borderColor: palette.border }}
                                   >
                                     {values.filter(v => v !== 'Todos').map((tag) => (
