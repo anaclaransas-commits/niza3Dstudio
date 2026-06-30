@@ -73,17 +73,17 @@ function SettingsPanel({ settings, onSave, onClose }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
-          <h3 className="font-black text-slate-800 text-lg flex items-center gap-2">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100">
+          <h3 className="font-black text-slate-800 text-base sm:text-lg flex items-center gap-2">
             <Palette className="w-5 h-5 text-blue-500" /> Personalizar Catálogo
           </h3>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-6 space-y-5">
+        <div className="p-4 sm:p-6 space-y-5">
           {/* Logo */}
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-500 uppercase">Logo da Empresa</label>
@@ -371,17 +371,17 @@ function FilterValuesManagementPanel({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
-          <h3 className="font-black text-slate-800 text-lg flex items-center gap-2">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100">
+          <h3 className="font-black text-slate-800 text-base sm:text-lg flex items-center gap-2">
             <Edit2 className="w-5 h-5 text-blue-500" /> Gerenciar {fieldName}
           </h3>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-6">
           {/* Add new value */}
           <div className="space-y-3">
             <label className="text-xs font-bold text-slate-500 uppercase">Adicionar novo valor</label>
@@ -526,17 +526,17 @@ function CategoryManagementPanel({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
-          <h3 className="font-black text-slate-800 text-lg flex items-center gap-2">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100">
+          <h3 className="font-black text-slate-800 text-base sm:text-lg flex items-center gap-2">
             <Edit2 className="w-5 h-5 text-blue-500" /> Gerenciar Categorias
           </h3>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-6">
           {/* Add new category */}
           <div className="space-y-3">
             <label className="text-xs font-bold text-slate-500 uppercase">Adicionar nova categoria</label>
@@ -849,51 +849,51 @@ export function Catalog() {
   return (
     <div className="space-y-6">
       {/* Admin toolbar */}
-      <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 no-print">
-        <div className="flex items-center gap-2 text-amber-700">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-amber-50 border border-amber-200 rounded-2xl px-4 sm:px-5 py-3 no-print gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-amber-700">
           <span className="text-xs font-black uppercase tracking-widest">👁 Visualização do catálogo do cliente</span>
           <span className="text-xs text-amber-500">• Preços ocultos • {publicProducts.length} produto(s) visível(is)</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button onClick={() => setShowCategoryManagement(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-amber-200 text-amber-700 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors">
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white border border-amber-200 text-amber-700 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors">
             <Edit2 className="w-3.5 h-3.5" /> Categorias
           </button>
           <button onClick={() => setShowFilterManagement(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-amber-200 text-amber-700 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors">
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white border border-amber-200 text-amber-700 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors">
             <Palette className="w-3.5 h-3.5" /> Filtros
           </button>
           <button onClick={() => setShowSettings(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-amber-200 text-amber-700 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors">
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white border border-amber-200 text-amber-700 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors">
             <Palette className="w-3.5 h-3.5" /> Personalizar
           </button>
           <button onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-xl text-xs font-bold hover:bg-amber-700 transition-colors">
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-amber-600 text-white rounded-xl text-xs font-bold hover:bg-amber-700 transition-colors">
             Imprimir / PDF
           </button>
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-2xl px-5 py-4 no-print">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="bg-white border border-slate-200 rounded-2xl px-4 sm:px-5 py-4 no-print">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-widest text-slate-400">Link público do catálogo</p>
             <p className="text-sm text-slate-600 mt-1">Esse é o link que o cliente acessa sem entrar no painel.</p>
           </div>
-          <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-center md:justify-end">
-            <div className="flex-1 md:max-w-xl px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 break-all">
+          <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <div className="flex-1 sm:max-w-xl px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 break-all">
               {publicCatalogUrl}
             </div>
             <div className="flex gap-2">
               <button
                 onClick={handleCopyPublicLink}
-                className="flex items-center gap-2 px-4 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors"
+                className="flex items-center gap-2 px-3 sm:px-4 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors"
               >
                 <Copy className="w-4 h-4" /> Copiar
               </button>
               <button
                 onClick={handleOpenPublicCatalog}
-                className="flex items-center gap-2 px-4 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors"
+                className="flex items-center gap-2 px-3 sm:px-4 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors"
               >
                 <ExternalLink className="w-4 h-4" /> Abrir
               </button>
@@ -902,8 +902,8 @@ export function Catalog() {
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-2xl px-5 py-4 no-print space-y-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="bg-white border border-slate-200 rounded-2xl px-4 sm:px-5 py-4 no-print space-y-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-widest text-slate-400">Diagnóstico do catálogo</p>
             <p className="text-sm text-slate-600 mt-1">Use este teste para confirmar se este build está lendo e publicando no backend compartilhado.</p>
@@ -911,14 +911,14 @@ export function Catalog() {
           <button
             onClick={handleRunDiagnostics}
             disabled={diagnostics.status === 'loading'}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors disabled:opacity-60"
+            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors disabled:opacity-60"
           >
             <RefreshCw className={`w-4 h-4 ${diagnostics.status === 'loading' ? 'animate-spin' : ''}`} />
             {diagnostics.status === 'loading' ? 'Testando...' : 'Testar publicação'}
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Backend detectado</p>
             <p className="mt-2 text-sm font-bold text-slate-800">
@@ -991,58 +991,58 @@ export function Catalog() {
       )}
 
       {showFilterManagement && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b border-slate-100">
-              <h3 className="font-black text-slate-800 text-lg flex items-center gap-2">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100">
+              <h3 className="font-black text-slate-800 text-base sm:text-lg flex items-center gap-2">
                 <Palette className="w-5 h-5 text-blue-500" /> Gerenciar Filtros
               </h3>
               <button onClick={() => setShowFilterManagement(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-6 space-y-3">
+            <div className="p-4 sm:p-6 space-y-3">
               <label className="text-xs font-bold text-slate-500 uppercase">Selecione o campo para gerenciar</label>
               <div className="space-y-2">
                 <button
                   type="button"
                   onClick={() => { setSelectedFilterField('ambiente'); setShowFilterManagement(false); }}
-                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                  className="w-full p-3 sm:p-4 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
                 >
                   Ambiente
                 </button>
                 <button
                   type="button"
                   onClick={() => { setSelectedFilterField('público'); setShowFilterManagement(false); }}
-                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                  className="w-full p-3 sm:p-4 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
                 >
                   Público
                 </button>
                 <button
                   type="button"
                   onClick={() => { setSelectedFilterField('estilo'); setShowFilterManagement(false); }}
-                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                  className="w-full p-3 sm:p-4 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
                 >
                   Estilo
                 </button>
                 <button
                   type="button"
                   onClick={() => { setSelectedFilterField('ocasião'); setShowFilterManagement(false); }}
-                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                  className="w-full p-3 sm:p-4 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
                 >
                   Ocasião
                 </button>
                 <button
                   type="button"
                   onClick={() => { setSelectedFilterField('coleção'); setShowFilterManagement(false); }}
-                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                  className="w-full p-3 sm:p-4 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
                 >
                   Coleção
                 </button>
                 <button
                   type="button"
                   onClick={() => { setSelectedFilterField('material'); setShowFilterManagement(false); }}
-                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                  className="w-full p-3 sm:p-4 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
                 >
                   Material
                 </button>
@@ -1149,27 +1149,33 @@ export function Catalog() {
         </div>
 
         {/* Search + filters */}
-        <div className="bg-white px-8 py-5 border-b border-slate-100 no-print">
+        <div className="bg-white px-4 sm:px-8 py-4 sm:py-5 border-b border-slate-100 no-print">
           <div className="max-w-4xl mx-auto mb-4">
-            <h2 className="text-2xl font-black text-slate-900">{catalogHeadline || 'Coleções em destaque'}</h2>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900">{catalogHeadline || 'Coleções em destaque'}</h2>
             {catalogSubheadline && <p className="mt-2 text-sm text-slate-500">{catalogSubheadline}</p>}
           </div>
-          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row gap-3">
+          
+          {/* Search input */}
+          <div className="max-w-4xl mx-auto mb-4">
             <input type="text" placeholder="Buscar produto..." value={search} onChange={e => setSearch(e.target.value)}
-              className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm focus:ring-2"
+              className="w-full px-4 py-3 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm focus:ring-2"
               style={{ '--tw-ring-color': accentColor + '40' } as any} />
           </div>
+          
+          {/* Categories */}
           {collections.length > 1 && (
-            <div className="max-w-4xl mx-auto flex gap-2 flex-wrap mt-3">
-              {collections.map(col => (
-                <button key={col} onClick={() => setActiveCollection(col)}
-                  className="px-4 py-1.5 rounded-full text-xs font-bold transition-all border"
-                  style={activeCollection === col
-                    ? { backgroundColor: accentColor, color: '#fff', borderColor: accentColor }
-                    : { backgroundColor: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0' }}>
-                  {col}
-                </button>
-              ))}
+            <div className="max-w-4xl mx-auto">
+              <div className="flex gap-2 flex-wrap items-center justify-center sm:justify-start">
+                {collections.map(col => (
+                  <button key={col} onClick={() => setActiveCollection(col)}
+                    className="px-3 sm:px-4 py-2 sm:py-1.5 rounded-full text-xs sm:text-xs font-bold transition-all border min-w-fit"
+                    style={activeCollection === col
+                      ? { backgroundColor: accentColor, color: '#fff', borderColor: accentColor }
+                      : { backgroundColor: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0' }}>
+                    {col}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
