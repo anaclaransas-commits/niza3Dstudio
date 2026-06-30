@@ -62,7 +62,7 @@ const RANGE_OPTIONS: Array<{ value: AnalyticsRange; label: string }> = [
 ];
 
 export function Dashboard({ onNavigate }: DashboardProps) {
-  const { budgets, clients, products, filaments, financeEntries, printQueue, activityLog, updateBudgetStatus, addPrintQueueItem, updatePrintQueueItem } = useStore();
+  const { budgets, clients, products, filaments, financeEntries, printQueue, activityLog, updateBudgetStatus, addPrintQueueItem, updatePrintQueueItem, addActivityLog } = useStore();
   const [selectedRange, setSelectedRange] = useState<AnalyticsRange>('30d');
 
   const metrics = calculateBusinessMetrics(budgets, financeEntries);

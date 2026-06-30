@@ -48,7 +48,7 @@ export function Dropzone({
 
       if (disabled) return;
 
-      const files = Array.from(e.dataTransfer.files);
+      const files = Array.from(e.dataTransfer.files) as File[];
       if (files.length > 0) {
         onFilesDrop(files);
       }

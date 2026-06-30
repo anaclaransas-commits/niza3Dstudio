@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, Box, CheckCircle2, Copy, ExternalLink, Instagram, Mail, MessageCircle, Palette, RefreshCw, Save, X, ChevronLeft, ChevronRight, Plus, Edit2, Trash2 } from 'lucide-react';
 import { useStore } from '../store';
 import { getCatalogAdminData, getCatalogBackendDebugInfo, getCatalogPublicData, uploadCatalogAsset } from '../lib/catalogApi';
 import { getProductImages } from '../lib/catalogUtils';
-import type { CatalogSettings } from '../types';
+import type { CatalogSettings, Product } from '../types';
 
 /* ── Settings panel ───────────────────────────────── */
 function SettingsPanel({ settings, onSave, onClose }: {
@@ -301,7 +301,7 @@ function SettingsPanel({ settings, onSave, onClose }: {
   );
 }
 
-/* ── Category Management Panel ─────────────────────────── */
+/* ── Filter Values Management Panel ─────────────────────────── */
 function FilterValuesManagementPanel({ 
   products, 
   field, 
@@ -309,7 +309,7 @@ function FilterValuesManagementPanel({
   onUpdateValues, 
   onClose 
 }: { 
-  products: any[]; 
+  products: Product[]; 
   field: string;
   fieldName: string;
   onUpdateValues: (values: string[]) => void;
@@ -321,7 +321,18 @@ function FilterValuesManagementPanel({
   const [editValue, setEditValue] = useState('');
 
   useEffect(() => {
-    const uniqueValues = Array.from(new Set(products.map((p) => p[field]).filter(Boolean)));
+    const uniqueValues = Array.from(new Set(
+      products
+        .map((p) => {
+          const fieldValue = p[field as keyof Product];
+          if (Array.isArray(fieldValue)) {
+            return fieldValue.flat();
+          }
+          return fieldValue;
+        })
+        .flat()
+        .filter(Boolean)
+    ));
     setValues(uniqueValues);
   }, [products, field]);
 
@@ -466,7 +477,7 @@ function CategoryManagementPanel({
   onUpdateCategories, 
   onClose 
 }: { 
-  products: any[]; 
+  products: Product[]; 
   onUpdateCategories: (categories: string[]) => void;
   onClose: () => void;
 }) {
@@ -633,12 +644,13 @@ type CatalogDiagnostics = {
 };
 
 /* ── Product Card Component ───────────────────────── */
-function ProductCard({ product, accentColor, primaryColor, primaryCtaLabel, whatsapp }: {
-  product: any;
+function ProductCard({ product, accentColor, primaryColor, primaryCtaLabel, whatsapp, key }: {
+  product: Product;
   accentColor: string;
   primaryColor: string;
   primaryCtaLabel: string;
   whatsapp: string;
+  key?: string;
 }) {
   const images = getProductImages(product);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -741,7 +753,7 @@ export function Catalog() {
   const publicProducts = products.filter(p => p.isPublic !== false);
   const collections = ['Todos', ...Array.from(new Set(publicProducts.map(p => p.collection || 'Sem Coleção')))];
 
-  const filtered = publicProducts.filter(p => {
+  const filtered: Product[] = publicProducts.filter(p => {
     const matchCollection = activeCollection === 'Todos' || (p.collection || 'Sem Coleção') === activeCollection;
     const matchSearch = !search ||
       p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -971,8 +983,7 @@ export function Catalog() {
         <CategoryManagementPanel
           products={publicProducts}
           onUpdateCategories={(updatedCategories) => {
-            // Update products with new categories
-            // This is a simplified version - in a real implementation, you'd need to update the actual product data
+            // Categories are managed via product updates - this panel is for reference only
             console.log('Categories updated:', updatedCategories);
           }}
           onClose={() => setShowCategoryManagement(false)}
@@ -1028,7 +1039,13 @@ export function Catalog() {
                 >
                   Coleção
                 </button>
-
+                <button
+                  type="button"
+                  onClick={() => { setSelectedFilterField('material'); setShowFilterManagement(false); }}
+                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-left font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                >
+                  Material
+                </button>
               </div>
             </div>
           </div>
@@ -1041,6 +1058,7 @@ export function Catalog() {
           field={selectedFilterField}
           fieldName={selectedFilterField.charAt(0).toUpperCase() + selectedFilterField.slice(1)}
           onUpdateValues={(updatedValues) => {
+            // Filter values are managed via product updates - this panel is for reference only
             console.log(`${selectedFilterField} values updated:`, updatedValues);
           }}
           onClose={() => setSelectedFilterField(null)}
@@ -1161,12 +1179,12 @@ export function Catalog() {
           <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtered.map(product => (
               <ProductCard
-                key={product.id}
                 product={product}
                 accentColor={accentColor}
                 primaryColor={primaryColor}
                 primaryCtaLabel={primaryCtaLabel}
                 whatsapp={whatsapp}
+                key={product.id}
               />
             ))}
 

@@ -240,6 +240,7 @@ type StoreContextValue = {
   addResin: (data: Omit<ResinSupply, 'id'>) => ResinSupply;
   addClient: (data: Omit<Client, 'id'>) => Client;
   updateClient: (id: string, data: Partial<Omit<Client, 'id'>>) => void;
+  deleteClient: (clientId: string) => void;
   addProduct: (data: Omit<Product, 'id'>) => Product;
   updateProduct: (id: string, data: Partial<Omit<Product, 'id'>>) => void;
   addBudget: (data: Omit<Budget, 'id'>) => Budget;
@@ -400,6 +401,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setClients((currentClients) =>
       currentClients.map((client) => (client.id === id ? { ...client, ...data } : client))
     );
+  };
+
+  const deleteClient = (clientId: string) => {
+    setClients((currentClients) => currentClients.filter((client) => client.id !== clientId));
   };
 
   const addProduct = (data: Omit<Product, 'id'>) => {
@@ -615,6 +620,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addResin,
       addClient,
       updateClient,
+      deleteClient,
       addProduct,
       updateProduct,
       addBudget,

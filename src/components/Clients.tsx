@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Users, 
   Search, 
@@ -47,13 +47,15 @@ function getClientContactUrl(phone: string, email: string) {
 }
 
 export function Clients() {
-  const { clients, addClient, budgets, products, updateClient, addActivityLog } = useStore();
+  const { clients, addClient, budgets, products, updateClient, addActivityLog, deleteClient } = useStore();
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [clientNotes, setClientNotes] = useState('');
   const [loyaltyFilter, setLoyaltyFilter] = useState<'all' | 'VIP' | 'Frequente' | 'Regular' | 'Novo'>('all');
+  const [editingClientId, setEditingClientId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -137,17 +139,6 @@ export function Clients() {
       discountPercent = 5;
     }
     
-    // Update client loyalty data
-    const client = clients.find(c => c.id === clientId);
-    if (client && (client.loyaltyTier !== loyaltyTier || client.discountPercent !== discountPercent)) {
-      updateClient(clientId, { 
-        loyaltyTier, 
-        discountPercent,
-        totalOrders,
-        totalRevenue 
-      });
-    }
-    
     return {
       totalRevenue,
       totalProfit,
@@ -162,6 +153,21 @@ export function Clients() {
       recentOrders: clientBudgets.slice(0, 5)
     };
   };
+
+  // Separate effect to update client loyalty data without causing render loops
+  useEffect(() => {
+    clients.forEach(client => {
+      const metrics = getClientMetrics(client.id);
+      if (client.loyaltyTier !== metrics.loyaltyTier || client.discountPercent !== metrics.discountPercent) {
+        updateClient(client.id, { 
+          loyaltyTier: metrics.loyaltyTier, 
+          discountPercent: metrics.discountPercent,
+          totalOrders: metrics.totalOrders,
+          totalRevenue: metrics.totalRevenue 
+        });
+      }
+    });
+  }, [clients, budgets]);
 
   const handleApplyLoyaltyDiscount = (clientId: string) => {
     const client = clients.find(c => c.id === clientId);
@@ -447,15 +453,32 @@ export function Clients() {
       </div>
 
       {!showForm && (
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-          <input 
-            type="text"
-            placeholder="Buscar por nome ou email..."
-            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm outline-none focus:ring-2 focus:ring-indigo-500/20"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input 
+              type="text"
+              placeholder="Buscar por nome ou email..."
+              className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm outline-none focus:ring-2 focus:ring-indigo-500/20"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-slate-400" />
+            <select
+              value={loyaltyFilter}
+              onChange={(e) => setLoyaltyFilter(e.target.value as any)}
+              className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20"
+            >
+              <option value="all">Todos os clientes</option>
+              <option value="VIP">VIP</option>
+              <option value="Frequente">Frequente</option>
+              <option value="Regular">Regular</option>
+              <option value="Novo">Novo</option>
+            </select>
+          </div>
         </div>
       )}
 
@@ -489,6 +512,109 @@ export function Clients() {
         </div>
       )}
 
+      {/* Edit Client Modal */}
+      {editingClientId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-800">Editar Cliente</h3>
+              <button 
+                onClick={() => {
+                  setEditingClientId(null);
+                  setFormData({ name: '', email: '', phone: '', cpf: '', address: '' });
+                }}
+                className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              updateClient(editingClientId, formData);
+              setEditingClientId(null);
+              setFormData({ name: '', email: '', phone: '', cpf: '', address: '' });
+            }} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nome Completo</label>
+                <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-2.5 border rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">E-mail</label>
+                <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full p-2.5 border rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Telefone / WhatsApp</label>
+                <input required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full p-2.5 border rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">CPF (Opcional)</label>
+                <input value={formData.cpf} onChange={e => setFormData({...formData, cpf: e.target.value})} className="w-full p-2.5 border rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Endereço de Entrega</label>
+                <textarea value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full p-2.5 border rounded-xl h-24" />
+              </div>
+              <div className="flex gap-2">
+                <button type="submit" className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold">Salvar Alterações</button>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setEditingClientId(null);
+                    setFormData({ name: '', email: '', phone: '', cpf: '', address: '' });
+                  }}
+                  className="px-4 py-2 bg-slate-200 text-slate-700 rounded-xl font-bold"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-800">Confirmar Exclusão</h3>
+                <p className="text-sm text-slate-500">Esta ação não pode ser desfeita.</p>
+              </div>
+            </div>
+            <p className="text-slate-600 mb-6">
+              Tem certeza que deseja excluir o cliente "{clients.find(c => c.id === showDeleteConfirm)?.name}"?
+            </p>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => {
+                  deleteClient(showDeleteConfirm);
+                  setShowDeleteConfirm(null);
+                  addActivityLog({
+                    type: 'client',
+                    description: `Cliente excluído: ${clients.find(c => c.id === showDeleteConfirm)?.name}`,
+                    entityId: showDeleteConfirm,
+                    entityType: 'client',
+                  });
+                }}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors"
+              >
+                Sim, Excluir
+              </button>
+              <button 
+                onClick={() => setShowDeleteConfirm(null)}
+                className="px-4 py-2 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredClients.map(client => {
           const clientBudgets = budgets.filter((budget) => budget.clientId === client.id);
@@ -497,7 +623,11 @@ export function Clients() {
             .reduce((total, budget) => total + budget.price, 0);
 
           return (
-            <div key={client.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
+            <div 
+              key={client.id} 
+              className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden cursor-pointer"
+              onClick={() => handleClientClick(client.id)}
+            >
               <div className="flex items-center space-x-4 mb-6">
                 <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-indigo-600 font-bold text-lg">
                   {client.name.charAt(0).toUpperCase()}
@@ -523,15 +653,45 @@ export function Clients() {
                 )}
               </div>
 
-              <a
-                href={getClientContactUrl(client.phone, client.email)}
-                target="_blank"
-                rel="noreferrer"
-                className="absolute top-4 right-4 p-2 text-slate-300 hover:text-indigo-600 transition-colors"
-                aria-label={`Abrir contato de ${client.name}`}
-              >
-                <ExternalLink className="w-4 h-4" />
-              </a>
+              <div className="absolute top-4 right-4 flex gap-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingClientId(client.id);
+                    setFormData({
+                      name: client.name,
+                      email: client.email,
+                      phone: client.phone,
+                      cpf: client.cpf || '',
+                      address: client.address || ''
+                    });
+                  }}
+                  className="p-2 text-slate-300 hover:text-blue-600 transition-colors"
+                  aria-label={`Editar ${client.name}`}
+                >
+                  <Edit3 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDeleteConfirm(client.id);
+                  }}
+                  className="p-2 text-slate-300 hover:text-red-600 transition-colors"
+                  aria-label={`Excluir ${client.name}`}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <a
+                  href={getClientContactUrl(client.phone, client.email)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="p-2 text-slate-300 hover:text-indigo-600 transition-colors"
+                  aria-label={`Abrir contato de ${client.name}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
               
               <div className="mt-6 pt-4 border-t border-slate-50 flex items-center justify-between">
                 <div>

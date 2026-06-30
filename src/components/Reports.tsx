@@ -40,7 +40,7 @@ import {
   getFinanceEntryOccurrencesInRange,
   getRangeStart,
 } from '../lib/finance';
-import { downloadCsvFile, formatCurrency } from '../lib/utils';
+import { downloadCsvFile, formatCurrency, isApprovedBudget } from '../lib/utils';
 import { useStore } from '../store';
 import type { AnalyticsRange, FinanceEntryType } from '../types';
 import jsPDF from 'jspdf';
