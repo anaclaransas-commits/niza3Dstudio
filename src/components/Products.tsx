@@ -90,13 +90,13 @@ function readBlobAsDataUrl(blob: Blob, fileLabel = 'arquivo') {
 }
 
 // MultiSelect component for tags/categories
-function MultiSelect({ 
-  label, 
-  values, 
-  onChange, 
-  availableOptions, 
-  placeholder 
-}: { 
+function MultiSelect({
+  label,
+  values,
+  onChange,
+  availableOptions,
+  placeholder
+}: {
   label: string;
   values: string[];
   onChange: (values: string[]) => void;
@@ -125,7 +125,7 @@ function MultiSelect({
     }
   };
 
-  const filteredOptions = availableOptions.filter(opt => 
+  const filteredOptions = availableOptions.filter(opt =>
     !values.includes(opt) && opt.toLowerCase().includes(inputValue.toLowerCase())
   );
 
@@ -442,7 +442,7 @@ export function Products() {
       description: p.description || '',
       collection: p.collection || '',
       imageUrl: p.imageUrl || '',
-      imageUrls: coerceProductImageUrls(p.imageUrls).filter((url) => url !== p.imageUrl),
+      imageUrls: p.imageUrls?.filter((url) => url !== p.imageUrl) || [],
       defaultWeightG: p.defaultWeightG?.toString() || '',
       basePrice: p.basePrice?.toString() || '',
       stlUrl: p.stlUrl || '',
@@ -457,6 +457,7 @@ export function Products() {
       público: Array.isArray(p.público) ? p.público : (p.público ? [p.público] : []),
       estilo: Array.isArray(p.estilo) ? p.estilo : (p.estilo ? [p.estilo] : []),
       coleção: Array.isArray(p.coleção) ? p.coleção : (p.coleção ? [p.coleção] : []),
+      material: Array.isArray(p.material) ? p.material : (p.material ? [p.material] : []),
       variants: p.variants?.map(v => ({
         id: v.id,
         name: v.name,
