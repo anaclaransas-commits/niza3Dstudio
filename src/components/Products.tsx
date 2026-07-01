@@ -402,7 +402,7 @@ export function Products() {
 
 
   // Collections list
-  const collections = ['Todos', ...Array.from(new Set(products.map(p => p.collection || 'Sem Coleção')))];
+  const collections = ['Todos', ...Array.from(new Set((products || []).map(p => p.collection || 'Sem Coleção')))];
 
   // Extract unique values for filter fields from catalogSettings
   const store = useStore();
@@ -416,7 +416,7 @@ export function Products() {
   const coleçãoOptions = Array.isArray(filterValues.coleção) ? filterValues.coleção : [];
   const materialOptions = Array.isArray(filterValues.material) ? filterValues.material : [];
 
-  const filtered = products.filter(p => {
+  const filtered = (products || []).filter(p => {
     const matchSearch =
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -442,7 +442,7 @@ export function Products() {
       description: p.description || '',
       collection: p.collection || '',
       imageUrl: p.imageUrl || '',
-      imageUrls: coerceProductImageUrls(p.imageUrls).filter((url) => url !== p.imageUrl),
+      imageUrls: (p.imageUrls ? coerceProductImageUrls(p.imageUrls) : []).filter((url) => url !== p.imageUrl),
       defaultWeightG: p.defaultWeightG?.toString() || '',
       basePrice: p.basePrice?.toString() || '',
       stlUrl: p.stlUrl || '',
@@ -457,7 +457,7 @@ export function Products() {
       público: Array.isArray(p.público) ? p.público : (p.público ? [p.público] : []),
       estilo: Array.isArray(p.estilo) ? p.estilo : (p.estilo ? [p.estilo] : []),
       coleção: Array.isArray(p.coleção) ? p.coleção : (p.coleção ? [p.coleção] : []),
-      variants: p.variants?.map(v => ({
+      variants: (p.variants || []).map(v => ({
         id: v.id,
         name: v.name,
         size: v.size || '',
@@ -465,7 +465,7 @@ export function Products() {
         material: v.material || '',
         priceAdjustment: v.priceAdjustment,
         defaultWeightG: v.defaultWeightG?.toString() || ''
-      })) || [],
+      })),
     });
     setShowForm(true);
   };
@@ -726,7 +726,7 @@ export function Products() {
       </div>
 
       {/* Collection tabs */}
-      {collections.length > 1 && (
+      {collections && collections.length > 1 && (
         <div className="flex gap-2 flex-wrap">
           {collections.map(col => (
             <button key={col} onClick={() => setActiveCollection(col)}
