@@ -93,6 +93,13 @@ function sanitizeOptionalText(value: unknown) {
   return normalizedValue || undefined;
 }
 
+function sanitizeOptionalTextOrArray(value: unknown): string | string[] | undefined {
+  if (Array.isArray(value)) {
+    return value.filter(v => typeof v === 'string' && v.trim() !== '').map(v => v.trim());
+  }
+  return sanitizeOptionalText(value);
+}
+
 function sanitizeNumber(value: unknown) {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
@@ -150,10 +157,13 @@ function normalizeProduct(input: Partial<Product> = {}): Product {
     avgPrintTimeHours: sanitizeNumber(input.avgPrintTimeHours),
     tags: sanitizeOptionalText(input.tags),
     isPublic: sanitizeBoolean(input.isPublic, true),
-    tipo: sanitizeOptionalText(input.tipo),
-    ocasião: sanitizeOptionalText(input.ocasião),
-    ambiente: sanitizeOptionalText(input.ambiente),
-    público: sanitizeOptionalText(input.público),
+    tipo: sanitizeOptionalTextOrArray(input.tipo),
+    ocasião: sanitizeOptionalTextOrArray(input.ocasião),
+    ambiente: sanitizeOptionalTextOrArray(input.ambiente),
+    público: sanitizeOptionalTextOrArray(input.público),
+    estilo: sanitizeOptionalTextOrArray(input.estilo),
+    coleção: sanitizeOptionalTextOrArray(input.coleção),
+    material: sanitizeOptionalTextOrArray(input.material),
   };
 }
 
