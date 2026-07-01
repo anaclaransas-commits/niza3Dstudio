@@ -406,14 +406,15 @@ export function Products() {
 
   // Extract unique values for filter fields from catalogSettings
   const store = useStore();
-  const catalogSettings = store.catalogSettings;
-  const tipoOptions = catalogSettings.filterValues?.tipo || [];
-  const ocasiãoOptions = catalogSettings.filterValues?.ocasião || [];
-  const ambienteOptions = catalogSettings.filterValues?.ambiente || [];
-  const públicoOptions = catalogSettings.filterValues?.público || [];
-  const estiloOptions = catalogSettings.filterValues?.estilo || [];
-  const coleçãoOptions = catalogSettings.filterValues?.coleção || [];
-  const materialOptions = catalogSettings.filterValues?.material || [];
+  const catalogSettings = store.catalogSettings || {};
+  const filterValues = catalogSettings?.filterValues || {};
+  const tipoOptions = filterValues.tipo || [];
+  const ocasiãoOptions = filterValues.ocasião || [];
+  const ambienteOptions = filterValues.ambiente || [];
+  const públicoOptions = filterValues.público || [];
+  const estiloOptions = filterValues.estilo || [];
+  const coleçãoOptions = filterValues.coleção || [];
+  const materialOptions = filterValues.material || [];
 
   const filtered = products.filter(p => {
     const matchSearch =
