@@ -408,13 +408,13 @@ export function Products() {
   const store = useStore();
   const catalogSettings = store.catalogSettings || {};
   const filterValues = catalogSettings?.filterValues || {};
-  const tipoOptions = filterValues.tipo || [];
-  const ocasiãoOptions = filterValues.ocasião || [];
-  const ambienteOptions = filterValues.ambiente || [];
-  const públicoOptions = filterValues.público || [];
-  const estiloOptions = filterValues.estilo || [];
-  const coleçãoOptions = filterValues.coleção || [];
-  const materialOptions = filterValues.material || [];
+  const tipoOptions = Array.isArray(filterValues.tipo) ? filterValues.tipo : [];
+  const ocasiãoOptions = Array.isArray(filterValues.ocasião) ? filterValues.ocasião : [];
+  const ambienteOptions = Array.isArray(filterValues.ambiente) ? filterValues.ambiente : [];
+  const públicoOptions = Array.isArray(filterValues.público) ? filterValues.público : [];
+  const estiloOptions = Array.isArray(filterValues.estilo) ? filterValues.estilo : [];
+  const coleçãoOptions = Array.isArray(filterValues.coleção) ? filterValues.coleção : [];
+  const materialOptions = Array.isArray(filterValues.material) ? filterValues.material : [];
 
   const filtered = products.filter(p => {
     const matchSearch =
