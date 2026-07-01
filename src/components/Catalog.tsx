@@ -1067,7 +1067,7 @@ export function Catalog() {
                 [fieldKey]: updatedValues,
               },
             };
-            setCatalogSettings(updatedSettings);
+            updateCatalogSettings(updatedSettings);
             // Also save to backend if configured
             if (backendInfo.supabase.configured) {
               saveCatalogSettings(updatedSettings).catch(err => {
